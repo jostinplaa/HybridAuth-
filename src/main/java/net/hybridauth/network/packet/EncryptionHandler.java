@@ -83,7 +83,13 @@ public class EncryptionHandler {
 
                         // 2. Check Mojang API
                         // Esto ya no bloquea el hilo principal ni Netty
-                        boolean isPremium = mojangAPI.getPremiumUUID(finalPlayerName).isPresent();
+                        // boolean isPremium = mojangAPI.getPremiumUUID(finalPlayerName).isPresent();
+
+                        // FIX: No podemos confiar solo en la API para auto-login en modo offline
+                        // porque cualquiera puede usar el nombre de un usuario premium.
+                        // Por seguridad, nuevos usuarios siempre deben registrarse/loguearse.
+                        // Solo confiamos si ya está verificado en la base de datos.
+                        boolean isPremium = false;
 
                         // Cachear resultado
                         premiumCache.put(finalPlayerName.toLowerCase(), isPremium);
@@ -98,14 +104,7 @@ public class EncryptionHandler {
                 }).thenAccept(isPremium -> {
                     if (isPremium) {
                         premiumPlayers.add(finalPlayerName.toLowerCase());
-                        plugin.getLogger().info("Detected Premium User: " + finalPlayerName);
-
-                        EncryptionHandler.this.plugin.getSecurityLogger().log(
-                                net.hybridauth.security.SecurityLogger.EventType.PREMIUM_DETECT,
-                                finalPlayerName,
-                                null, // UUID unknown at this stage via Packet
-                                "Unknown IP", // Packet doesn't easily give IP without context
-                                "Detected via Mojang API");
+                        // Log only if actually premium (which is impossible now for new users, safe)
                     }
                 });
             }
