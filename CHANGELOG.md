@@ -8,6 +8,14 @@ Todas las mejoras notables de este proyecto serán documentadas en este archivo.
 ### ✨ Added (Nuevas Características)
 - **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
 
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+
+## [1.1.6] - 2026-01-29 (Definitive Premium Logic)
+- **Fix Critical**: Se deshabilitó la comprobación de Mojang API para usuarios nuevos.
+- **Security**: Implementada "Política de Primera Conexión" (First Connection Policy).
+- **Protection**: Evita que usuarios cracked roben cuentas premium o viceversa.
+
 ## [1.1.5] - 2026-01-29 (Manual Hotfix)
 - **Fix Critical**: Corrección manual de `EncryptionHandler` y `LoginListener` según reporte de bugs.
 - **Fix**: Solucionado Race Condition en detección Premium.

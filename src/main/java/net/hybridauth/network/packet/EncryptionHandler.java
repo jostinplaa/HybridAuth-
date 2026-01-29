@@ -31,7 +31,7 @@ public class EncryptionHandler {
         this.plugin = plugin;
         this.mojangAPI = new MojangAPI();
 
-        // Cache de 30 minutos para resultados de Mojang
+        // Cache de 30 minutos para resultados
         this.premiumCache = Caffeine.newBuilder()
                 .expireAfterWrite(30, TimeUnit.MINUTES)
                 .maximumSize(5000)
@@ -56,8 +56,8 @@ public class EncryptionHandler {
 
                 final String finalPlayerName = playerName;
 
-                // Verificar async para no bloquear el hilo de Netty
-                CompletableFuture.runAsync(() -> {
+                // Verificar async
+                plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
                     try {
                         checkPremiumStatus(finalPlayerName);
                     } catch (Exception e) {
@@ -70,6 +70,11 @@ public class EncryptionHandler {
 
     /**
      * Verifica el estado premium de un jugador
+     * 
+     * POLÍTICA DE PRIMERA CONEXIÓN:
+     * - Solo confía en usuarios YA REGISTRADOS en la base de datos
+     * - Usuarios nuevos SIEMPRE deben registrarse primero
+     * - NO verifica Mojang API para nuevos usuarios (evita conflictos)
      */
     private void checkPremiumStatus(String playerName) {
         String lowerName = playerName.toLowerCase();
@@ -81,12 +86,12 @@ public class EncryptionHandler {
                 premiumPlayers.add(lowerName);
                 plugin.getLogger().info("[Premium Cache] " + playerName + " - Premium: YES");
             } else {
-                plugin.getLogger().info("[Premium Cache] " + playerName + " - Premium: NO");
+                plugin.getLogger().info("[Premium Cache] " + playerName + " - Cracked (cached)");
             }
             return;
         }
 
-        // 2. Verificar en base de datos (usuarios ya registrados)
+        // 2. Verificar SOLO en base de datos (usuarios ya registrados)
         Optional<User> userOpt = plugin.getDatabaseManager().getUserDAO()
                 .getUserByUsername(playerName);
         
@@ -101,26 +106,24 @@ public class EncryptionHandler {
                 premiumPlayers.add(lowerName);
                 plugin.getLogger().info("[Premium DB] " + playerName + " - Premium: YES (UUID: " + user.getPremiumUuid() + ")");
             } else {
-                plugin.getLogger().info("[Premium DB] " + playerName + " - Premium: NO (Registered as Cracked)");
+                plugin.getLogger().info("[Premium DB] " + playerName + " - Cracked (registered)");
             }
             return;
         }
 
-        // 3. Usuario nuevo - Verificar con API de Mojang
-        plugin.getLogger().info("[Premium Check] " + playerName + " - Checking Mojang API...");
+        // 3. Usuario NUEVO - NO verificar Mojang API
+        // 
+        // RAZÓN: En online-mode=false, cualquiera puede usar cualquier nombre.
+        // Si verificamos Mojang API, un cracked usando nombre "Notch" sería
+        // detectado como premium, causando problemas.
+        //
+        // SOLUCIÓN: Usuarios nuevos SIEMPRE deben registrarse primero.
+        // Una vez registrados, su tipo (PREMIUM/CRACKED) queda guardado en DB.
         
-        Optional<UUID> premiumUUID = mojangAPI.getPremiumUUID(playerName);
+        plugin.getLogger().info("[Premium Check] " + playerName + " - New user (not in DB), will require /register or /login");
         
-        if (premiumUUID.isPresent()) {
-            // ES PREMIUM
-            premiumPlayers.add(lowerName);
-            premiumCache.put(lowerName, new PremiumCheckResult(true, premiumUUID.get()));
-            plugin.getLogger().info("[Premium Mojang] " + playerName + " - Premium: YES (UUID: " + premiumUUID.get() + ")");
-        } else {
-            // NO ES PREMIUM
-            premiumCache.put(lowerName, new PremiumCheckResult(false, null));
-            plugin.getLogger().info("[Premium Mojang] " + playerName + " - Premium: NO");
-        }
+        // Cachear como "no verificado" para evitar spam de logs
+        premiumCache.put(lowerName, new PremiumCheckResult(false, null));
     }
 
     /**
@@ -143,6 +146,9 @@ public class EncryptionHandler {
     /**
      * Verifica asíncronamente si un jugador tiene cuenta Premium en Mojang.
      * Útil para comandos de admin o verificación manual.
+     * 
+     * ADVERTENCIA: Esto solo verifica si el NOMBRE existe en Mojang,
+     * NO si el jugador conectado es el dueño real de esa cuenta.
      */
     public CompletableFuture<Boolean> checkMojangStatus(String playerName) {
         return CompletableFuture.supplyAsync(() -> {
@@ -155,18 +161,36 @@ public class EncryptionHandler {
 
                 // Consultar Mojang API
                 Optional<UUID> premiumUUID = mojangAPI.getPremiumUUID(playerName);
-                boolean isPremium = premiumUUID.isPresent();
+                boolean exists = premiumUUID.isPresent();
                 
-                // Cachear resultado
-                premiumCache.put(playerName.toLowerCase(), 
-                    new PremiumCheckResult(isPremium, premiumUUID.orElse(null)));
+                plugin.getLogger().info("[Mojang API Check] " + playerName + " - Exists: " + exists);
                 
-                return isPremium;
+                return exists;
             } catch (Exception e) {
                 plugin.getLogger().warning("Error checking Mojang API for " + playerName + ": " + e.getMessage());
                 return false;
             }
         });
+    }
+
+    /**
+     * Marca manualmente a un jugador como premium (para comandos de admin)
+     */
+    public void forcePremiumStatus(String playerName, UUID premiumUuid) {
+        String lowerName = playerName.toLowerCase();
+        premiumPlayers.add(lowerName);
+        premiumCache.put(lowerName, new PremiumCheckResult(true, premiumUuid));
+        plugin.getLogger().info("[Force Premium] " + playerName + " - Marked as premium by admin");
+    }
+
+    /**
+     * Remueve estado premium manualmente (para comandos de admin)
+     */
+    public void removePremiumStatus(String playerName) {
+        String lowerName = playerName.toLowerCase();
+        premiumPlayers.remove(lowerName);
+        premiumCache.invalidate(lowerName);
+        plugin.getLogger().info("[Remove Premium] " + playerName + " - Premium status removed by admin");
     }
 
     /**
