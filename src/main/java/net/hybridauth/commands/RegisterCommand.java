@@ -92,15 +92,14 @@ public class RegisterCommand implements CommandExecutor {
         if (!validation.valid) {
             messages.send(player, "password.too_weak");
 
-            // Mostrar errores específicos si existen
-            if (validation.errorMessage != null && !validation.errorMessage.isEmpty()) {
-                // Aquí podríamos mapear los errores a mensajes configurables si quisiéramos ser
-                // muy estrictos,
-                // pero por ahora usamos el mensaje raw del validador o un mensaje genérico
-                player.sendMessage("§c" + validation.errorMessage);
-            }
+            // Mostrar errores específicos si existen -> DESHABILITADO para evitar
+            // duplicados con messages.yml
+            // if (validation.errorMessage != null && !validation.errorMessage.isEmpty()) {
+            // player.sendMessage("§c" + validation.errorMessage);
+            // }
 
             // Mostrar requisitos
+            messages.send(player, "password.requirements.length");
             messages.send(player, "password.requirements.uppercase");
             messages.send(player, "password.requirements.lowercase");
             messages.send(player, "password.requirements.number");
@@ -117,60 +116,77 @@ public class RegisterCommand implements CommandExecutor {
         String hash = plugin.getPasswordService().hashPassword(password);
 
         // 8. Crear objeto Usuario
-        User newUser = new User(uuid, player.getName(), User.AuthType.CRACKED);
-        newUser.setPasswordHash(hash);
-        newUser.setLastIp(player.getAddress().getAddress().getHostAddress());
-        newUser.setStatus("ACTIVE");
+        // Verificar asíncronamente si es Premium para marcarlo correctamente
+        plugin.getEncryptionHandler().checkMojangStatus(player.getName()).thenAccept(isPremium -> {
 
-        // 9. Feedback visual de procesamiento
-        messages.sendActionBar(player, "success.processing");
+            User.AuthType authType = isPremium ? User.AuthType.PREMIUM : User.AuthType.CRACKED;
+            User newUser = new User(uuid, player.getName(), authType);
 
-        // 10. Guardar en BD asíncronamente
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                plugin.getDatabaseManager().getUserDAO().createUser(newUser);
+            // Si es premium, intentamos obtener su UUID real (aunque en offline mode usamos
+            // el offline UUID para ID)
+            // Guardamos el UUID premium en el campo premium_uuid si quisiéramos, pero por
+            // ahora AuthType es lo importante.
 
-                // Log Security Event
-                plugin.getSecurityLogger().log(
-                        net.hybridauth.security.SecurityLogger.EventType.REGISTER,
-                        newUser.getUsername(),
-                        newUser.getUuid(),
-                        newUser.getLastIp(),
-                        "Registered via Command");
+            newUser.setPasswordHash(hash);
+            newUser.setLastIp(player.getAddress().getAddress().getHostAddress());
+            newUser.setStatus("ACTIVE");
 
-                // Resetear Rate Limit por si acaso
-                plugin.getRateLimitService().resetLimit(newUser.getLastIp());
+            // 9. Feedback visual de procesamiento
+            messages.sendActionBar(player, "success.processing");
 
-                // Crear sesión persistente inmediata
-                plugin.getSessionManager().createSession(newUser.getUuid(), newUser.getLastIp());
+            // 10. Guardar en BD asíncronamente
+            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+                try {
+                    plugin.getDatabaseManager().getUserDAO().createUser(newUser);
 
-                // Volver al thread principal para acciones de Bukkit API
-                plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    // Autenticar
-                    plugin.getAuthStateManager().setAuthState(player, AuthState.AUTHENTICATED);
+                    // Log Security Event
+                    plugin.getSecurityLogger().log(
+                            net.hybridauth.security.SecurityLogger.EventType.REGISTER,
+                            newUser.getUsername(),
+                            newUser.getUuid(),
+                            newUser.getLastIp(),
+                            "Registered via Command (AuthType: " + authType + ")");
 
-                    // Remover restricciones
-                    player.removePotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS);
-                    player.removePotionEffect(org.bukkit.potion.PotionEffectType.SLOW);
+                    // Resetear Rate Limit por si acaso
+                    plugin.getRateLimitService().resetLimit(newUser.getLastIp());
 
-                    // Enviar mensajes de éxito
-                    messages.send(player, "success.registered",
-                            MessageManager.placeholder()
-                                    .add("player", player.getName())
-                                    .build());
+                    // Crear sesión persistente inmediata
+                    plugin.getSessionManager().createSession(newUser.getUuid(), newUser.getLastIp());
 
-                    messages.send(player, "success.enjoy");
+                    // Volver al thread principal para acciones de Bukkit API
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        // Autenticar
+                        plugin.getAuthStateManager().setAuthState(player, AuthState.AUTHENTICATED);
 
-                    // Títulos y Sonidos
-                    messages.sendTitle(player, "titles.register_success.title", "titles.register_success.subtitle");
-                    player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.2f);
-                });
+                        // Remover restricciones
+                        player.removePotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS);
+                        player.removePotionEffect(org.bukkit.potion.PotionEffectType.SLOW);
 
-            } catch (SQLException e) {
-                e.printStackTrace();
-                plugin.getServer().getScheduler().runTask(plugin,
-                        () -> messages.send(player, "error.database_error"));
-            }
+                        // Enviar mensajes de éxito
+                        messages.send(player, "success.registered",
+                                MessageManager.placeholder()
+                                        .add("player", player.getName())
+                                        .build());
+
+                        messages.send(player, "success.enjoy");
+
+                        // Mensaje extra si se detectó premium
+                        if (isPremium) {
+                            player.sendMessage("§a§l[!] §aTu cuenta ha sido marcada como §6Premium§a.");
+                        }
+
+                        // Títulos y Sonidos
+                        messages.sendTitle(player, "titles.register_success.title", "titles.register_success.subtitle");
+                        player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f,
+                                1.2f);
+                    });
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    plugin.getServer().getScheduler().runTask(plugin,
+                            () -> messages.send(player, "error.database_error"));
+                }
+            });
         });
 
         return true;

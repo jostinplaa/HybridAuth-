@@ -70,10 +70,18 @@ public class ChangePasswordCommand implements CommandExecutor {
                     var validation = plugin.getPasswordService().validatePassword(newPass, player.getName());
                     if (!validation.valid) {
                         messages.send(player, "password.too_weak");
-                        if (validation.errorMessage != null && !validation.errorMessage.isEmpty()) {
-                            // Opcional: mostrar error específico del validador
-                            player.sendMessage("§c" + validation.errorMessage);
-                        }
+                        // Opcional: mostrar error específico del validador -> DESHABILITADO (usa
+                        // messages.yml)
+                        // if (validation.errorMessage != null && !validation.errorMessage.isEmpty()) {
+                        // player.sendMessage("§c" + validation.errorMessage);
+                        // }
+
+                        // Mostrar requisitos
+                        messages.send(player, "password.requirements.length");
+                        messages.send(player, "password.requirements.uppercase");
+                        messages.send(player, "password.requirements.lowercase");
+                        messages.send(player, "password.requirements.number");
+
                         return;
                     }
 

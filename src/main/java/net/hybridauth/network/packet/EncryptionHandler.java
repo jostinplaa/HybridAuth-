@@ -114,4 +114,26 @@ public class EncryptionHandler {
     public boolean isPremium(String playerName) {
         return premiumPlayers.contains(playerName.toLowerCase());
     }
+
+    /**
+     * Verifica asíncronamente si un jugador tiene cuenta Premium en Mojang.
+     * Útil para marcar usuarios como PREMIUM durante el registro.
+     */
+    public CompletableFuture<Boolean> checkMojangStatus(String playerName) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                // Verificar cache primero para no spammear API
+                Boolean cached = premiumCache.getIfPresent(playerName.toLowerCase());
+                if (cached != null)
+                    return cached;
+
+                boolean isPremium = mojangAPI.getPremiumUUID(playerName).isPresent();
+                premiumCache.put(playerName.toLowerCase(), isPremium);
+                return isPremium;
+            } catch (Exception e) {
+                plugin.getLogger().warning("Error checking Mojang API for " + playerName + ": " + e.getMessage());
+                return false;
+            }
+        });
+    }
 }

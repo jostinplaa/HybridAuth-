@@ -100,6 +100,7 @@ password:
   
   # Requisitos de contraseña (se muestran cuando too_weak es true)
   requirements:
+    length: "  &7• Al menos &e8 caracteres"
     uppercase: "  &7• Al menos &euna letra mayúscula &7(A-Z)"
     lowercase: "  &7• Al menos &euna letra minúscula &7(a-z)"
     number: "  &7• Al menos &eun número &7(0-9)"
