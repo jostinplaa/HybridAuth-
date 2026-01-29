@@ -25,6 +25,7 @@ public class LogoutCommand implements CommandExecutor {
         Player player = (Player) sender;
 
         // De-authenticate
+        plugin.getSessionManager().invalidateSession(player.getUniqueId());
         plugin.getAuthStateManager().setAuthState(player, AuthState.UNAUTHENTICATED);
         player.sendMessage("§aHas cerrado sesión correctamente.");
         player.sendMessage("§7Usa /login para entrar de nuevo.");

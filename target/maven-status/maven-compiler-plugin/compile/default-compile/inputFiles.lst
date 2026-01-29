@@ -1,4 +1,5 @@
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\network\packet\EncryptionHandler.java
+C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\security\SecurityLogger.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\HybridAuthPlugin.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\security\ratelimit\RateLimitService.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\core\auth\AuthStateManager.java
@@ -9,9 +10,11 @@ C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\s
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\commands\ChangePasswordCommand.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\commands\LogoutCommand.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\core\auth\PasswordService.java
+C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\core\session\SessionManager.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\commands\AdminCommand.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\listeners\LoginListener.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\data\model\Session.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\data\model\User.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\commands\LoginCommand.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\network\MojangAPI.java
+C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\listeners\SecurityListener.java

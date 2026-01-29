@@ -1,21 +1,32 @@
 package net.hybridauth.data.dao;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import net.hybridauth.data.DatabaseManager;
 import net.hybridauth.data.model.User;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Optional;
-import java.util.UUID;
+import java.sql.*;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class UserDAO {
 
     private final DatabaseManager dbManager;
+    private final Cache<UUID, User> userCache;
+    private final Cache<String, User> usernameCache;
 
     public UserDAO(DatabaseManager dbManager) {
         this.dbManager = dbManager;
+        // Cache de 1 hora, máximo 1000 usuarios
+        this.userCache = Caffeine.newBuilder()
+                .expireAfterWrite(60, TimeUnit.MINUTES)
+                .maximumSize(1000)
+                .build();
+
+        this.usernameCache = Caffeine.newBuilder()
+                .expireAfterWrite(60, TimeUnit.MINUTES)
+                .maximumSize(1000)
+                .build();
     }
 
     public void createUser(User user) throws SQLException {
@@ -33,17 +44,31 @@ public class UserDAO {
             stmt.setInt(9, user.getTotalLogins());
             stmt.setString(10, user.getStatus());
             stmt.executeUpdate();
+
+            // Cachear
+            userCache.put(user.getUuid(), user);
+            usernameCache.put(user.getUsername().toLowerCase(), user);
         }
     }
 
     public Optional<User> getUserByUUID(UUID uuid) {
+        // Intentar obtener del cache primero
+        User cached = userCache.getIfPresent(uuid);
+        if (cached != null) {
+            return Optional.of(cached);
+        }
+
         String sql = "SELECT * FROM hybrid_users WHERE uuid = ?";
         try (Connection conn = dbManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid.toString());
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(mapResultSetToUser(rs));
+                    User user = mapResultSetToUser(rs);
+                    // Cachear
+                    userCache.put(uuid, user);
+                    usernameCache.put(user.getUsername().toLowerCase(), user);
+                    return Optional.of(user);
                 }
             }
         } catch (SQLException e) {
@@ -53,13 +78,23 @@ public class UserDAO {
     }
 
     public Optional<User> getUserByUsername(String username) {
+        // Intentar obtener del cache primero
+        User cached = usernameCache.getIfPresent(username.toLowerCase());
+        if (cached != null) {
+            return Optional.of(cached);
+        }
+
         String sql = "SELECT * FROM hybrid_users WHERE username = ?";
         try (Connection conn = dbManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, username);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(mapResultSetToUser(rs));
+                    User user = mapResultSetToUser(rs);
+                    // Cachear
+                    userCache.put(user.getUuid(), user);
+                    usernameCache.put(username.toLowerCase(), user);
+                    return Optional.of(user);
                 }
             }
         } catch (SQLException e) {
@@ -81,16 +116,60 @@ public class UserDAO {
             stmt.setString(7, user.getStatus());
             stmt.setString(8, user.getUuid().toString());
             stmt.executeUpdate();
+
+            // Actualizar cache o invalidar
+            userCache.put(user.getUuid(), user);
+            usernameCache.put(user.getUsername().toLowerCase(), user);
         }
     }
 
     public void deleteUser(UUID uuid) throws SQLException {
+        // Obtener usuario antes de borrar para limpiar cache de username
+        Optional<User> userOpt = getUserByUUID(uuid);
+
         String sql = "DELETE FROM hybrid_users WHERE uuid = ?";
         try (Connection conn = dbManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid.toString());
             stmt.executeUpdate();
+
+            // Invalidar cache
+            userCache.invalidate(uuid);
+            if (userOpt.isPresent()) {
+                usernameCache.invalidate(userOpt.get().getUsername().toLowerCase());
+            }
         }
+    }
+
+    public Map<String, Long> getStatistics() throws SQLException {
+        Map<String, Long> stats = new HashMap<>();
+
+        try (Connection conn = dbManager.getConnection();
+                Statement stmt = conn.createStatement()) {
+
+            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as total FROM hybrid_users");
+            if (rs.next())
+                stats.put("total_users", rs.getLong("total"));
+
+            rs = stmt.executeQuery("SELECT COUNT(*) as premium FROM hybrid_users WHERE auth_type = 'PREMIUM'");
+            if (rs.next())
+                stats.put("premium_users", rs.getLong("premium"));
+
+            rs = stmt.executeQuery("SELECT COUNT(*) as cracked FROM hybrid_users WHERE auth_type = 'CRACKED'");
+            if (rs.next())
+                stats.put("cracked_users", rs.getLong("cracked"));
+
+            try {
+                rs = stmt.executeQuery("SELECT COUNT(*) as active FROM hybrid_sessions WHERE active = TRUE");
+                if (rs.next())
+                    stats.put("active_sessions", rs.getLong("active"));
+            } catch (SQLException e) {
+                // Table might not exist yet if not migrated properly, ignore for now
+                stats.put("active_sessions", 0L);
+            }
+        }
+
+        return stats;
     }
 
     private User mapResultSetToUser(ResultSet rs) throws SQLException {

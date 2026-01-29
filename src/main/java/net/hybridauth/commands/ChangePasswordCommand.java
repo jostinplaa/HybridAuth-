@@ -49,6 +49,15 @@ public class ChangePasswordCommand implements CommandExecutor {
 
                 // Verify old password
                 if (plugin.getPasswordService().verifyPassword(oldPass, user.getPasswordHash())) {
+
+                    // Validate new password
+                    var validation = plugin.getPasswordService().validatePassword(newPass, player.getName());
+                    if (!validation.valid) {
+                        player.sendMessage("§cContraseña insegura:");
+                        player.sendMessage("§c" + validation.errorMessage);
+                        return;
+                    }
+
                     // Update password
                     String newHash = plugin.getPasswordService().hashPassword(newPass);
                     user.setPasswordHash(newHash);

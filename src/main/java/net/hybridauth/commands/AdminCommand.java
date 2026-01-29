@@ -106,17 +106,19 @@ public class AdminCommand implements CommandExecutor {
     }
 
     private void handleStats(CommandSender sender) {
-        // Simple stats implementation (placeholder for full DB stats from spec)
         sender.sendMessage("§8§m---------------------§r §bHybridAuth Stats §8§m---------------------");
         sender.sendMessage("§eVersión: §7" + plugin.getDescription().getVersion());
         try {
-            sender.sendMessage("§eBase de Datos: §7"
-                    + (plugin.getDatabaseManager().getConnection() != null ? "Conectada" : "Desconectada"));
+            java.util.Map<String, Long> stats = plugin.getDatabaseManager().getUserDAO().getStatistics();
+
+            sender.sendMessage("§eTotal Usuarios: §f" + stats.getOrDefault("total_users", 0L));
+            sender.sendMessage("§ePremium: §a" + stats.getOrDefault("premium_users", 0L));
+            sender.sendMessage("§eCracked: §7" + stats.getOrDefault("cracked_users", 0L));
+            sender.sendMessage("§eSesiones Activas: §b" + stats.getOrDefault("active_sessions", 0L));
+
         } catch (SQLException e) {
-            sender.sendMessage("§eBase de Datos: §cError");
+            sender.sendMessage("§cError obteniendo estadísticas: " + e.getMessage());
         }
-        // In a real scenario we would count users in DB
-        sender.sendMessage("§eAutenticación: §7Híbrida (Mojang API + BCrypt)");
         sender.sendMessage("§8§m--------------------------------------------------------");
     }
 

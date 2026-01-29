@@ -1,16 +1,7 @@
-# HybridAuth Configuration v5.0 - Aligned with Specification
+# HybridAuth Configuration - Premium Edition
 
-# ========================================
-# DATABASE CONFIGURATION
-# ========================================
 database:
-  # Tipo: MYSQL, MARIADB, SQLITE
   type: SQLITE
-  
-  sqlite:
-    file: database.db
-
-  # MySQL/MariaDB settings
   mysql:
     host: localhost
     port: 3306
@@ -19,32 +10,95 @@ database:
     password: ''
     pool:
       maximum-pool-size: 10
+      minimum-idle: 2
 
-# ========================================
-# SECURITY
-# ========================================
 security:
   password:
-    # Algoritmo: BCRYPT
-    hash-algorithm: BCRYPT
+    min-length: 8
+    max-length: 32
+    require-uppercase: true
+    require-lowercase: true
+    require-numbers: true
+    require-special-chars: false
     bcrypt-cost: 12
-  
+    block-common-passwords: true
+    
   rate-limit:
     enabled: true
     max-attempts-per-ip: 5
-    lockout-duration: 300  # 5 minutos
-
-  fingerprint:
+    max-attempts-per-username: 3
+    base-delay: 5  # segundos
+    progressive-backoff: true
+    whitelisted-ips:
+      - 127.0.0.1
+      - 192.168.1.1
+    
+  sessions:
     enabled: true
+    duration: 86400  # 24 horas
+    validate-fingerprint: true
+    auto-logout-on-disconnect: false
+    max-sessions-per-user: 3
+    
+  two-factor:
+    enabled: false
+    issuer: "HybridAuth"
+    mandatory-for-admins: false
+    backup-codes: 10
+    
+  anti-bot:
+    enabled: true
+    max-connections-per-minute: 10
+    block-suspicious-usernames: true
+    check-vpn: false  # Requiere API key
 
-# ========================================
-# MESSAGES
-# ========================================
+authentication:
+  timeout-seconds: 60
+  premium-auto-login: true
+  bedrock-support: true
+  spawn-teleport: false
+  spawn-location:
+    world: world
+    x: 0
+    y: 100
+    z: 0
+  
+restrictions:
+  blindness-effect: true
+  slow-effect: true
+  block-movement: true
+  block-commands: true
+  block-chat: true
+  block-interact: true
+  
+integrations:
+  discord:
+    enabled: false
+    webhook-url: ""
+    notify-on:
+      - new-registration
+      - suspicious-activity
+      - admin-actions
+      
+  email:
+    enabled: false
+    smtp-host: smtp.gmail.com
+    smtp-port: 587
+    username: ""
+    password: ""
+    from: "noreply@tuservidor.com"
+    
+logging:
+  file-logging: true
+  log-directory: logs/
+  rotate-daily: true
+  keep-days: 30
+  events:
+    login-success: true
+    login-fail: true
+    register: true
+    premium-detect: true
+    suspicious: true
+
 messages:
   prefix: "&8[&bHybridAuth&8]&r"
-
-# ========================================
-# ADVANCED
-# ========================================
-advanced:
-  debug: false

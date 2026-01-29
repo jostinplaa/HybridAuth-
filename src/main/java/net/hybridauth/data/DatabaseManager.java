@@ -20,7 +20,7 @@ public class DatabaseManager {
         this.plugin = plugin;
     }
 
-    public void initialize() {
+    public boolean initialize() {
         FileConfiguration config = plugin.getConfig();
         HikariConfig hikariConfig = new HikariConfig();
 
@@ -45,53 +45,150 @@ public class DatabaseManager {
         hikariConfig.setMaximumPoolSize(10);
         hikariConfig.setConnectionTimeout(30000);
 
-        this.dataSource = new HikariDataSource(hikariConfig);
-
         try {
+            this.dataSource = new HikariDataSource(hikariConfig);
             createTables();
             this.userDAO = new UserDAO(this); // Initialize DAO
             plugin.getLogger().info("Database connected successfully!");
-        } catch (SQLException e) {
+            return true;
+        } catch (Exception e) { // Catch Hikari/SQL exceptions
             plugin.getLogger().severe("Failed to initialize database: " + e.getMessage());
             e.printStackTrace();
+            return false;
         }
     }
 
     private void createTables() throws SQLException {
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            // Users table
-            // Users table
-            stmt.execute("CREATE TABLE IF NOT EXISTS hybrid_users (" +
-                    "uuid CHAR(36) PRIMARY KEY, " +
-                    "username VARCHAR(16) NOT NULL, " +
-                    "password_hash VARCHAR(128), " +
-                    "auth_type VARCHAR(20) NOT NULL, " +
-                    "premium_uuid CHAR(36), " +
-                    "email VARCHAR(255), " +
-                    "registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                    "last_login_date TIMESTAMP NULL, " +
-                    "last_ip VARCHAR(45), " +
-                    "total_logins INT DEFAULT 0, " +
-                    "status VARCHAR(20) " +
-                    ");");
+            boolean isMySQL = dataSource.getJdbcUrl().contains("mysql");
 
-            // Index for username lookups
-            try {
-                stmt.execute("CREATE INDEX IF NOT EXISTS idx_username ON hybrid_users (username)");
-            } catch (SQLException ignored) {
+            if (isMySQL) {
+                createTablesMySQL(stmt);
+            } else {
+                createTablesSQLite(stmt);
             }
 
-            // Sessions table
-            stmt.execute("CREATE TABLE IF NOT EXISTS hybrid_sessions (" +
-                    "id INTEGER PRIMARY KEY "
-                    + (dataSource.getJdbcUrl().contains("mysql") ? "AUTO_INCREMENT" : "AUTOINCREMENT") + ", " +
-                    "user_uuid VARCHAR(36) NOT NULL, " +
-                    "player_ip VARCHAR(45), " +
-                    "login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                    "last_activity TIMESTAMP, " +
-                    "active BOOLEAN DEFAULT TRUE" +
-                    ");");
+            plugin.getLogger().info("Database tables verified for: " + (isMySQL ? "MySQL" : "SQLite"));
         }
+    }
+
+    private void createTablesMySQL(Statement stmt) throws SQLException {
+        // Users table - MySQL
+        stmt.execute("""
+                    CREATE TABLE IF NOT EXISTS hybrid_users (
+                        uuid CHAR(36) PRIMARY KEY,
+                        username VARCHAR(16) NOT NULL UNIQUE,
+                        password_hash VARCHAR(128),
+                        auth_type ENUM('PREMIUM', 'CRACKED', 'BEDROCK') NOT NULL,
+                        premium_uuid CHAR(36),
+                        email VARCHAR(255),
+                        registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        last_login_date TIMESTAMP NULL,
+                        last_ip VARCHAR(45),
+                        total_logins INT DEFAULT 0,
+                        status VARCHAR(20) DEFAULT 'ACTIVE',
+                        INDEX idx_username (username),
+                        INDEX idx_auth_type (auth_type),
+                        INDEX idx_status (status)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """);
+
+        // Sessions table - MySQL
+        stmt.execute("""
+                    CREATE TABLE IF NOT EXISTS hybrid_sessions (
+                        id INT PRIMARY KEY AUTO_INCREMENT,
+                        user_uuid CHAR(36) NOT NULL,
+                        session_token VARCHAR(64) UNIQUE NOT NULL,
+                        fingerprint VARCHAR(128),
+                        player_ip VARCHAR(45),
+                        login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                        expires_at TIMESTAMP,
+                        active BOOLEAN DEFAULT TRUE,
+                        INDEX idx_user_uuid (user_uuid),
+                        INDEX idx_session_token (session_token),
+                        INDEX idx_active (active),
+                        FOREIGN KEY (user_uuid) REFERENCES hybrid_users(uuid) ON DELETE CASCADE
+                    ) ENGINE=InnoDB
+                """);
+
+        // Security logs table - MySQL
+        stmt.execute(
+                """
+                            CREATE TABLE IF NOT EXISTS hybrid_security_logs (
+                                id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                event_type ENUM('LOGIN_SUCCESS', 'LOGIN_FAIL', 'REGISTER', 'PREMIUM_DETECT', 'RATE_LIMIT', 'SUSPICIOUS') NOT NULL,
+                                username VARCHAR(16),
+                                uuid CHAR(36),
+                                ip_address VARCHAR(45),
+                                details TEXT,
+                                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                INDEX idx_event_type (event_type),
+                                INDEX idx_timestamp (timestamp),
+                                INDEX idx_username (username),
+                                INDEX idx_ip (ip_address)
+                            ) ENGINE=InnoDB
+                        """);
+    }
+
+    private void createTablesSQLite(Statement stmt) throws SQLException {
+        // Users table - SQLite
+        stmt.execute("""
+                    CREATE TABLE IF NOT EXISTS hybrid_users (
+                        uuid TEXT PRIMARY KEY,
+                        username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+                        password_hash TEXT,
+                        auth_type TEXT NOT NULL CHECK(auth_type IN ('PREMIUM', 'CRACKED', 'BEDROCK')),
+                        premium_uuid TEXT,
+                        email TEXT,
+                        registered_at TEXT DEFAULT (datetime('now')),
+                        last_login_date TEXT,
+                        last_ip TEXT,
+                        total_logins INTEGER DEFAULT 0,
+                        status TEXT DEFAULT 'ACTIVE'
+                    )
+                """);
+
+        stmt.execute("CREATE INDEX IF NOT EXISTS idx_username ON hybrid_users(username COLLATE NOCASE)");
+        stmt.execute("CREATE INDEX IF NOT EXISTS idx_auth_type ON hybrid_users(auth_type)");
+        stmt.execute("CREATE INDEX IF NOT EXISTS idx_status ON hybrid_users(status)");
+
+        // Sessions table - SQLite
+        stmt.execute("""
+                    CREATE TABLE IF NOT EXISTS hybrid_sessions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_uuid TEXT NOT NULL,
+                        session_token TEXT UNIQUE NOT NULL,
+                        fingerprint TEXT,
+                        player_ip TEXT,
+                        login_time TEXT DEFAULT (datetime('now')),
+                        last_activity TEXT DEFAULT (datetime('now')),
+                        expires_at TEXT,
+                        active INTEGER DEFAULT 1,
+                        FOREIGN KEY (user_uuid) REFERENCES hybrid_users(uuid) ON DELETE CASCADE
+                    )
+                """);
+
+        stmt.execute("CREATE INDEX IF NOT EXISTS idx_user_uuid ON hybrid_sessions(user_uuid)");
+        stmt.execute("CREATE INDEX IF NOT EXISTS idx_session_token ON hybrid_sessions(session_token)");
+        stmt.execute("CREATE INDEX IF NOT EXISTS idx_active ON hybrid_sessions(active)");
+
+        // Security logs table - SQLite
+        stmt.execute(
+                """
+                            CREATE TABLE IF NOT EXISTS hybrid_security_logs (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                event_type TEXT NOT NULL CHECK(event_type IN ('LOGIN_SUCCESS', 'LOGIN_FAIL', 'REGISTER', 'PREMIUM_DETECT', 'RATE_LIMIT', 'SUSPICIOUS')),
+                                username TEXT,
+                                uuid TEXT,
+                                ip_address TEXT,
+                                details TEXT,
+                                timestamp TEXT DEFAULT (datetime('now'))
+                            )
+                        """);
+
+        stmt.execute("CREATE INDEX IF NOT EXISTS idx_event_type ON hybrid_security_logs(event_type)");
+        stmt.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON hybrid_security_logs(timestamp)");
     }
 
     public Connection getConnection() throws SQLException {

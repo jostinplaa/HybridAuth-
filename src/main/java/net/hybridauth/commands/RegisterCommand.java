@@ -59,7 +59,15 @@ public class RegisterCommand implements CommandExecutor {
         }
 
         // 5. Create User
-        // TODO: Validate password strength (Phase 5 refinement)
+        // Validate password strength
+        var validation = plugin.getPasswordService().validatePassword(password, player.getName());
+        if (!validation.valid) {
+            player.sendMessage("§cContraseña insegura:");
+            player.sendMessage("§c" + validation.errorMessage);
+            return true;
+        }
+
+        player.sendMessage("§7Fortaleza de contraseña: " + validation.getStrengthLabel());
 
         String hash = plugin.getPasswordService().hashPassword(password);
 
@@ -73,9 +81,21 @@ public class RegisterCommand implements CommandExecutor {
             try {
                 plugin.getDatabaseManager().getUserDAO().createUser(newUser);
 
-                // 7. Update state on main thread
+                // Log Security Event
+                plugin.getSecurityLogger().log(
+                        net.hybridauth.security.SecurityLogger.EventType.REGISTER,
+                        newUser.getUsername(),
+                        newUser.getUuid(),
+                        newUser.getLastIp(),
+                        "Registered via Command");
+
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     plugin.getAuthStateManager().setAuthState(player, AuthState.AUTHENTICATED);
+
+                    // Remove restrictions
+                    player.removePotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS);
+                    player.removePotionEffect(org.bukkit.potion.PotionEffectType.SLOW);
+
                     player.sendMessage("§a¡Registrado correctamente! Has iniciado sesión.");
                     player.sendMessage("§7Disfruta tu estancia en el servidor.");
                 });

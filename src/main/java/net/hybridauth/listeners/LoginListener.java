@@ -15,6 +15,11 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.Bukkit;
 
 public class LoginListener implements Listener {
 
@@ -79,6 +84,7 @@ public class LoginListener implements Listener {
                 // Sync back to main thread to authorize
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     authStateManager.setAuthState(player, AuthState.AUTHENTICATED);
+                    removeAuthRestrictions(player);
                     player.sendMessage("§a§lHybridAuth §8» §aAutenticado automáticamente (Cuenta Premium).");
                 });
 
@@ -91,8 +97,20 @@ public class LoginListener implements Listener {
 
     private void handleCrackedJoin(Player player) {
         authStateManager.setAuthState(player, AuthState.UNAUTHENTICATED);
-        // Check if registered to change message
+        // Check if registered or has session
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+
+            // Check for persistent session first
+            String ip = player.getAddress().getAddress().getHostAddress();
+            if (plugin.getSessionManager().validateSession(player.getUniqueId(), ip)) {
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    authStateManager.setAuthState(player, AuthState.AUTHENTICATED);
+                    removeAuthRestrictions(player);
+                    player.sendMessage("§a§lHybridAuth §8» §aSesión restaurada correctamente.");
+                });
+                return;
+            }
+
             boolean isRegistered = plugin.getDatabaseManager().getUserDAO().getUserByUUID(player.getUniqueId())
                     .isPresent();
             plugin.getServer().getScheduler().runTask(plugin, () -> {
@@ -102,8 +120,33 @@ public class LoginListener implements Listener {
                     player.sendMessage(
                             "§c§lHybridAuth §8» §7Por favor, usa §f/register <pass> <pass> §7para registrarte.");
                 }
+
+                // UX Enhancement: Apply Blindness/Slow
+                applyAuthRestrictions(player);
+
+                // UX Enhancement: Authentication Timeout
+                int timeoutSeconds = plugin.getConfig().getInt("authentication.timeout-seconds", 60);
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                    if (player.isOnline() && authStateManager.isPending(player)) {
+                        player.kickPlayer("§c§lHybridAuth\n\n§7Tiempo de autenticación agotado.");
+                    }
+                }, timeoutSeconds * 20L);
             });
         });
+    }
+
+    private void applyAuthRestrictions(Player player) {
+        if (plugin.getConfig().getBoolean("restrictions.blindness-effect", true)) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, Integer.MAX_VALUE, 1, false, false));
+        }
+        if (plugin.getConfig().getBoolean("restrictions.slow-effect", true)) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, Integer.MAX_VALUE, 5, false, false));
+        }
+    }
+
+    private void removeAuthRestrictions(Player player) {
+        player.removePotionEffect(PotionEffectType.BLINDNESS);
+        player.removePotionEffect(PotionEffectType.SLOW);
     }
 
     @EventHandler

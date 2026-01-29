@@ -66,6 +66,17 @@ public class LoginCommand implements CommandExecutor {
                 // Success
                 plugin.getRateLimitService().resetLimit(ip);
 
+                // Create Persistent Session
+                plugin.getSessionManager().createSession(user.getUuid(), ip);
+
+                // Log Security Event
+                plugin.getSecurityLogger().log(
+                        net.hybridauth.security.SecurityLogger.EventType.LOGIN_SUCCESS,
+                        user.getUsername(),
+                        user.getUuid(),
+                        ip,
+                        "AuthType: " + user.getAuthType());
+
                 // Update Last login/IP info
                 user.setLastIp(ip);
                 user.setLastLoginDate(new java.sql.Timestamp(System.currentTimeMillis()));
@@ -77,11 +88,24 @@ public class LoginCommand implements CommandExecutor {
 
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     plugin.getAuthStateManager().setAuthState(player, AuthState.AUTHENTICATED);
-                    player.sendMessage("§a¡Inicio de sesión exitoso!");
+                    // Remove restrictions
+                    player.removePotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS);
+                    player.removePotionEffect(org.bukkit.potion.PotionEffectType.SLOW);
+
+                    player.sendMessage("§aHas iniciado sesión correctamente.");
                 });
             } else {
                 // Failure
                 plugin.getRateLimitService().incrementAttempt(ip);
+
+                // Log Security Event
+                plugin.getSecurityLogger().log(
+                        net.hybridauth.security.SecurityLogger.EventType.LOGIN_FAIL,
+                        user.getUsername(),
+                        user.getUuid(),
+                        ip,
+                        "Wrong Password");
+
                 plugin.getServer().getScheduler().runTask(plugin, () -> player.sendMessage("§cContraseña incorrecta."));
             }
         });

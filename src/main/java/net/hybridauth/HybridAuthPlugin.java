@@ -24,6 +24,8 @@ public class HybridAuthPlugin extends JavaPlugin {
     // Security Services
     private RateLimitService rateLimitService;
     private ClientFingerprintService fingerprintService;
+    private net.hybridauth.security.SecurityLogger securityLogger;
+    private net.hybridauth.core.session.SessionManager sessionManager;
 
     @Override
     public void onLoad() {
@@ -47,7 +49,11 @@ public class HybridAuthPlugin extends JavaPlugin {
 
         // 3. Inicializar base de datos
         this.databaseManager = new DatabaseManager(this);
-        this.databaseManager.initialize();
+        if (!this.databaseManager.initialize()) {
+            getLogger().severe("Database initialization failed! Disabling plugin...");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
 
         // 4. Inicializar servicios de Seguridad
         this.rateLimitService = new RateLimitService(this);
@@ -57,9 +63,12 @@ public class HybridAuthPlugin extends JavaPlugin {
         this.authStateManager = new AuthStateManager();
         this.passwordService = new PasswordService(this);
         this.encryptionHandler = new EncryptionHandler(this);
+        this.securityLogger = new net.hybridauth.security.SecurityLogger(this);
+        this.sessionManager = new net.hybridauth.core.session.SessionManager(this);
 
         // 6. Registrar listeners
         getServer().getPluginManager().registerEvents(new LoginListener(this, authStateManager), this);
+        getServer().getPluginManager().registerEvents(new net.hybridauth.listeners.SecurityListener(this), this);
 
         // 7. Registrar comandos
         getCommand("login").setExecutor(new LoginCommand(this));
@@ -131,5 +140,13 @@ public class HybridAuthPlugin extends JavaPlugin {
 
     public EncryptionHandler getEncryptionHandler() {
         return encryptionHandler;
+    }
+
+    public net.hybridauth.security.SecurityLogger getSecurityLogger() {
+        return securityLogger;
+    }
+
+    public net.hybridauth.core.session.SessionManager getSessionManager() {
+        return sessionManager;
     }
 }
