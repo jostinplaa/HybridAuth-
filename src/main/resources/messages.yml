@@ -1,0 +1,17 @@
+prefix: "&8[&bHybridAuth&8] &r"
+error:
+  only_players: "&cSolo los jugadores pueden ejecutar este comando."
+  not_authenticated: "&cDebes iniciar sesión primero."
+  already_authenticated: "&cYa estás autenticado."
+  already_registered: "&cYa estás registrado."
+  not_registered: "&cNo estás registrado. Usa /register <password> <confirm>"
+  passwords_do_not_match: "&cLas contraseñas no coinciden."
+  wrong_password: "&cContraseña incorrecta."
+  database_error: "&cError en la base de datos. Contacta a un administrador."
+  cooldown: "&cPor favor espera antes de intentar de nuevo."
+  usage:
+    login: "&cUso: /login <contraseña>"
+    register: "&cUso: /register <contraseña> <confirmar>"
+success:
+  registered: "&a¡Registrado correctamente! Bienvenido."
+  logged_in: "&a¡Has iniciado sesión correctamente!"

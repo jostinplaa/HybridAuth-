@@ -1,0 +1,50 @@
+# HybridAuth Configuration v5.0 - Aligned with Specification
+
+# ========================================
+# DATABASE CONFIGURATION
+# ========================================
+database:
+  # Tipo: MYSQL, MARIADB, SQLITE
+  type: SQLITE
+  
+  sqlite:
+    file: database.db
+
+  # MySQL/MariaDB settings
+  mysql:
+    host: localhost
+    port: 3306
+    database: hybridauth
+    username: root
+    password: ''
+    pool:
+      maximum-pool-size: 10
+
+# ========================================
+# SECURITY
+# ========================================
+security:
+  password:
+    # Algoritmo: BCRYPT
+    hash-algorithm: BCRYPT
+    bcrypt-cost: 12
+  
+  rate-limit:
+    enabled: true
+    max-attempts-per-ip: 5
+    lockout-duration: 300  # 5 minutos
+
+  fingerprint:
+    enabled: true
+
+# ========================================
+# MESSAGES
+# ========================================
+messages:
+  prefix: "&8[&bHybridAuth&8]&r"
+
+# ========================================
+# ADVANCED
+# ========================================
+advanced:
+  debug: false

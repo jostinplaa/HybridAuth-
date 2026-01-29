@@ -1,0 +1,33 @@
+name: HybridAuth
+version: 1.0.0-SNAPSHOT
+main: net.hybridauth.HybridAuthPlugin
+api-version: 1.20
+description: Sistema de autenticación híbrida (Premium/Cracked)
+authors: [TuNombre]
+depend: [ProtocolLib]
+softdepend: [Floodgate, PlaceholderAPI]
+
+commands:
+  login:
+    description: Iniciar sesión
+    usage: /login <contraseña>
+  register:
+    description: Registrarse
+    usage: /register <contraseña> <confirmar>
+  changepassword:
+    description: Cambiar tu contraseña
+    usage: /changepassword <antigua> <nueva>
+    aliases: [changepass, cp]
+  logout:
+    description: Cerrar sesión actual
+    usage: /logout
+  hybridauth:
+    description: Comandos de administración
+    usage: /hybridauth help
+    aliases: [ha, auth]
+    permission: hybridauth.admin
+
+permissions:
+  hybridauth.admin:
+    description: Permiso de administrador
+    default: op
