@@ -23,6 +23,16 @@ Todas las mejoras notables de este proyecto serán documentadas en este archivo.
 ### ✨ Added (Nuevas Características)
 - **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
 
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+
+## [1.2.0] - 2026-01-29 (Smart Reconnect Protocol)
+- **Feature**: Implementado **Smart Reconnect** para Auto-Login Seguro sin crashes.
+- **Flow**: Join -> Handshake -> **Kick (Verified)** -> Rejoin -> **Auto-Login**.
+- **Security**: Impostores (Cracked con nick Premium) NUNCA pasan la primera fase (Kick/Block).
+- **Hybrid**: Usuarios No-Premium pueden entrar y registrarse normalmente.
+- **Fix**: Solucionado `DecoderException` al evitar la encriptación persistente en servidor offline.
+
 ## [1.1.10] - 2026-01-29 (Stable First-Connection Policy)
 - **Revert**: Se retiró el "Secure Handshake" debido a incompatibilidad con Spigot no-NMS (DecoderException).
 - **Core**: Restaurada la "Política de Primera Conexión" (Solución Estable).

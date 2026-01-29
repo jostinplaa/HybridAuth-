@@ -58,4 +58,29 @@ public class MojangAPI {
         return Optional.empty();
     }
 
+    public Optional<JsonObject> checkSession(String username, String serverHash) {
+        try {
+            String url = "https://sessionserver.mojang.com/session/minecraft/hasJoined?username=" + username
+                    + "&serverId=" + serverHash;
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+
+            if (connection.getResponseCode() == 200) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                return Optional.of(JsonParser.parseString(response.toString()).getAsJsonObject());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
 }
