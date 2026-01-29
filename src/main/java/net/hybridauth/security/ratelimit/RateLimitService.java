@@ -102,4 +102,9 @@ public class RateLimitService {
     public void resetLimit(String ip) {
         reset(ip);
     }
+
+    public int getAttempts(String ip) {
+        Integer attempts = attemptsCache.getIfPresent(ip);
+        return (attempts == null) ? 0 : attempts;
+    }
 }

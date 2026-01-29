@@ -1,0 +1,31 @@
+# Changelog
+
+Todas las mejoras notables de este proyecto serán documentadas en este archivo.
+
+## [1.1.0] - 2026-01-29 (Premium Upgrade)
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+- **Tab Completion**: Autocompletado para todos los comandos (`/login`, `/register`, `/hybridauth`).
+- **Confirmation System**: Los comandos destructivos (`unregister`) ahora requieren confirmación explícita.
+- **Visual & Audio Feedback**: Añadidos títulos, subtítulos, action bars y sonidos para eventos de login/registro.
+- **Validation Utils**: Nuevas utilidades para validación estricta de usernames y passwords.
+- **Audit Compliance**: Se resolvieron todas las vulnerabilidades críticas del reporte de auditoría.
+
+### 🔧 Changed (Cambios)
+- **Refactorización de Comandos**: Todos los comandos (`Login`, `Register`, `Admin`, etc.) ahora usan el sistema de mensajes centralizado.
+- **Admin Tools**: El comando `/hybridauth stats` ahora muestra datos reales de la base de datos (Premium vs Cracked users).
+- **Security Listener**: Mejorado el mensaje de "Rate Limit Kick" para ser informativo y configurable.
+- **Configuración**: Se reestructuró `config.yml` y se creó un `messages.yml` completo con soporte para HEX colors.
+
+### 🐛 Fixed (Arreglos)
+- Corregido `NullPointerException` en inicialización de base de datos.
+- Eliminados mensajes hardcodeados que impedían la traducción.
+- Corregidos problemas de consistencia en feedback al usuario.
+
+---
+
+## [1.0.0] - 2026-01-15 (Initial Release)
+- Lanzamiento inicial con soporte básico para SQLite/MySQL.
+- Detección de usuarios Premium.
+- Sistema de Rate Limiting.
+- Autenticación básica (Login/Register).

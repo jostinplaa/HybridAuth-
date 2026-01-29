@@ -1,5 +1,5 @@
 target/
-*.class
+*.jar
 *.log
 .idea/
 *.iml
@@ -7,4 +7,6 @@ target/
 .classpath
 .project
 .vscode/
-database.db
+bin/
+tmp/
+*.class

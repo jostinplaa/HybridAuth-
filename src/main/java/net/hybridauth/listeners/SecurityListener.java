@@ -1,6 +1,7 @@
 package net.hybridauth.listeners;
 
 import net.hybridauth.HybridAuthPlugin;
+import net.hybridauth.core.messages.MessageManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -9,9 +10,11 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 public class SecurityListener implements Listener {
 
     private final HybridAuthPlugin plugin;
+    private final MessageManager messages;
 
     public SecurityListener(HybridAuthPlugin plugin) {
         this.plugin = plugin;
+        this.messages = plugin.getMessageManager();
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -21,9 +24,7 @@ public class SecurityListener implements Listener {
         if (!plugin.getRateLimitService().isAllowed(ip)) {
             long remaining = plugin.getRateLimitService().getSecondsRemaining(ip);
 
-            // Only log if not just spamming (maybe check if block happened recently?
-            // For now simple log is fine, though might spam DB)
-            // Let's log it anyway as "BLOCKED_CONNECTION"
+            // Log security event
             plugin.getSecurityLogger().log(
                     net.hybridauth.security.SecurityLogger.EventType.RATE_LIMIT,
                     event.getName(),
@@ -31,10 +32,13 @@ public class SecurityListener implements Listener {
                     ip,
                     "Blocked for " + remaining + "s");
 
-            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
-                    "§c§lHybridAuth Security\n\n§7Tu dirección IP está temporalmente bloqueada.\n§7Razón: §fDemasiados intentos fallidos.\n§7Expira en: §e"
-                            + remaining + "s");
-            return;
+            // Get formatted kick message
+            String kickMessage = messages.getMessage("rate_limit.kick_message",
+                    MessageManager.placeholder()
+                            .add("remaining", remaining)
+                            .build());
+
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, kickMessage);
         }
     }
 }

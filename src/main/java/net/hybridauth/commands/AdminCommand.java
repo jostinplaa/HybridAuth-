@@ -1,26 +1,41 @@
 package net.hybridauth.commands;
 
 import net.hybridauth.HybridAuthPlugin;
+import net.hybridauth.core.messages.MessageManager;
 import net.hybridauth.data.model.User;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
+/**
+ * Comando administrativo para gestionar HybridAuth.
+ * 
+ * @version 1.1.0
+ */
 public class AdminCommand implements CommandExecutor {
 
     private final HybridAuthPlugin plugin;
+    private final MessageManager messages;
+
+    // Almacena confirmaciones pendientes: UUID del admin -> Contexto
+    private final Map<UUID, ConfirmationContext> pendingConfirmations = new HashMap<>();
 
     public AdminCommand(HybridAuthPlugin plugin) {
         this.plugin = plugin;
+        this.messages = plugin.getMessageManager();
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("hybridauth.admin")) {
-            sender.sendMessage("§cNo tienes permiso para usar este comando.");
+            messages.send(sender, "error.no_permission");
             return true;
         }
 
@@ -29,29 +44,19 @@ public class AdminCommand implements CommandExecutor {
             return true;
         }
 
-        String subCommand = args[0].toLowerCase();
-
-        switch (subCommand) {
+        switch (args[0].toLowerCase()) {
             case "reload":
                 plugin.reloadConfig();
-                // TODO: Reload messages.yml as well
-                sender.sendMessage("§a[HybridAuth] Configuración recargada.");
+                plugin.getMessageManager().reload();
+                messages.send(sender, "admin.reload.success");
                 break;
 
             case "unregister":
-                if (args.length < 2) {
-                    sender.sendMessage("§cUso: /hybridauth unregister <jugador>");
-                    return true;
-                }
-                handleUnregister(sender, args[1]);
+                handleUnregister(sender, args);
                 break;
 
-            case "resetpassword":
-                if (args.length < 3) {
-                    sender.sendMessage("§cUso: /hybridauth resetpassword <jugador> <nueva_pass>");
-                    return true;
-                }
-                handleResetPassword(sender, args[1], args[2]);
+            case "confirm":
+                handleConfirm(sender);
                 break;
 
             case "stats":
@@ -66,66 +71,149 @@ public class AdminCommand implements CommandExecutor {
         return true;
     }
 
-    private void handleUnregister(CommandSender sender, String targetName) {
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-            Optional<User> userOpt = plugin.getDatabaseManager().getUserDAO().getUserByUsername(targetName);
-
-            if (userOpt.isEmpty()) {
-                sender.sendMessage("§cEl usuario " + targetName + " no está registrado.");
-                return;
-            }
-
-            try {
-                plugin.getDatabaseManager().getUserDAO().deleteUser(userOpt.get().getUuid());
-                plugin.getRateLimitService().resetLimit(userOpt.get().getLastIp()); // Bonus: reset their limit
-                sender.sendMessage("§aEl usuario " + targetName + " ha sido desregistrado correctamente.");
-            } catch (SQLException e) {
-                e.printStackTrace();
-                sender.sendMessage("§cError al eliminar usuario de la base de datos.");
-            }
-        });
+    private void sendHelp(CommandSender sender) {
+        messages.send(sender, "admin.help.header");
+        messages.send(sender, "admin.help.reload");
+        messages.send(sender, "admin.help.unregister");
+        messages.send(sender, "admin.help.resetpassword");
+        messages.send(sender, "admin.help.stats");
+        messages.send(sender, "admin.help.footer");
     }
 
-    private void handleResetPassword(CommandSender sender, String targetName, String newPass) {
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-            Optional<User> userOpt = plugin.getDatabaseManager().getUserDAO().getUserByUsername(targetName);
-            if (userOpt.isEmpty()) {
-                sender.sendMessage("§cUsuario no encontrado.");
-                return;
+    private void handleUnregister(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            messages.send(sender, "usage.unregister");
+            return;
+        }
+
+        String targetName = args[1];
+
+        // Si es consola, ejecutar directamente (asumimos que sabe lo que hace)
+        if (!(sender instanceof Player)) {
+            executeUnregister(sender, targetName);
+            return;
+        }
+
+        Player admin = (Player) sender;
+
+        // Crear contexto de confirmación
+        ConfirmationContext context = new ConfirmationContext(targetName, () -> executeUnregister(sender, targetName));
+        pendingConfirmations.put(admin.getUniqueId(), context);
+
+        // Enviar mensaje de confirmación
+        messages.send(sender, "admin.unregister.confirm",
+                MessageManager.placeholder().add("player", targetName).build());
+        messages.send(sender, "admin.unregister.confirm_instruction");
+
+        // Programar limpieza (timeout 30s)
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (pendingConfirmations.containsKey(admin.getUniqueId()) &&
+                    pendingConfirmations.get(admin.getUniqueId()) == context) {
+                pendingConfirmations.remove(admin.getUniqueId());
+                messages.send(sender, "admin.unregister.timeout");
             }
-            User user = userOpt.get();
-            String hash = plugin.getPasswordService().hashPassword(newPass);
-            user.setPasswordHash(hash);
+        }, 30 * 20L);
+    }
+
+    private void handleConfirm(CommandSender sender) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("Consola no necesita confirmación.");
+            return;
+        }
+
+        Player admin = (Player) sender;
+
+        if (!pendingConfirmations.containsKey(admin.getUniqueId())) {
+            sender.sendMessage("§cNo tienes ninguna confirmación pendiente.");
+            return;
+        }
+
+        // Ejecutar acción
+        ConfirmationContext context = pendingConfirmations.remove(admin.getUniqueId());
+        context.action.run();
+    }
+
+    private void executeUnregister(CommandSender sender, String targetName) {
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                plugin.getDatabaseManager().getUserDAO().updateUser(user);
-                sender.sendMessage("§aContraseña restablecida para " + targetName);
+                // CORREGIDO: Usar getUserByUsername en lugar de getUserByName
+                Optional<User> userOpt = plugin.getDatabaseManager().getUserDAO().getUserByUsername(targetName);
+                if (userOpt.isEmpty()) {
+                    plugin.getServer().getScheduler().runTask(plugin, () -> sender.sendMessage(
+                            messages.getMessage("error.user_not_registered").replace("{player}", targetName)));
+                    return;
+                }
+
+                User user = userOpt.get();
+                plugin.getDatabaseManager().getUserDAO().deleteUser(user.getUuid());
+
+                // Invalidate session if exists
+                plugin.getSessionManager().invalidateSession(user.getUuid());
+
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    messages.send(sender, "admin.unregister.success",
+                            MessageManager.placeholder()
+                                    .add("player", targetName)
+                                    .build());
+                });
+
             } catch (SQLException e) {
-                sender.sendMessage("§cError en base de datos.");
+                e.printStackTrace();
+                plugin.getServer().getScheduler().runTask(plugin, () -> messages.send(sender, "error.database_error"));
             }
         });
     }
 
     private void handleStats(CommandSender sender) {
-        sender.sendMessage("§8§m---------------------§r §bHybridAuth Stats §8§m---------------------");
-        sender.sendMessage("§eVersión: §7" + plugin.getDescription().getVersion());
-        try {
-            java.util.Map<String, Long> stats = plugin.getDatabaseManager().getUserDAO().getStatistics();
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                Map<String, Long> stats = plugin.getDatabaseManager().getUserDAO().getStatistics();
 
-            sender.sendMessage("§eTotal Usuarios: §f" + stats.getOrDefault("total_users", 0L));
-            sender.sendMessage("§ePremium: §a" + stats.getOrDefault("premium_users", 0L));
-            sender.sendMessage("§eCracked: §7" + stats.getOrDefault("cracked_users", 0L));
-            sender.sendMessage("§eSesiones Activas: §b" + stats.getOrDefault("active_sessions", 0L));
+                long total = stats.getOrDefault("total_users", 0L);
+                long premium = stats.getOrDefault("premium_users", 0L);
+                long cracked = stats.getOrDefault("cracked_users", 0L);
+                long sessions = stats.getOrDefault("active_sessions", 0L);
 
-        } catch (SQLException e) {
-            sender.sendMessage("§cError obteniendo estadísticas: " + e.getMessage());
-        }
-        sender.sendMessage("§8§m--------------------------------------------------------");
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    messages.send(sender, "admin.stats.header");
+
+                    messages.send(sender, "admin.stats.version",
+                            MessageManager.placeholder()
+                                    .add("version", plugin.getDescription().getVersion())
+                                    .build());
+
+                    messages.send(sender, "admin.stats.total_users",
+                            MessageManager.placeholder().add("total", total).build());
+
+                    messages.send(sender, "admin.stats.premium_users",
+                            MessageManager.placeholder().add("premium", premium).build());
+
+                    messages.send(sender, "admin.stats.cracked_users",
+                            MessageManager.placeholder().add("cracked", cracked).build());
+
+                    messages.send(sender, "admin.stats.active_sessions",
+                            MessageManager.placeholder().add("sessions", sessions).build());
+
+                    messages.send(sender, "admin.stats.footer");
+                });
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                plugin.getServer().getScheduler().runTask(plugin, () -> messages.send(sender, "error.database_error"));
+            }
+        });
     }
 
-    private void sendHelp(CommandSender sender) {
-        sender.sendMessage("§8§m----------------§r §bHybridAuth Admin §8§m----------------");
-        sender.sendMessage("§7/hybridauth reload §8- §fRecargar configuración");
-        sender.sendMessage("§7/hybridauth unregister <player> §8- §fDesregistrar usuario");
-        sender.sendMessage("§8§m--------------------------------------------------");
+    /**
+     * Clase auxiliar para almacenar el contexto de una confirmación.
+     */
+    private static class ConfirmationContext {
+        final String targetName; // Solo para referencia si se necesitara
+        final Runnable action;
+
+        ConfirmationContext(String targetName, Runnable action) {
+            this.targetName = targetName;
+            this.action = action;
+        }
     }
 }

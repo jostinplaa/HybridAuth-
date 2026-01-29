@@ -151,6 +151,16 @@ public class PasswordService {
             this.strength = strength;
         }
 
+        public String getStrengthKey() {
+            if (strength < 40)
+                return "weak";
+            if (strength < 60)
+                return "medium";
+            if (strength < 80)
+                return "strong";
+            return "very_strong";
+        }
+
         public String getStrengthLabel() {
             if (strength < 40)
                 return "§c§lMUY DÉBIL";

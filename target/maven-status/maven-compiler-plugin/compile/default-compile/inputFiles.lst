@@ -1,9 +1,11 @@
+C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\commands\HybridAuthTabCompleter.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\network\packet\EncryptionHandler.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\security\SecurityLogger.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\HybridAuthPlugin.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\security\ratelimit\RateLimitService.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\core\auth\AuthStateManager.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\data\dao\UserDAO.java
+C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\core\messages\MessageManager.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\commands\RegisterCommand.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\data\DatabaseManager.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\security\fingerprint\ClientFingerprintService.java
@@ -11,6 +13,7 @@ C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\c
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\commands\LogoutCommand.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\core\auth\PasswordService.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\core\session\SessionManager.java
+C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\util\ValidationUtils.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\commands\AdminCommand.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\listeners\LoginListener.java
 C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\data\model\Session.java

@@ -26,6 +26,7 @@ public class HybridAuthPlugin extends JavaPlugin {
     private ClientFingerprintService fingerprintService;
     private net.hybridauth.security.SecurityLogger securityLogger;
     private net.hybridauth.core.session.SessionManager sessionManager;
+    private net.hybridauth.core.messages.MessageManager messageManager;
 
     @Override
     public void onLoad() {
@@ -45,9 +46,14 @@ public class HybridAuthPlugin extends JavaPlugin {
         }
 
         // 2. Cargar configuración
+        // 2. Cargar configuración
         loadConfiguration();
 
-        // 3. Inicializar base de datos
+        // 3. Inicializar sistema de mensajes
+        this.messageManager = new net.hybridauth.core.messages.MessageManager(this);
+        getLogger().info("✓ Message system loaded");
+
+        // 4. Inicializar base de datos
         this.databaseManager = new DatabaseManager(this);
         if (!this.databaseManager.initialize()) {
             getLogger().severe("Database initialization failed! Disabling plugin...");
@@ -70,13 +76,21 @@ public class HybridAuthPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new LoginListener(this, authStateManager), this);
         getServer().getPluginManager().registerEvents(new net.hybridauth.listeners.SecurityListener(this), this);
 
-        // 7. Registrar comandos
+        // 6. Registrar Comandos
         getCommand("login").setExecutor(new LoginCommand(this));
         getCommand("register").setExecutor(new RegisterCommand(this));
-        getCommand("hybridauth").setExecutor(new AdminCommand(this));
-        getCommand("changepassword").setExecutor(new net.hybridauth.commands.ChangePasswordCommand(this));
         getCommand("logout").setExecutor(new net.hybridauth.commands.LogoutCommand(this));
+        getCommand("changepassword").setExecutor(new net.hybridauth.commands.ChangePasswordCommand(this));
+        getCommand("hybridauth").setExecutor(new AdminCommand(this));
 
+        // 7. Registrar Tab Completer
+        net.hybridauth.commands.HybridAuthTabCompleter tabCompleter = new net.hybridauth.commands.HybridAuthTabCompleter();
+        getCommand("login").setTabCompleter(tabCompleter);
+        getCommand("register").setTabCompleter(tabCompleter);
+        getCommand("changepassword").setTabCompleter(tabCompleter);
+        getCommand("hybridauth").setTabCompleter(tabCompleter);
+
+        // 8. Tareas Programadas
         long loadTime = System.currentTimeMillis() - startTime;
         getLogger().info(String.format("HybridAuth v%s enabled in %dms",
                 getDescription().getVersion(), loadTime));
@@ -148,5 +162,9 @@ public class HybridAuthPlugin extends JavaPlugin {
 
     public net.hybridauth.core.session.SessionManager getSessionManager() {
         return sessionManager;
+    }
+
+    public net.hybridauth.core.messages.MessageManager getMessageManager() {
+        return messageManager;
     }
 }
