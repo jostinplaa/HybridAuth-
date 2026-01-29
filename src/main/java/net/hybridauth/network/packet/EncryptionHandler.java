@@ -138,18 +138,6 @@ public class EncryptionHandler {
                 if (currentCtx != null && currentCtx == context) {
                     plugin.getLogger().warning("[Secure Auth] Timeout for " + playerName + ". Fallback to cracked.");
                     pendingContexts.remove(address);
-                    // We can't really "resume" the packet easily from here without the event reference
-                    // BUT the player connection might still be open.
-                    // We need to re-inject LoginStart.
-                    // However, we don't have the Player object easily accessible here in a safe way if the event is gone.
-                    // Actually, we can assume if timeout happens, client probably disconnected or is stuck.
-                    // But if it's a cracked client ignoring the packet, it's still connected.
-                    // We rely on the client sending something else? No.
-                    // Realistically, for cracked clients on offline mode servers, WE must initiate the fallback.
-                    // We need a reference to the player.
-                    // 'event.getPlayer()' is valid? ProtocolLib TemporaryPlayer.
-                    // It should be valid if connection is open.
-                    // We need to be careful with thread safety.
                     try {
                         fallbackToCracked(event.getPlayer(), playerName);
                     } catch (Exception e) {}
@@ -161,8 +149,12 @@ public class EncryptionHandler {
             // Send Encryption Request
             PacketContainer packet = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Login.Server.ENCRYPTION_BEGIN);
             packet.getStrings().write(0, ""); // Server ID
-            packet.getSpecificModifier(PublicKey.class).write(0, keyPair.getPublic());
-            packet.getByteArrays().write(0, verifyToken);
+            
+            // FIX: Use ByteArrays for Key and Token (Modern MC)
+            // Index 0: Public Key (Encoded)
+            // Index 1: Verify Token
+            packet.getByteArrays().write(0, keyPair.getPublic().getEncoded());
+            packet.getByteArrays().write(1, verifyToken);
             
             try {
                 ProtocolLibrary.getProtocolManager().sendServerPacket(event.getPlayer(), packet);
@@ -181,7 +173,6 @@ public class EncryptionHandler {
         VerificationContext context = pendingContexts.get(address);
 
         if (context == null) {
-            // Disconnected or duplicate packet
             return; 
         }
         
@@ -200,7 +191,7 @@ public class EncryptionHandler {
 
             if (!Arrays.equals(context.verifyToken, verifyToken)) {
                 plugin.getLogger().warning("[Secure Auth] Token mismatch for " + context.username);
-                fallbackToCracked(event.getPlayer(), context.username); // Or kick?
+                fallbackToCracked(event.getPlayer(), context.username); 
                 return;
             }
 

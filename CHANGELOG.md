@@ -14,6 +14,14 @@ Todas las mejoras notables de este proyecto serán documentadas en este archivo.
 ### ✨ Added (Nuevas Características)
 - **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
 
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+
+## [1.1.8] - 2026-01-29 (Protocol Fix)
+- **Fix**: Solucionado crash `FieldAccessException` en 1.21+ al enviar Encryption Packet.
+- **Fix**: Corregido formato de `PublicKey` en handshake (ahora usa `byte[]` en vez de Object).
+- **Core**: Optimización de Timeouts para evitar tareas zombies.
+
 ## [1.1.7] - 2026-01-29 (Secure Handshake)
 - **Feature**: Implementado **Secure Encryption Handshake** usando ProtocolLib.
 - **Security**: Verificación criptográfica real con Mojang antes de dar Auto-Login.
