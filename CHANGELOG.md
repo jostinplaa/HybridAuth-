@@ -20,6 +20,15 @@ Todas las mejoras notables de este proyecto serán documentadas en este archivo.
 ### ✨ Added (Nuevas Características)
 - **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
 
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+
+## [1.1.10] - 2026-01-29 (Stable First-Connection Policy)
+- **Revert**: Se retiró el "Secure Handshake" debido a incompatibilidad con Spigot no-NMS (DecoderException).
+- **Core**: Restaurada la "Política de Primera Conexión" (Solución Estable).
+- **Security**: Usuarios NUEVOS siempre son tratados como Cracked (requieren /register) para prevenir impostores.
+- **Trust**: El Auto-Login solo se da si el usuario YA ESTÁ verificado en la Base de Datos.
+
 ## [1.1.9] - 2026-01-29 (Strict Security Patch)
 - **Fix**: Solucionado error `unknown packet id 52` (DecoderException) al fallar handshake.
 - **Security**: Ahora los impostores (Fallan Handshake) son **kick** en vez de fallback (Evita bugs de protocolo).

@@ -1,9 +1,9 @@
 net\hybridauth\commands\LogoutCommand.class
 net\hybridauth\core\auth\AuthStateManager$AuthState.class
-net\hybridauth\network\packet\EncryptionHandler$VerificationContext.class
 net\hybridauth\data\model\Session$SessionBuilder.class
 net\hybridauth\network\packet\EncryptionHandler$1.class
 net\hybridauth\core\messages\MessageManager.class
+net\hybridauth\network\packet\EncryptionHandler$PremiumCheckResult.class
 net\hybridauth\security\SecurityLogger$EventType.class
 net\hybridauth\commands\HybridAuthTabCompleter.class
 net\hybridauth\HybridAuthPlugin.class
@@ -19,7 +19,6 @@ net\hybridauth\core\session\SessionManager.class
 net\hybridauth\commands\AdminCommand$ConfirmationContext.class
 net\hybridauth\util\ValidationUtils.class
 net\hybridauth\security\SecurityLogger.class
-net\hybridauth\network\packet\EncryptionHandler$2.class
 net\hybridauth\commands\RegisterCommand.class
 net\hybridauth\network\packet\EncryptionHandler.class
 net\hybridauth\core\auth\AuthStateManager.class
