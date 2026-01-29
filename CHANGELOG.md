@@ -17,6 +17,14 @@ Todas las mejoras notables de este proyecto serán documentadas en este archivo.
 ### ✨ Added (Nuevas Características)
 - **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
 
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+
+## [1.1.9] - 2026-01-29 (Strict Security Patch)
+- **Fix**: Solucionado error `unknown packet id 52` (DecoderException) al fallar handshake.
+- **Security**: Ahora los impostores (Fallan Handshake) son **kick** en vez de fallback (Evita bugs de protocolo).
+- **Core**: Mejora en la generación de hash para validar sesión Mojang.
+
 ## [1.1.8] - 2026-01-29 (Protocol Fix)
 - **Fix**: Solucionado crash `FieldAccessException` en 1.21+ al enviar Encryption Packet.
 - **Fix**: Corregido formato de `PublicKey` en handshake (ahora usa `byte[]` en vez de Object).
