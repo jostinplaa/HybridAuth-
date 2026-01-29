@@ -180,11 +180,44 @@ public class UserDAO {
         user.setPasswordHash(rs.getString("password_hash"));
         user.setAuthType(User.AuthType.valueOf(rs.getString("auth_type")));
         user.setPremiumUuid(premiumUuidStr != null ? UUID.fromString(premiumUuidStr) : null);
-        user.setRegisteredAt(rs.getTimestamp("registered_at"));
-        user.setLastLoginDate(rs.getTimestamp("last_login_date"));
+        user.setRegisteredAt(getSafeTimestamp(rs, "registered_at"));
+        user.setLastLoginDate(getSafeTimestamp(rs, "last_login_date"));
         user.setLastIp(rs.getString("last_ip"));
         user.setTotalLogins(rs.getInt("total_logins"));
         user.setStatus(rs.getString("status"));
         return user;
+    }
+
+    private Timestamp getSafeTimestamp(ResultSet rs, String column) throws SQLException {
+        Object obj = rs.getObject(column);
+        if (obj == null)
+            return null;
+
+        // Caso 1: Es un número (Long/Integer)
+        if (obj instanceof Number) {
+            return new Timestamp(((Number) obj).longValue());
+        }
+
+        // Caso 2: Es un String
+        String str = obj.toString();
+
+        // Intentar parsear como milisegundos (Long explícito)
+        try {
+            long millis = Long.parseLong(str);
+            return new Timestamp(millis);
+        } catch (NumberFormatException ignored) {
+            // No es un número puro
+        }
+
+        // Caso 3: Formato estándar SQL (YYYY-MM-DD HH:MM:SS)
+        // Dejar que el driver lo intente parsear
+        try {
+            return rs.getTimestamp(column);
+        } catch (Exception e) {
+            // En caso de emergencia, retornar timestamp actual para no crashear
+            // y loguear el error para debug
+            System.err.println("[HybridAuth] Error parsing date for column " + column + ": " + str);
+            return new Timestamp(System.currentTimeMillis());
+        }
     }
 }
