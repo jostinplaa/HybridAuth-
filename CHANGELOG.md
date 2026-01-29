@@ -5,6 +5,14 @@ Todas las mejoras notables de este proyecto serán documentadas en este archivo.
 ### ✨ Added (Nuevas Características)
 - **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
 
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+
+## [1.1.5] - 2026-01-29 (Manual Hotfix)
+- **Fix Critical**: Corrección manual de `EncryptionHandler` y `LoginListener` según reporte de bugs.
+- **Fix**: Solucionado Race Condition en detección Premium.
+- **Fix**: Limpieza de estado correcta al desconectar.
+
 ## [1.1.4] - 2026-01-29 (UX & Logic Hotfix)
 - **Fix**: Eliminados mensajes de error duplicados en Registro y Cambio de Contraseña.
 - **Fix**: Corrección lógica en detección Premium (ahora detecta Mojang status al registrarse).

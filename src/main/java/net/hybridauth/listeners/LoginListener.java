@@ -17,9 +17,6 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.Bukkit;
 
 public class LoginListener implements Listener {
 
@@ -37,20 +34,31 @@ public class LoginListener implements Listener {
         // También aquí se decide si se inicia el proceso Premium
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        
+        plugin.getLogger().info("[Login] Player " + player.getName() + " joining...");
 
-        // 1. Check if Premium (Validated by EncryptionHandler)
-        if (plugin.getEncryptionHandler().isPremium(player.getName())) {
-            handlePremiumLogin(player);
-        } else {
-            // 2. Cracked flow
-            handleCrackedJoin(player);
-        }
+        // Pequeño delay para asegurar que el EncryptionHandler terminó
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            // 1. Check if Premium (Validated by EncryptionHandler)
+            boolean isPremium = plugin.getEncryptionHandler().isPremium(player.getName());
+            
+            plugin.getLogger().info("[Login] " + player.getName() + " - Premium status: " + isPremium);
+            
+            if (isPremium) {
+                handlePremiumLogin(player);
+            } else {
+                // 2. Cracked flow
+                handleCrackedJoin(player);
+            }
+        }, 5L); // Delay de 5 ticks (250ms) para que EncryptionHandler termine
     }
 
     private void handlePremiumLogin(Player player) {
+        plugin.getLogger().info("[Premium Login] Processing " + player.getName());
+        
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 // Check if user exists, if not create
@@ -60,49 +68,66 @@ public class LoginListener implements Listener {
 
                 if (userOpt.isPresent()) {
                     user = userOpt.get();
+                    plugin.getLogger().info("[Premium Login] User exists in DB: " + player.getName());
+                    
                     // Update info
                     user.setUsername(player.getName());
                     user.setLastIp(player.getAddress().getAddress().getHostAddress());
                     user.setLastLoginDate(new java.sql.Timestamp(System.currentTimeMillis()));
                     user.setTotalLogins(user.getTotalLogins() + 1);
-                    // Ensure auth type is updated if they switched/migrated (optional, but safe)
+                    
+                    // Ensure auth type is updated if they switched/migrated
                     if (user.getAuthType() != net.hybridauth.data.model.User.AuthType.PREMIUM) {
+                        plugin.getLogger().info("[Premium Login] Updating auth type to PREMIUM for " + player.getName());
                         user.setAuthType(net.hybridauth.data.model.User.AuthType.PREMIUM);
                     }
+                    
                     plugin.getDatabaseManager().getUserDAO().updateUser(user);
                 } else {
                     // Register new Premium User
+                    plugin.getLogger().info("[Premium Login] Creating new premium user: " + player.getName());
+                    
                     user = new net.hybridauth.data.model.User(player.getUniqueId(), player.getName(),
                             net.hybridauth.data.model.User.AuthType.PREMIUM);
                     user.setLastIp(player.getAddress().getAddress().getHostAddress());
                     user.setLastLoginDate(new java.sql.Timestamp(System.currentTimeMillis()));
                     user.setTotalLogins(1);
                     plugin.getDatabaseManager().getUserDAO().createUser(user);
-                    plugin.getLogger().info("Auto-registered Premium user: " + player.getName());
+                    plugin.getLogger().info("✓ Auto-registered Premium user: " + player.getName());
                 }
 
                 // Sync back to main thread to authorize
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     authStateManager.setAuthState(player, AuthState.AUTHENTICATED);
                     removeAuthRestrictions(player);
-                    player.sendMessage("§a§lHybridAuth §8» §aAutenticado automáticamente (Cuenta Premium).");
+                    player.sendMessage("§a§lHybridAuth §8» §aAutenticado automáticamente (Cuenta Premium Mojang).");
+                    plugin.getLogger().info("✓ Premium login completed: " + player.getName());
                 });
 
             } catch (Exception e) {
+                plugin.getLogger().severe("ERROR in premium login for " + player.getName());
                 e.printStackTrace();
-                player.sendMessage("§cError en auto-login premium. Contacta a un admin.");
+                
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    player.sendMessage("§c§lHybridAuth §8» §cError en auto-login premium. Contacta a un admin.");
+                });
             }
         });
     }
 
     private void handleCrackedJoin(Player player) {
+        plugin.getLogger().info("[Cracked Login] Processing " + player.getName());
+        
         authStateManager.setAuthState(player, AuthState.UNAUTHENTICATED);
+        
         // Check if registered or has session
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
 
             // Check for persistent session first
             String ip = player.getAddress().getAddress().getHostAddress();
             if (plugin.getSessionManager().validateSession(player.getUniqueId(), ip)) {
+                plugin.getLogger().info("[Cracked Login] Valid session found for " + player.getName());
+                
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     authStateManager.setAuthState(player, AuthState.AUTHENTICATED);
                     removeAuthRestrictions(player);
@@ -113,6 +138,9 @@ public class LoginListener implements Listener {
 
             boolean isRegistered = plugin.getDatabaseManager().getUserDAO().getUserByUUID(player.getUniqueId())
                     .isPresent();
+            
+            plugin.getLogger().info("[Cracked Login] Registered: " + isRegistered + " - " + player.getName());
+            
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 if (isRegistered) {
                     player.sendMessage("§c§lHybridAuth §8» §7Por favor, usa §f/login <pass> §7para entrar.");
@@ -121,14 +149,15 @@ public class LoginListener implements Listener {
                             "§c§lHybridAuth §8» §7Por favor, usa §f/register <pass> <pass> §7para registrarte.");
                 }
 
-                // UX Enhancement: Apply Blindness/Slow
+                // Apply restrictions
                 applyAuthRestrictions(player);
 
-                // UX Enhancement: Authentication Timeout
+                // Authentication Timeout
                 int timeoutSeconds = plugin.getConfig().getInt("authentication.timeout-seconds", 60);
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                     if (player.isOnline() && authStateManager.isPending(player)) {
-                        player.kickPlayer("§c§lHybridAuth\n\n§7Tiempo de autenticación agotado.");
+                        plugin.getLogger().warning("[Timeout] Kicking " + player.getName() + " - auth timeout");
+                        player.kickPlayer("§c§lHybridAuth\n\n§7Tiempo de autenticación agotado.\n§7Tienes " + timeoutSeconds + " segundos para autenticarte.");
                     }
                 }, timeoutSeconds * 20L);
             });
@@ -151,7 +180,15 @@ public class LoginListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        authStateManager.removePlayer(event.getPlayer());
+        Player player = event.getPlayer();
+        
+        // IMPORTANTE: Limpiar estado premium
+        plugin.getEncryptionHandler().clearPremiumStatus(player.getName());
+        
+        // Limpiar estado de autenticación
+        authStateManager.removePlayer(player);
+        
+        plugin.getLogger().info("[Logout] " + player.getName() + " - State cleared");
     }
 
     // --- Restricciones para usuarios no autenticados ---
@@ -169,7 +206,7 @@ public class LoginListener implements Listener {
     public void onChat(AsyncPlayerChatEvent event) {
         if (authStateManager.isPending(event.getPlayer())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage("§cDebes loguearte primero.");
+            event.getPlayer().sendMessage("§cDebes autenticarte primero.");
         }
     }
 

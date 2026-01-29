@@ -3,6 +3,7 @@ net\hybridauth\core\auth\AuthStateManager$AuthState.class
 net\hybridauth\data\model\Session$SessionBuilder.class
 net\hybridauth\network\packet\EncryptionHandler$1.class
 net\hybridauth\core\messages\MessageManager.class
+net\hybridauth\network\packet\EncryptionHandler$PremiumCheckResult.class
 net\hybridauth\security\SecurityLogger$EventType.class
 net\hybridauth\commands\HybridAuthTabCompleter.class
 net\hybridauth\HybridAuthPlugin.class
