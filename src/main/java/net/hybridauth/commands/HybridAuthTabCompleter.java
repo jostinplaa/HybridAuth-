@@ -29,9 +29,9 @@ public class HybridAuthTabCompleter implements TabCompleter {
             }
 
             if (args.length == 1) {
-                // Subcomandos principales
+                // Subcomandos principales (agregado "confirm")
                 return StringUtil.copyPartialMatches(args[0],
-                        Arrays.asList("reload", "unregister", "resetpassword", "stats"),
+                        Arrays.asList("reload", "unregister", "resetpassword", "stats", "confirm"),
                         new ArrayList<>());
             } else if (args.length == 2) {
                 // Segundo argumento: nombres de jugadores para unregister/resetpassword
@@ -44,11 +44,11 @@ public class HybridAuthTabCompleter implements TabCompleter {
         // 2. Comando /changepassword
         if (command.getName().equalsIgnoreCase("changepassword")) {
             if (args.length == 1) {
-                return Collections.singletonList("<antigua_pass>");
+                return Collections.singletonList("<contraseña_actual>");
             } else if (args.length == 2) {
-                return Collections.singletonList("<nueva_pass>");
+                return Collections.singletonList("<contraseña_nueva>");
             } else if (args.length == 3) {
-                return Collections.singletonList("<confirmar_pass>");
+                return Collections.singletonList("<confirmar_nueva>");
             }
         }
 

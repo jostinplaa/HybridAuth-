@@ -61,36 +61,36 @@ public class HybridAuthPlugin extends JavaPlugin {
             return;
         }
 
-        // 4. Inicializar servicios de Seguridad
+        // 5. Inicializar servicios de seguridad
         this.rateLimitService = new RateLimitService(this);
         this.fingerprintService = new ClientFingerprintService();
 
-        // 5. Inicializar servicios Core
+        // 6. Inicializar servicios core
         this.authStateManager = new AuthStateManager();
         this.passwordService = new PasswordService(this);
         this.encryptionHandler = new EncryptionHandler(this);
         this.securityLogger = new net.hybridauth.security.SecurityLogger(this);
         this.sessionManager = new net.hybridauth.core.session.SessionManager(this);
 
-        // 6. Registrar listeners
+        // 7. Registrar listeners
         getServer().getPluginManager().registerEvents(new LoginListener(this, authStateManager), this);
         getServer().getPluginManager().registerEvents(new net.hybridauth.listeners.SecurityListener(this), this);
 
-        // 6. Registrar Comandos
+        // 8. Registrar Comandos
         getCommand("login").setExecutor(new LoginCommand(this));
         getCommand("register").setExecutor(new RegisterCommand(this));
         getCommand("logout").setExecutor(new net.hybridauth.commands.LogoutCommand(this));
         getCommand("changepassword").setExecutor(new net.hybridauth.commands.ChangePasswordCommand(this));
         getCommand("hybridauth").setExecutor(new AdminCommand(this));
 
-        // 7. Registrar Tab Completer
+        // 9. Registrar Tab Completer
         net.hybridauth.commands.HybridAuthTabCompleter tabCompleter = new net.hybridauth.commands.HybridAuthTabCompleter();
         getCommand("login").setTabCompleter(tabCompleter);
         getCommand("register").setTabCompleter(tabCompleter);
         getCommand("changepassword").setTabCompleter(tabCompleter);
         getCommand("hybridauth").setTabCompleter(tabCompleter);
 
-        // 8. Tareas Programadas
+        // 10. Finalizar carga
         long loadTime = System.currentTimeMillis() - startTime;
         getLogger().info(String.format("HybridAuth v%s enabled in %dms",
                 getDescription().getVersion(), loadTime));

@@ -191,6 +191,8 @@ admin:
     success: "&a&l✔ &aEl usuario &e{player} &aha sido desregistrado correctamente."
     cancelled: "&7Operación cancelada."
     timeout: "&cEl tiempo de confirmación ha expirado. Operación cancelada."
+    console_no_confirmation: "&7La consola no requiere confirmación para comandos."
+    no_pending_confirmation: "&cNo tienes ninguna acción pendiente de confirmación."
   
   # Estadísticas del plugin
   stats:

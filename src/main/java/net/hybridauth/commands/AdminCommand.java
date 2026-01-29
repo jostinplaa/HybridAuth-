@@ -117,14 +117,14 @@ public class AdminCommand implements CommandExecutor {
 
     private void handleConfirm(CommandSender sender) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("Consola no necesita confirmación.");
+            messages.send(sender, "admin.unregister.console_no_confirmation");
             return;
         }
 
         Player admin = (Player) sender;
 
         if (!pendingConfirmations.containsKey(admin.getUniqueId())) {
-            sender.sendMessage("§cNo tienes ninguna confirmación pendiente.");
+            messages.send(sender, "admin.unregister.no_pending_confirmation");
             return;
         }
 

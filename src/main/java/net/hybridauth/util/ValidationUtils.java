@@ -8,11 +8,18 @@ import java.util.regex.Pattern;
  */
 public class ValidationUtils {
 
-    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_]{3,16}$");
+    // Regex: 3-16 chars, letters/nums/under, BUT not *only* numbers or *only*
+    // underscores
+    private static final Pattern USERNAME_PATTERN = Pattern.compile("^(?![0-9_]+$)[a-zA-Z0-9_]{3,16}$");
     private static final Pattern UNSAFE_CHARS = Pattern.compile("[<>\"';\\\\]");
 
     /**
      * Valida un nombre de usuario de Minecraft.
+     * <p>
+     * Requisitos:
+     * - Entre 3 y 16 caracteres
+     * - Solo letras, números y guiones bajos
+     * - No puede ser solo números o guiones bajos
      * 
      * @param username Nombre a validar
      * @return true si es válido
@@ -27,8 +34,21 @@ public class ValidationUtils {
      * @param password Contraseña a validar
      * @return true si cumple longitud mínima
      */
-    public static boolean isValidPasswordLength(String password) {
-        return password != null && password.length() >= 4 && password.length() <= 32;
+    public static boolean isValidPassword(String password) {
+        if (password == null || password.trim().isEmpty()) {
+            return false;
+        }
+        return password.length() >= 4 && password.length() <= 32;
+    }
+
+    /**
+     * Verifica si el input contiene caracteres peligrosos.
+     * 
+     * @param input Entrada a verificar
+     * @return true si contiene caracteres inseguros
+     */
+    public static boolean containsUnsafeChars(String input) {
+        return input != null && UNSAFE_CHARS.matcher(input).find();
     }
 
     /**
@@ -36,11 +56,12 @@ public class ValidationUtils {
      * Útil para prevenir XSS básico en logs o mensajes de admin.
      * 
      * @param input Entrada del usuario
-     * @return Entrada sanitizada
+     * @return Entrada sanitizada y truncada a 100 caracteres
      */
-    public static String sanitize(String input) {
+    public static String sanitizeForLog(String input) {
         if (input == null)
             return "";
-        return UNSAFE_CHARS.matcher(input).replaceAll("");
+        String sanitized = UNSAFE_CHARS.matcher(input).replaceAll("");
+        return sanitized.length() > 100 ? sanitized.substring(0, 100) + "..." : sanitized;
     }
 }
