@@ -11,6 +11,15 @@ Todas las mejoras notables de este proyecto serán documentadas en este archivo.
 ### ✨ Added (Nuevas Características)
 - **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
 
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+
+## [1.1.7] - 2026-01-29 (Secure Handshake)
+- **Feature**: Implementado **Secure Encryption Handshake** usando ProtocolLib.
+- **Security**: Verificación criptográfica real con Mojang antes de dar Auto-Login.
+- **Fix**: Impostores (Cracked usando nicks Premium) fallan el handshake y son forzados a registrarse (`/register`).
+- **Fix**: Corrección de timeout para evitar conexiones colgadas.
+
 ## [1.1.6] - 2026-01-29 (Definitive Premium Logic)
 - **Fix Critical**: Se deshabilitó la comprobación de Mojang API para usuarios nuevos.
 - **Security**: Implementada "Política de Primera Conexión" (First Connection Policy).

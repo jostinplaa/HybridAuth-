@@ -1,4 +1,7 @@
-package net.hybridauth.network.packet;
+
+import os
+
+code = r"""package net.hybridauth.network.packet;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -279,3 +282,9 @@ public class EncryptionHandler {
         });
     }
 }
+"""
+
+with open(r"C:\Users\herre\OneDrive\Desktop\phyton\HybridAuth\src\main\java\net\hybridauth\network\packet\EncryptionHandler.java", "w", encoding="utf-8") as f:
+    f.write(code)
+
+print("Fixed EncryptionHandler written.")
