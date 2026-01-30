@@ -35,6 +35,14 @@ Todas las mejoras notables de este proyecto serán documentadas en este archivo.
 ### ✨ Added (Nuevas Características)
 - **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
 
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+
+## [2.1.0] - 2026-01-29 (Packet-Based UUID Fix)
+- **Fix**: Usar `WrappedGameProfile` desde el paquete `Login Start` para obtener el UUID exacto del cliente.
+- **Stability**: Resuelve problemas donde `player.getUniqueId()` devolvía UUIDs offline prematuros.
+- **Accuracy**: Garantiza que el UUID comparado sea el que envía el cliente (o BungeeCord) en el handshake.
+
 ## [2.0.0] - 2026-01-29 (Simplified UUID Auth)
 - **Rewrite**: Reemplazado todo el sistema de RSA Handshake por verificación directa de UUID.
 - **Logic**: `UUID_Cliente == UUID_Mojang` => **Premium Real**. De lo contrario => **Impostor**.

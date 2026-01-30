@@ -6,6 +6,7 @@ import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import net.hybridauth.HybridAuthPlugin;
 import net.hybridauth.network.MojangAPI;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -26,7 +27,7 @@ import java.util.concurrent.CompletableFuture;
  * 3. Si coincide = Premium real → Auto-login
  * 4. Si NO coincide = Impostor → Obligar a registrarse
  * 
- * @version 2.0.0 (Simplified)
+ * @version 2.1.0 (Fixed - obtiene UUID del paquete)
  */
 public class EncryptionHandler {
 
@@ -75,7 +76,17 @@ public class EncryptionHandler {
                     return;
                 }
 
-                String playerName = event.getPacket().getStrings().read(0);
+                // ✅ CRÍTICO: Obtener GameProfile del paquete (tiene UUID y nombre)
+                WrappedGameProfile profile = event.getPacket().getGameProfiles().read(0);
+
+                if (profile == null) {
+                    plugin.getLogger().warning("[Premium Check] No se pudo obtener GameProfile del paquete");
+                    return;
+                }
+
+                String playerName = profile.getName();
+                UUID clientUUID = profile.getUUID();
+
                 if (playerName == null || playerName.isEmpty()) {
                     return;
                 }
@@ -85,7 +96,7 @@ public class EncryptionHandler {
 
                 // Procesar async para no bloquear el thread principal
                 plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-                    handleLoginStart(event, playerName);
+                    handleLoginStart(event, playerName, clientUUID);
                 });
             }
         });
@@ -95,28 +106,26 @@ public class EncryptionHandler {
      * Maneja el inicio de login de un jugador.
      * 
      * LÓGICA SIMPLE:
-     * 1. Obtener UUID del cliente (el que está conectando)
+     * 1. Obtener UUID del cliente (del paquete)
      * 2. Verificar en Mojang API si ese nombre es premium
      * 3. Si es premium, obtener el UUID real de Mojang
      * 4. Comparar: UUID cliente == UUID Mojang?
      * - SÍ → Premium verificado
      * - NO → Impostor/Cracked
      */
-    private void handleLoginStart(PacketEvent event, String playerName) {
+    private void handleLoginStart(PacketEvent event, String playerName, UUID clientUUID) {
         try {
-            // 1. Obtener UUID del jugador conectando
-            UUID clientUUID = event.getPlayer().getUniqueId();
-
             plugin.getLogger().info("[Premium Check] Verificando: " + playerName + " (UUID: " + clientUUID + ")");
 
-            // 2. Verificar en cache primero
+            // 1. Verificar en cache primero
             PremiumStatus cached = verificationCache.getIfPresent(playerName.toLowerCase());
             if (cached != null) {
+                plugin.getLogger().info("[Premium Check] Usando resultado cacheado para " + playerName);
                 processVerification(event, playerName, clientUUID, cached);
                 return;
             }
 
-            // 3. Verificar con Mojang API
+            // 2. Verificar con Mojang API
             Optional<UUID> mojangUUID = mojangAPI.getPremiumUUID(playerName);
 
             if (mojangUUID.isEmpty()) {
@@ -129,10 +138,10 @@ public class EncryptionHandler {
                 return;
             }
 
-            // 4. Es premium - verificar UUID
+            // 3. Es premium - verificar UUID
             UUID realMojangUUID = mojangUUID.get();
 
-            plugin.getLogger().info("[Premium Check] " + playerName + " es cuenta premium.");
+            plugin.getLogger().info("[Premium Check] " + playerName + " es cuenta premium en Mojang.");
             plugin.getLogger().info("[UUID Check] Cliente: " + clientUUID);
             plugin.getLogger().info("[UUID Check] Mojang:  " + realMojangUUID);
 
