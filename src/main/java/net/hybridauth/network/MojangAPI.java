@@ -66,8 +66,12 @@ public class MojangAPI {
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
+            connection.setRequestProperty("User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
 
-            if (connection.getResponseCode() == 200) {
+            int responseCode = connection.getResponseCode();
+
+            if (responseCode == 200) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 StringBuilder response = new StringBuilder();
                 String line;
@@ -77,6 +81,9 @@ public class MojangAPI {
                 reader.close();
 
                 return Optional.of(JsonParser.parseString(response.toString()).getAsJsonObject());
+            } else {
+                System.out.println("[HybridAuth Debug] Mojang Check Failed. Code: " + responseCode + " for " + username
+                        + " with hash " + serverHash);
             }
         } catch (Exception e) {
             e.printStackTrace();

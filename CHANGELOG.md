@@ -26,6 +26,14 @@ Todas las mejoras notables de este proyecto serán documentadas en este archivo.
 ### ✨ Added (Nuevas Características)
 - **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
 
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+
+## [1.2.1] - 2026-01-29 (Verification Debug)
+- **Fix**: Añadido `User-Agent` a las peticiones MojangAPI para evitar bloqueos (403 Forbidden).
+- **Core**: Logs detallados en consola (`responseCode`) para diagnosticar fallos de verificación.
+- **Protocol**: Corregido error de sintaxis en `MojangAPI.java`.
+
 ## [1.2.0] - 2026-01-29 (Smart Reconnect Protocol)
 - **Feature**: Implementado **Smart Reconnect** para Auto-Login Seguro sin crashes.
 - **Flow**: Join -> Handshake -> **Kick (Verified)** -> Rejoin -> **Auto-Login**.
