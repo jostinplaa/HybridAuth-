@@ -11,54 +11,47 @@ import net.hybridauth.network.MojangAPI;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.security.*;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Handler simplificado de autenticación premium.
+ * 
+ * SISTEMA SIMPLE Y EFECTIVO:
+ * 1. Verificar si el nombre es premium (API Mojang)
+ * 2. Verificar si el UUID del jugador coincide con el UUID de Mojang
+ * 3. Si coincide = Premium real → Auto-login
+ * 4. Si NO coincide = Impostor → Obligar a registrarse
+ * 
+ * @version 2.0.0 (Simplified)
+ */
 public class EncryptionHandler {
 
     private final HybridAuthPlugin plugin;
     private final MojangAPI mojangAPI;
-    private final Set<String> premiumPlayers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    // IP-based Verified Cache (The "VIP List")
-    private final Cache<String, String> verifiedIPs = Caffeine.newBuilder()
-            .expireAfterWrite(5, TimeUnit.MINUTES)
-            .build();
+    // Lista de jugadores verificados como premium
+    private final Set<String> verifiedPremiumPlayers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    // RSA Keys
-    private KeyPair keyPair;
-    private final Random random = new Random();
-
-    // Context Storage
-    private final ConcurrentHashMap<SocketAddress, VerificationContext> pendingContexts = new ConcurrentHashMap<>();
-
-    // Compatibility Cache
-    private final Cache<String, Boolean> premiumCheckCache = Caffeine.newBuilder()
+    // Cache de verificaciones (para no spam a Mojang API)
+    private final Cache<String, PremiumStatus> verificationCache = Caffeine.newBuilder()
             .expireAfterWrite(10, TimeUnit.MINUTES)
+            .maximumSize(500)
             .build();
 
-    private static class VerificationContext {
-        final String username;
-        final byte[] verifyToken;
-        final int timeoutTaskId;
+    /**
+     * Resultado de verificación premium
+     */
+    private static class PremiumStatus {
+        final boolean isPremium;
+        final UUID mojangUUID;
 
-        VerificationContext(String username, byte[] verifyToken, int timeoutTaskId) {
-            this.username = username;
-            this.verifyToken = verifyToken;
-            this.timeoutTaskId = timeoutTaskId;
+        PremiumStatus(boolean isPremium, UUID mojangUUID) {
+            this.isPremium = isPremium;
+            this.mojangUUID = mojangUUID;
         }
     }
 
@@ -66,273 +59,227 @@ public class EncryptionHandler {
         this.plugin = plugin;
         this.mojangAPI = new MojangAPI();
 
-        try {
-            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-            generator.initialize(1024);
-            this.keyPair = generator.generateKeyPair();
-            plugin.getLogger().info("✓ RSA KeyPair generated for Premium Authentication.");
-        } catch (NoSuchAlgorithmException e) {
-            plugin.getLogger().severe("Could not generate RSA keys!");
-            e.printStackTrace();
-        }
+        plugin.getLogger().info("✓ Premium Authentication System (UUID-based) loaded.");
 
         registerPacketListeners();
     }
 
     private void registerPacketListeners() {
+        // Interceptar el paquete de login
         ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(
                 plugin, ListenerPriority.LOWEST, PacketType.Login.Client.START) {
             @Override
             public void onPacketReceiving(PacketEvent event) {
+                // Evitar procesamiento duplicado
                 if (event.getPacket().getMeta("auth_checked").isPresent()) {
                     return;
                 }
 
                 String playerName = event.getPacket().getStrings().read(0);
-                if (playerName == null || playerName.isEmpty())
+                if (playerName == null || playerName.isEmpty()) {
                     return;
+                }
 
+                // Cancelar el paquete original
                 event.setCancelled(true);
 
+                // Procesar async para no bloquear el thread principal
                 plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
                     handleLoginStart(event, playerName);
                 });
             }
         });
-
-        ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(
-                plugin, ListenerPriority.LOWEST, PacketType.Login.Client.ENCRYPTION_BEGIN) {
-            @Override
-            public void onPacketReceiving(PacketEvent event) {
-                event.setCancelled(true);
-
-                plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-                    handleEncryptionResponse(event);
-                });
-            }
-        });
-    }
-
-    private void handleLoginStart(PacketEvent event, String playerName) {
-        String ip = event.getPlayer().getAddress().getAddress().getHostAddress();
-
-        // 1. SMART RECONNECT CHECK
-        String verifiedUser = verifiedIPs.getIfPresent(ip);
-        if (verifiedUser != null && verifiedUser.equalsIgnoreCase(playerName)) {
-            plugin.getLogger()
-                    .info("[Smart Reconnect] " + playerName + " verified by IP cache. Granting Premium Access.");
-            premiumPlayers.add(playerName.toLowerCase());
-            resendLoginStart(event.getPlayer(), playerName);
-            return;
-        }
-
-        // 2. Check if user is Premium Name
-        Optional<UUID> mojangUUID = mojangAPI.getPremiumUUID(playerName);
-
-        SocketAddress address = event.getPlayer().getAddress();
-        cleanupContext(address);
-
-        if (mojangUUID.isPresent()) {
-            plugin.getLogger().info("[Secure Auth] " + playerName + " is a Premium Name. Challenging...");
-
-            byte[] verifyToken = new byte[4];
-            random.nextBytes(verifyToken);
-
-            // Timeout Task
-            int taskId = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                VerificationContext currentCtx = pendingContexts.get(address);
-                if (currentCtx != null && currentCtx.username.equals(playerName)) {
-                    pendingContexts.remove(address);
-                    try {
-                        event.getPlayer().kickPlayer("§cAuthentication Timeout.\n§7Impostor detection.");
-                    } catch (Exception e) {
-                    }
-                }
-            }, 300L).getTaskId();
-
-            VerificationContext context = new VerificationContext(playerName, verifyToken, taskId);
-            pendingContexts.put(address, context);
-
-            PacketContainer packet = ProtocolLibrary.getProtocolManager()
-                    .createPacket(PacketType.Login.Server.ENCRYPTION_BEGIN);
-            packet.getStrings().write(0, "");
-            packet.getByteArrays().write(0, keyPair.getPublic().getEncoded());
-            packet.getByteArrays().write(1, verifyToken);
-
-            try {
-                ProtocolLibrary.getProtocolManager().sendServerPacket(event.getPlayer(), packet);
-            } catch (Exception e) {
-                plugin.getLogger().warning("[Secure Auth] Failed to send encryption packet to " + playerName
-                        + ". Falling back to cracked.");
-                fallbackToCracked(event.getPlayer(), playerName);
-            }
-        } else {
-            plugin.getLogger().info("[Auth] " + playerName + " is NOT a Premium Name. Allowing registration.");
-            fallbackToCracked(event.getPlayer(), playerName);
-        }
-    }
-
-    private void handleEncryptionResponse(PacketEvent event) {
-        SocketAddress address = event.getPlayer().getAddress();
-        VerificationContext context = pendingContexts.get(address);
-
-        if (context == null) {
-            event.getPlayer().kickPlayer("§cInvalid session.");
-            return;
-        }
-
-        if (context.timeoutTaskId != -1) {
-            plugin.getServer().getScheduler().cancelTask(context.timeoutTaskId);
-        }
-
-        try {
-            byte[] sharedSecretEncrypted = event.getPacket().getByteArrays().read(0);
-            byte[] verifyTokenEncrypted = event.getPacket().getByteArrays().read(1);
-
-            PrivateKey privateKey = keyPair.getPrivate();
-            byte[] sharedSecret = decrypt(privateKey, sharedSecretEncrypted);
-            byte[] verifyToken = decrypt(privateKey, verifyTokenEncrypted);
-
-            // Validate Shared Secret Length
-            if (sharedSecret.length != 16) {
-                plugin.getLogger().warning("[Secure Auth] SharedSecret length is " + sharedSecret.length
-                        + " (Expected 16). Decryption Error?");
-                event.getPlayer().kickPlayer("§cEncryption Error (Invalid SharedSecret).");
-                return;
-            }
-
-            // Validate Verify Token
-            if (!Arrays.equals(context.verifyToken, verifyToken)) {
-                plugin.getLogger().warning("[Secure Auth] VerifyToken mismatch for " + context.username);
-                event.getPlayer().kickPlayer("§cVerification Failed (Wrong Key).");
-                return;
-            }
-
-            // ✅ FIX CRÍTICO: Usar el método correcto para generar el hash
-            String serverHash = generateMinecraftHash("", keyPair.getPublic(), new SecretKeySpec(sharedSecret, "AES"));
-
-            plugin.getLogger().info("[Debug] Generated serverHash for " + context.username + ": " + serverHash);
-
-            // Verify with Mojang
-            Optional<com.google.gson.JsonObject> response = mojangAPI.checkSession(context.username, serverHash);
-
-            if (response.isPresent()) {
-                String ip = event.getPlayer().getAddress().getAddress().getHostAddress();
-                plugin.getLogger().info("[✓] " + context.username + " VERIFIED as Premium! Whitelisting IP: " + ip);
-
-                verifiedIPs.put(ip, context.username);
-                premiumPlayers.add(context.username.toLowerCase());
-
-                // IMPORTANTE: En vez de kickear, dejar pasar al jugador
-                plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    resendLoginStart(event.getPlayer(), context.username);
-                });
-
-            } else {
-                plugin.getLogger()
-                        .warning("[✖] " + context.username + " validation FAILED (Code 204). Hash: " + serverHash);
-                plugin.getLogger().warning("[✖] This means the client didn't authenticate properly with Mojang.");
-                event.getPlayer().kickPlayer(
-                        "§c§lVerificación Fallida\n\n§7No pudimos verificar tu sesión con Mojang.\n§7Posibles causas:\n§7• Tu launcher no es oficial\n§7• La cuenta no es premium\n§7• Problemas de conexión");
-            }
-
-        } catch (Exception e) {
-            plugin.getLogger().severe("[Secure Auth] Exception during encryption handling:");
-            e.printStackTrace();
-            event.getPlayer().kickPlayer("§cHandshake Error.");
-        } finally {
-            pendingContexts.remove(address);
-        }
-    }
-
-    private void cleanupContext(SocketAddress address) {
-        VerificationContext old = pendingContexts.remove(address);
-        if (old != null && old.timeoutTaskId != -1) {
-            plugin.getServer().getScheduler().cancelTask(old.timeoutTaskId);
-        }
-    }
-
-    private void fallbackToCracked(org.bukkit.entity.Player player, String username) {
-        premiumPlayers.remove(username.toLowerCase());
-        resendLoginStart(player, username);
-    }
-
-    private void resendLoginStart(org.bukkit.entity.Player player, String username) {
-        PacketContainer packet = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Login.Client.START);
-        packet.getStrings().write(0, username);
-        packet.setMeta("auth_checked", true);
-
-        try {
-            ProtocolLibrary.getProtocolManager().receiveClientPacket(player, packet);
-        } catch (Exception e) {
-            plugin.getLogger().severe("[Error] Failed to resend login packet for " + username);
-            e.printStackTrace();
-        }
-    }
-
-    private byte[] decrypt(PrivateKey key, byte[] data) throws Exception {
-        // Enforce PKCS1Padding for Minecraft Compatibility
-        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        cipher.init(Cipher.DECRYPT_MODE, key);
-        return cipher.doFinal(data);
     }
 
     /**
-     * ✅ MÉTODO CORREGIDO: Genera el hash de servidor compatible con Minecraft.
+     * Maneja el inicio de login de un jugador.
      * 
-     * Este hash DEBE ser hexadecimal con SIGNO (puede ser negativo).
-     * El método anterior usaba toString(16) que no maneja el signo correctamente.
-     * 
-     * @param serverId  El server ID (normalmente vacío "")
-     * @param publicKey La clave pública RSA del servidor
-     * @param secretKey La clave secreta compartida (AES)
-     * @return Hash hexadecimal con signo compatible con Mojang
+     * LÓGICA SIMPLE:
+     * 1. Obtener UUID del cliente (el que está conectando)
+     * 2. Verificar en Mojang API si ese nombre es premium
+     * 3. Si es premium, obtener el UUID real de Mojang
+     * 4. Comparar: UUID cliente == UUID Mojang?
+     * - SÍ → Premium verificado
+     * - NO → Impostor/Cracked
      */
-    private String generateMinecraftHash(String serverId, PublicKey publicKey, SecretKey secretKey) {
+    private void handleLoginStart(PacketEvent event, String playerName) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
-            digest.update(serverId.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
-            digest.update(secretKey.getEncoded());
-            digest.update(publicKey.getEncoded());
+            // 1. Obtener UUID del jugador conectando
+            UUID clientUUID = event.getPlayer().getUniqueId();
 
-            byte[] hash = digest.digest();
+            plugin.getLogger().info("[Premium Check] Verificando: " + playerName + " (UUID: " + clientUUID + ")");
 
-            // ✅ CRÍTICO: Usar BigInteger CON SIGNO (1 indica signo)
-            java.math.BigInteger bigInt = new java.math.BigInteger(1, hash);
-            String result = bigInt.toString(16);
-
-            // ✅ CRÍTICO: Si el hash es negativo, manejar el signo
-            // Verificar si el primer bit del hash es 1 (negativo en complemento a 2)
-            if ((hash[0] & 0x80) == 0x80) {
-                // Hash negativo - aplicar complemento a 2 manualmente
-                bigInt = new java.math.BigInteger(hash);
-                result = bigInt.toString(16);
+            // 2. Verificar en cache primero
+            PremiumStatus cached = verificationCache.getIfPresent(playerName.toLowerCase());
+            if (cached != null) {
+                processVerification(event, playerName, clientUUID, cached);
+                return;
             }
 
-            return result;
+            // 3. Verificar con Mojang API
+            Optional<UUID> mojangUUID = mojangAPI.getPremiumUUID(playerName);
+
+            if (mojangUUID.isEmpty()) {
+                // NO es premium - nombre no existe en Mojang
+                plugin.getLogger().info("[Premium Check] ✖ " + playerName + " NO es cuenta premium. Modo Cracked.");
+
+                PremiumStatus status = new PremiumStatus(false, null);
+                verificationCache.put(playerName.toLowerCase(), status);
+                processVerification(event, playerName, clientUUID, status);
+                return;
+            }
+
+            // 4. Es premium - verificar UUID
+            UUID realMojangUUID = mojangUUID.get();
+
+            plugin.getLogger().info("[Premium Check] " + playerName + " es cuenta premium.");
+            plugin.getLogger().info("[UUID Check] Cliente: " + clientUUID);
+            plugin.getLogger().info("[UUID Check] Mojang:  " + realMojangUUID);
+
+            boolean uuidMatch = clientUUID.equals(realMojangUUID);
+
+            if (uuidMatch) {
+                plugin.getLogger().info("[Premium Check] ✓ UUIDs coinciden - PREMIUM VERIFICADO");
+            } else {
+                plugin.getLogger().warning("[Premium Check] ✖ UUIDs NO coinciden - IMPOSTOR DETECTADO");
+            }
+
+            PremiumStatus status = new PremiumStatus(uuidMatch, realMojangUUID);
+            verificationCache.put(playerName.toLowerCase(), status);
+            processVerification(event, playerName, clientUUID, status);
+
         } catch (Exception e) {
-            plugin.getLogger().severe("[Error] Failed to generate Minecraft hash:");
+            plugin.getLogger().severe("[Premium Check] Error verificando " + playerName + ":");
             e.printStackTrace();
-            return "";
+            // En caso de error, permitir como cracked
+            allowAsCracked(event.getPlayer(), playerName);
         }
     }
 
+    /**
+     * Procesa el resultado de la verificación
+     */
+    private void processVerification(PacketEvent event, String playerName, UUID clientUUID, PremiumStatus status) {
+        if (status.isPremium) {
+            // ✓ Es premium verificado - permitir auto-login
+            plugin.getLogger().info("[Premium Check] ✓✓✓ " + playerName + " verificado como PREMIUM REAL");
+            verifiedPremiumPlayers.add(playerName.toLowerCase());
+            allowAsVerifiedPremium(event.getPlayer(), playerName);
+        } else {
+            // ✖ No es premium O es impostor
+            if (status.mojangUUID != null && !clientUUID.equals(status.mojangUUID)) {
+                // Es un impostor intentando usar nombre premium
+                plugin.getLogger().warning("[Security Alert] ⚠ IMPOSTOR DETECTADO: " + playerName);
+                plugin.getLogger().warning("[Security Alert] → Cliente UUID: " + clientUUID);
+                plugin.getLogger().warning("[Security Alert] → Real UUID: " + status.mojangUUID);
+
+                kickImpostor(event.getPlayer(), playerName);
+            } else {
+                // Simplemente no es premium
+                plugin.getLogger().info("[Premium Check] " + playerName + " permitido en modo Cracked");
+                verifiedPremiumPlayers.remove(playerName.toLowerCase());
+                allowAsCracked(event.getPlayer(), playerName);
+            }
+        }
+    }
+
+    /**
+     * Permite el login como premium verificado
+     */
+    private void allowAsVerifiedPremium(org.bukkit.entity.Player player, String username) {
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            PacketContainer packet = ProtocolLibrary.getProtocolManager()
+                    .createPacket(PacketType.Login.Client.START);
+            packet.getStrings().write(0, username);
+            packet.setMeta("auth_checked", true);
+
+            try {
+                ProtocolLibrary.getProtocolManager().receiveClientPacket(player, packet);
+            } catch (Exception e) {
+                plugin.getLogger().severe("[Error] Failed to allow premium login for " + username);
+                e.printStackTrace();
+            }
+        });
+    }
+
+    /**
+     * Permite el login como cracked (debe registrarse)
+     */
+    private void allowAsCracked(org.bukkit.entity.Player player, String username) {
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            PacketContainer packet = ProtocolLibrary.getProtocolManager()
+                    .createPacket(PacketType.Login.Client.START);
+            packet.getStrings().write(0, username);
+            packet.setMeta("auth_checked", true);
+
+            try {
+                ProtocolLibrary.getProtocolManager().receiveClientPacket(player, packet);
+            } catch (Exception e) {
+                plugin.getLogger().severe("[Error] Failed to allow cracked login for " + username);
+                e.printStackTrace();
+            }
+        });
+    }
+
+    /**
+     * Kickea a un impostor que intenta usar nombre premium
+     */
+    private void kickImpostor(org.bukkit.entity.Player player, String username) {
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            player.kickPlayer(
+                    "§c§l⚠ IMPOSTOR DETECTADO ⚠\n\n" +
+                            "§7El nombre §e" + username + " §7es una cuenta §aPREMIUM §7real.\n" +
+                            "§7Tu UUID no coincide con el UUID de esa cuenta.\n\n" +
+                            "§7Posibles razones:\n" +
+                            "§7• Estás usando un launcher pirata\n" +
+                            "§7• Intentas hacerte pasar por otra persona\n" +
+                            "§7• Tu cuenta no es la verdadera\n\n" +
+                            "§cSi eres el dueño real, usa el launcher oficial de Minecraft.\n" +
+                            "§cSi no, elige otro nombre que no sea premium.");
+        });
+    }
+
+    /**
+     * Verifica si un jugador está marcado como premium
+     */
     public boolean isPremium(String playerName) {
-        return premiumPlayers.contains(playerName.toLowerCase());
+        return verifiedPremiumPlayers.contains(playerName.toLowerCase());
     }
 
+    /**
+     * Limpia el estado premium de un jugador
+     */
     public void clearPremiumStatus(String playerName) {
-        premiumPlayers.remove(playerName.toLowerCase());
+        verifiedPremiumPlayers.remove(playerName.toLowerCase());
     }
 
+    /**
+     * Verifica el estado de una cuenta en Mojang (async)
+     */
     public CompletableFuture<Boolean> checkMojangStatus(String playerName) {
         return CompletableFuture.supplyAsync(() -> {
-            Boolean cached = premiumCheckCache.getIfPresent(playerName.toLowerCase());
-            if (cached != null)
-                return cached;
-            boolean result = mojangAPI.getPremiumUUID(playerName).isPresent();
-            premiumCheckCache.put(playerName.toLowerCase(), result);
-            return result;
+            PremiumStatus cached = verificationCache.getIfPresent(playerName.toLowerCase());
+            if (cached != null) {
+                return cached.isPremium;
+            }
+
+            Optional<UUID> uuid = mojangAPI.getPremiumUUID(playerName);
+            boolean isPremium = uuid.isPresent();
+
+            verificationCache.put(playerName.toLowerCase(),
+                    new PremiumStatus(isPremium, uuid.orElse(null)));
+
+            return isPremium;
         });
+    }
+
+    /**
+     * Obtiene estadísticas del sistema
+     */
+    public Map<String, Object> getStats() {
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("verified_premium_players", verifiedPremiumPlayers.size());
+        stats.put("cache_size", verificationCache.estimatedSize());
+        return stats;
     }
 }

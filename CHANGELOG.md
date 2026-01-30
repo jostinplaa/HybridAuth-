@@ -32,6 +32,15 @@ Todas las mejoras notables de este proyecto serán documentadas en este archivo.
 ### ✨ Added (Nuevas Características)
 - **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
 
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+
+## [2.0.0] - 2026-01-29 (Simplified UUID Auth)
+- **Rewrite**: Reemplazado todo el sistema de RSA Handshake por verificación directa de UUID.
+- **Logic**: `UUID_Cliente == UUID_Mojang` => **Premium Real**. De lo contrario => **Impostor**.
+- **Fix**: Elimina definitivamente el error `Code 204` y `DecoderException`.
+- **Security**: Mantiene detección de impostores (Launchers piratas generan UUIDs diferentes a Mojang).
+
 ## [1.2.2] - 2026-01-29 (Hash Fix)
 - **Fix Critical**: Corregido el relleno RSA a `PKCS1Padding` para coincidir con Minecraft.
 - **Fix**: Esto soluciona el "Error 204" (Hash Mismatch) donde Mojang rechazaba la sesión válida.
