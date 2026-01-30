@@ -42,21 +42,6 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <relocations>
-                                <!-- Relocate dependencies to avoid conflicts -->
-                                <relocation>
-                                    <pattern>com.zaxxer.hikari</pattern>
-                                    <shadedPattern>net.hybridauth.libs.hikari</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>at.favre.lib.crypto.bcrypt</pattern>
-                                    <shadedPattern>net.hybridauth.libs.bcrypt</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.github.benmanes.caffeine</pattern>
-                                    <shadedPattern>net.hybridauth.libs.caffeine</shadedPattern>
-                                </relocation>
-                            </relocations>
                         </configuration>
                     </execution>
                 </executions>
