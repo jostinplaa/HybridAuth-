@@ -38,6 +38,14 @@ Todas las mejoras notables de este proyecto serán documentadas en este archivo.
 ### ✨ Added (Nuevas Características)
 - **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
 
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+
+## [2.1.1] - 2026-01-29 (Crash Fix)
+- **Fix Critical**: Corregido `FieldAccessException` (Index 0 out of bounds) al leer paquetes de login.
+- **Safety**: Añadidas verificaciones de seguridad: si `GameProfiles` está vacío, busca en `UUIDs` o `Strings`.
+- **Compat**: Compatible con versiones recientes de ProtocolLib donde la estructura del paquete ha cambiado.
+
 ## [2.1.0] - 2026-01-29 (Packet-Based UUID Fix)
 - **Fix**: Usar `WrappedGameProfile` desde el paquete `Login Start` para obtener el UUID exacto del cliente.
 - **Stability**: Resuelve problemas donde `player.getUniqueId()` devolvía UUIDs offline prematuros.

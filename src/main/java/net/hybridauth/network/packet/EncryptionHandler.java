@@ -76,27 +76,49 @@ public class EncryptionHandler {
                     return;
                 }
 
-                // ✅ CRÍTICO: Obtener GameProfile del paquete (tiene UUID y nombre)
-                WrappedGameProfile profile = event.getPacket().getGameProfiles().read(0);
+                // Safely extract data from packet
+                String playerName = null;
+                UUID clientUUID = null;
 
-                if (profile == null) {
-                    plugin.getLogger().warning("[Premium Check] No se pudo obtener GameProfile del paquete");
+                try {
+                    // Try getting GameProfile first (Older versions or specific implementations)
+                    if (event.getPacket().getGameProfiles().size() > 0) {
+                        WrappedGameProfile profile = event.getPacket().getGameProfiles().read(0);
+                        if (profile != null) {
+                            playerName = profile.getName();
+                            clientUUID = profile.getUUID();
+                        }
+                    }
+
+                    // Fallback: Try Strings and UUIDs directly (Newer versions: 1.19.3+)
+                    if (playerName == null && event.getPacket().getStrings().size() > 0) {
+                        playerName = event.getPacket().getStrings().read(0);
+                    }
+
+                    if (clientUUID == null && event.getPacket().getUUIDs().size() > 0) {
+                        clientUUID = event.getPacket().getUUIDs().read(0);
+                    }
+                } catch (Exception e) {
+                    plugin.getLogger().warning("[Premium Check] Failed to parse Login Packet: " + e.getMessage());
                     return;
                 }
-
-                String playerName = profile.getName();
-                UUID clientUUID = profile.getUUID();
 
                 if (playerName == null || playerName.isEmpty()) {
                     return;
                 }
 
-                // Cancelar el paquete original
+                // If we still don't have a UUID (Client didn't send one?), we can't verify
+                // premium status reliably
+                // But typically 1.19+ sends it. If null, we treat as cracked/unknown.
+                final UUID finalUUID = clientUUID;
+                final String finalName = playerName;
+
+                // Cancel original packet to handle auth
                 event.setCancelled(true);
 
-                // Procesar async para no bloquear el thread principal
+                // Process async
                 plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-                    handleLoginStart(event, playerName, clientUUID);
+                    handleLoginStart(event, finalName, finalUUID);
                 });
             }
         });
