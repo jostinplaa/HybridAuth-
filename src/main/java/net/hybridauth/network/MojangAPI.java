@@ -81,9 +81,6 @@ public class MojangAPI {
                 reader.close();
 
                 return Optional.of(JsonParser.parseString(response.toString()).getAsJsonObject());
-            } else {
-                System.out.println("[HybridAuth Debug] Mojang Check Failed. Code: " + responseCode + " for " + username
-                        + " with hash " + serverHash);
             }
         } catch (Exception e) {
             e.printStackTrace();
