@@ -29,6 +29,14 @@ Todas las mejoras notables de este proyecto serán documentadas en este archivo.
 ### ✨ Added (Nuevas Características)
 - **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
 
+### ✨ Added (Nuevas Características)
+- **Centralized Message System**: Se implementó `MessageManager` para manejar todos los mensajes del plugin desde `messages.yml`.
+
+## [1.2.2] - 2026-01-29 (Hash Fix)
+- **Fix Critical**: Corregido el relleno RSA a `PKCS1Padding` para coincidir con Minecraft.
+- **Fix**: Esto soluciona el "Error 204" (Hash Mismatch) donde Mojang rechazaba la sesión válida.
+- **Core**: Añadida verificación de longitud del `sharedSecret` para detectar errores de desencriptación.
+
 ## [1.2.1] - 2026-01-29 (Verification Debug)
 - **Fix**: Añadido `User-Agent` a las peticiones MojangAPI para evitar bloqueos (403 Forbidden).
 - **Core**: Logs detallados en consola (`responseCode`) para diagnosticar fallos de verificación.

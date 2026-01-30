@@ -34,9 +34,8 @@ public class EncryptionHandler {
     private final Set<String> premiumPlayers = Collections.newSetFromMap(new ConcurrentHashMap<>());
     
     // IP-based Verified Cache (The "VIP List")
-    // Key: IP address string, Value: Username
     private final Cache<String, String> verifiedIPs = Caffeine.newBuilder()
-            .expireAfterWrite(5, TimeUnit.MINUTES) // 5 Minutes access window
+            .expireAfterWrite(5, TimeUnit.MINUTES) 
             .build();
             
     // RSA Keys
@@ -54,13 +53,12 @@ public class EncryptionHandler {
     private static class VerificationContext {
         final String username;
         final byte[] verifyToken;
-        final long timestamp;
-        int timeoutTaskId = -1;
+        final int timeoutTaskId;
 
-        VerificationContext(String username, byte[] verifyToken) {
+        VerificationContext(String username, byte[] verifyToken, int timeoutTaskId) {
             this.username = username;
             this.verifyToken = verifyToken;
-            this.timestamp = System.currentTimeMillis();
+            this.timeoutTaskId = timeoutTaskId;
         }
     }
 
@@ -118,11 +116,10 @@ public class EncryptionHandler {
         String ip = event.getPlayer().getAddress().getAddress().getHostAddress();
         
         // 1. SMART RECONNECT CHECK
-        // If IP is verified for this user -> SKIP HANDSHAKE (Auto-Login)
         String verifiedUser = verifiedIPs.getIfPresent(ip);
         if (verifiedUser != null && verifiedUser.equalsIgnoreCase(playerName)) {
             plugin.getLogger().info("[Smart Reconnect] " + playerName + " verified by IP cache. Granting Premium Access.");
-            premiumPlayers.add(playerName.toLowerCase()); // Mark for AutoLogin
+            premiumPlayers.add(playerName.toLowerCase());
             resendLoginStart(event.getPlayer(), playerName);
             return;
         }
@@ -139,17 +136,18 @@ public class EncryptionHandler {
             byte[] verifyToken = new byte[4];
             random.nextBytes(verifyToken);
             
-            VerificationContext context = new VerificationContext(playerName, verifyToken);
-            
-            // Timeout -> Kick (Impostor?)
-            context.timeoutTaskId = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            // Timeout Task
+            int taskId = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                 VerificationContext currentCtx = pendingContexts.get(address);
-                if (currentCtx != null && currentCtx == context) {
+                if (currentCtx != null && currentCtx.username.equals(playerName)) {
                     pendingContexts.remove(address);
-                    event.getPlayer().kickPlayer("§cAuthentication Timeout.\n§7Impostor detection.");
+                    try {
+                         event.getPlayer().kickPlayer("§cAuthentication Timeout.\n§7Impostor detection.");
+                    } catch (Exception e) {}
                 }
             }, 300L).getTaskId();
 
+            VerificationContext context = new VerificationContext(playerName, verifyToken, taskId);
             pendingContexts.put(address, context);
 
             PacketContainer packet = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Login.Server.ENCRYPTION_BEGIN);
@@ -160,10 +158,9 @@ public class EncryptionHandler {
             try {
                 ProtocolLibrary.getProtocolManager().sendServerPacket(event.getPlayer(), packet);
             } catch (Exception e) {
-                fallbackToCracked(event.getPlayer(), playerName); // Network error?
+                fallbackToCracked(event.getPlayer(), playerName); 
             }
         } else {
-            // 3. Not a Premium Name -> Allow as Cracked (Register)
             plugin.getLogger().info("[Auth] " + playerName + " is NOT a Premium Name. Allowing registration.");
             fallbackToCracked(event.getPlayer(), playerName);
         }
@@ -190,6 +187,11 @@ public class EncryptionHandler {
             byte[] sharedSecret = decrypt(privateKey, sharedSecretEncrypted);
             byte[] verifyToken = decrypt(privateKey, verifyTokenEncrypted);
 
+            // Debug Shared Secret
+            if (sharedSecret.length != 16) {
+                 plugin.getLogger().warning("[Secure Auth] SharedSecret length is " + sharedSecret.length + " (Expected 16). Decryption Error?");
+            }
+
             if (!Arrays.equals(context.verifyToken, verifyToken)) {
                 event.getPlayer().kickPlayer("§cVerification Failed (Wrong Key).");
                 return;
@@ -201,20 +203,17 @@ public class EncryptionHandler {
             Optional<com.google.gson.JsonObject> response = mojangAPI.checkSession(context.username, serverHash);
             
             if (response.isPresent()) {
-                // SUCCESS!
                 String ip = event.getPlayer().getAddress().getAddress().getHostAddress();
                 plugin.getLogger().info("[Smart Reconnect] " + context.username + " VERIFIED! Whitelisting IP: " + ip);
                 
-                // Add to VIP Cache
-                verifiedIPs.put(ip, context.username); // Valid for 5 minutes
+                verifiedIPs.put(ip, context.username); 
                 
-                // KICK to force Reconnect (Clean Session)
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                    event.getPlayer().kickPlayer("§a§l¡IDENTIDAD VERIFICADA! :)\n\n§ePor favor, entra de nuevo\n§epara acceder automáticamente.");
                 });
                 
             } else {
-                plugin.getLogger().warning("[Secure Auth] FAILED: " + context.username + " validation failed.");
+                plugin.getLogger().warning("[Secure Auth] FAILED: " + context.username + " validation failed (Code 204). Hash: " + serverHash);
                 event.getPlayer().kickPlayer("§cError verificando sesión con Mojang.\n§7Asegúrate de ser el dueño real de la cuenta.");
             }
 
@@ -251,7 +250,8 @@ public class EncryptionHandler {
     }
 
     private byte[] decrypt(PrivateKey key, byte[] data) throws Exception {
-        Cipher cipher = Cipher.getInstance("RSA");
+        // Enforce PKCS1Padding for Minecraft Compatibility
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher.init(Cipher.DECRYPT_MODE, key);
         return cipher.doFinal(data);
     }
@@ -259,17 +259,13 @@ public class EncryptionHandler {
     private String getHash(String serverId, PublicKey publicKey, SecretKey secretKey) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-1");
-            digest.update(serverId.getBytes("ISO_8859_1"));
-            digest.update(sharedSecret(secretKey));
+            digest.update(serverId.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+            digest.update(secretKey.getEncoded());
             digest.update(publicKey.getEncoded());
             return new java.math.BigInteger(digest.digest()).toString(16);
         } catch (Exception e) {
             return "";
         }
-    }
-    
-    private byte[] sharedSecret(SecretKey key) {
-        return key.getEncoded();
     }
 
     public boolean isPremium(String playerName) {
@@ -278,7 +274,6 @@ public class EncryptionHandler {
     
     public void clearPremiumStatus(String playerName) {
         premiumPlayers.remove(playerName.toLowerCase());
-        // Do NOT clear verifiedIPs immediately, allow quick reconnects in case of lag
     }
 
     public CompletableFuture<Boolean> checkMojangStatus(String playerName) {
