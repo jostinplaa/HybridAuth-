@@ -220,4 +220,92 @@ public class UserDAO {
             return new Timestamp(System.currentTimeMillis());
         }
     }
+
+    // ========== ASYNC METHODS FOR AUTO-LOGIN ==========
+
+    /**
+     * Crea un usuario premium de forma asíncrona (para auto-register)
+     */
+    public java.util.concurrent.CompletableFuture<Void> createPremiumUser(String username, UUID premiumUUID) {
+        return java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                User user = new User(premiumUUID, username, User.AuthType.PREMIUM);
+                user.setPremiumUuid(premiumUUID);
+                user.setPasswordHash(null); // Premium no necesita password
+                user.setLastLoginDate(new Timestamp(System.currentTimeMillis()));
+                user.setTotalLogins(1);
+                createUser(user);
+            } catch (SQLException e) {
+                throw new RuntimeException("Failed to create premium user", e);
+            }
+        });
+    }
+
+    /**
+     * Obtiene usuario por nombre de forma asíncrona
+     */
+    public java.util.concurrent.CompletableFuture<User> getUserByName(String username) {
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            return getUserByUsername(username).orElse(null);
+        });
+    }
+
+    /**
+     * Actualiza estadísticas de login de forma asíncrona
+     */
+    public java.util.concurrent.CompletableFuture<Void> updateLoginStats(String username, String ip) {
+        return java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                Optional<User> userOpt = getUserByUsername(username);
+                if (userOpt.isPresent()) {
+                    User user = userOpt.get();
+                    user.setLastLoginDate(new Timestamp(System.currentTimeMillis()));
+                    user.setLastIp(ip);
+                    user.incrementLogins();
+                    updateUser(user);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException("Failed to update login stats", e);
+            }
+        });
+    }
+
+    /**
+     * Migra una cuenta cracked a premium
+     */
+    public java.util.concurrent.CompletableFuture<Void> upgradeToPremium(String username, UUID premiumUUID) {
+        return java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                Optional<User> userOpt = getUserByUsername(username);
+                if (userOpt.isPresent()) {
+                    User user = userOpt.get();
+                    user.setAuthType(User.AuthType.PREMIUM);
+                    user.setPremiumUuid(premiumUUID);
+                    user.setPasswordHash(null); // Ya no necesita password
+                    updateUser(user);
+
+                    // Invalidar cache para forzar recarga
+                    userCache.invalidate(user.getUuid());
+                    usernameCache.invalidate(username.toLowerCase());
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException("Failed to upgrade to premium", e);
+            }
+        });
+    }
+
+    /**
+     * Invalida el cache de un usuario
+     */
+    public void invalidateCache(String username) {
+        usernameCache.invalidate(username.toLowerCase());
+    }
+
+    /**
+     * Invalida todo el cache
+     */
+    public void invalidateAllCache() {
+        userCache.invalidateAll();
+        usernameCache.invalidateAll();
+    }
 }

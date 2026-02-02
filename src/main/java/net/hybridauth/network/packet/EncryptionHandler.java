@@ -238,4 +238,20 @@ public class EncryptionHandler {
         stats.put("cache_size", verificationCache.estimatedSize());
         return stats;
     }
+
+    public void clearCache() {
+        verificationCache.invalidateAll();
+        verifiedPremiumPlayers.clear();
+        plugin.getLogger().info("[EncryptionHandler] Cache cleared manually.");
+    }
+
+    public void removePremiumStatus(String playerName) {
+        clearPremiumStatus(playerName); // Alias
+        verificationCache.invalidate(playerName.toLowerCase());
+    }
+
+    public void forcePremiumStatus(String playerName, UUID uuid) {
+        verifiedPremiumPlayers.add(playerName.toLowerCase());
+        verificationCache.put(playerName.toLowerCase(), new PremiumStatus(true, uuid));
+    }
 }

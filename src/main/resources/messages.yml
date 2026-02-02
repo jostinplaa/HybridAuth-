@@ -237,6 +237,51 @@ authentication:
   bedrock_player: "&b&l⛏ &bJugador Bedrock detectado. &7Sistema compatible activado."
 
 # ===================================================
+# PREMIUM AUTO-LOGIN - NUEVAS FEATURES
+# ===================================================
+auth:
+  # Se requiere registrarse
+  register-required: "&e&l⚠ &eYou must register: &f/register <password> <password>"
+  
+  # Se requiere login
+  login-required: "&e&l⚠ &eYou must login: &f/login <password>"
+  
+  # Error de verificación premium
+  premium-verification-failed: |-
+    {no-prefix}&c&l━━━━━━━━━━━━━━━━━━━━━━━━
+    &c&lPREMIUM VERIFICATION FAILED
+    &c&l━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    &7Could not verify your premium status.
+    &7Please try reconnecting.
+    
+    &7If the problem persists, contact an admin.
+    &c&l━━━━━━━━━━━━━━━━━━━━━━━━
+  
+  # Títulos
+  welcome-title: "&a&l✔ WELCOME"
+  premium-auto-registered: "&7Premium account registered"
+  welcome-back-title: "&a&lWELCOME BACK"
+  premium-auto-login: "&7Auto-logged as premium"
+  
+  # Migración de cuenta
+  migration:
+    success: |-
+      &a&l✔ &aAccount upgraded to PREMIUM!
+      &7
+      &7From now on:
+      &a  ✔ Auto-login (no password needed)
+      &a  ✔ Protected by Mojang
+      &a  ✔ Works on all Java servers
+      &7
+      &eReconnect to activate changes.
+    
+    failed: "&c&l✖ &cFailed to upgrade account. Contact an admin."
+    not_premium: "&c&l✖ &cYou are not a premium player!"
+    wrong_password: "&c&l✖ &cIncorrect password!"
+    usage: "&cUsage: &e/hybridauth migrate <your_password>"
+
+# ===================================================
 # TÍTULOS Y SUBTÍTULOS
 # Estos aparecen en pantalla grande
 # ===================================================

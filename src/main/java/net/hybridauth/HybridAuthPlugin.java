@@ -68,13 +68,18 @@ public class HybridAuthPlugin extends JavaPlugin {
         // 6. Inicializar servicios core
         this.authStateManager = new AuthStateManager();
         this.passwordService = new PasswordService(this);
-        this.encryptionHandler = new EncryptionHandler(this);
+        // this.encryptionHandler = new EncryptionHandler(this); // Ya no se usa
+        // (requiere ProtocolLib)
         this.securityLogger = new net.hybridauth.security.SecurityLogger(this);
         this.sessionManager = new net.hybridauth.core.session.SessionManager(this);
 
         // 7. Registrar listeners
         getServer().getPluginManager().registerEvents(new LoginListener(this, authStateManager), this);
         getServer().getPluginManager().registerEvents(new net.hybridauth.listeners.SecurityListener(this), this);
+
+        // 7.5. Registrar AUTO-LOGIN para premium (¡LA NUEVA FEATURE!)
+        getServer().getPluginManager().registerEvents(new net.hybridauth.core.auth.AutoLoginManager(this), this);
+        getLogger().info("✓ Premium auto-login enabled");
 
         // 8. Registrar Comandos
         getCommand("login").setExecutor(new LoginCommand(this));
@@ -105,14 +110,6 @@ public class HybridAuthPlugin extends JavaPlugin {
     }
 
     private boolean checkDependencies() {
-        // Verificar ProtocolLib
-        if (Bukkit.getPluginManager().getPlugin("ProtocolLib") == null) {
-            getLogger().severe("ProtocolLib not found! Please install it.");
-            return false;
-        }
-
-        getLogger().info("✓ ProtocolLib found");
-
         // Verificar Floodgate (opcional)
         if (Bukkit.getPluginManager().getPlugin("Floodgate") != null) {
             getLogger().info("✓ Floodgate detected - Bedrock support enabled");
@@ -125,6 +122,32 @@ public class HybridAuthPlugin extends JavaPlugin {
         saveDefaultConfig();
         saveResource("messages.yml", false); // Save messages file
         getLogger().info("✓ Configuration loaded");
+    }
+
+    /**
+     * Reinicializa servicios que dependen de la configuración
+     * Llamar después de reloadConfig()
+     */
+    public void reinitializeServices() {
+        getLogger().info("Reinitializing services...");
+
+        // 1. Reiniciar SessionManager
+        this.sessionManager = new net.hybridauth.core.session.SessionManager(this);
+        getLogger().info("✓ SessionManager reinitialized");
+
+        // 2. Reiniciar RateLimitService
+        this.rateLimitService = new RateLimitService(this);
+        getLogger().info("✓ RateLimitService reinitialized");
+
+        // 3. Reiniciar PasswordService
+        this.passwordService = new PasswordService(this);
+        getLogger().info("✓ PasswordService reinitialized");
+
+        // 4. Limpiar cache de EncryptionHandler
+        this.encryptionHandler.clearCache();
+        getLogger().info("✓ EncryptionHandler cache cleared");
+
+        getLogger().info("All services reinitialized successfully!");
     }
 
     // Getters

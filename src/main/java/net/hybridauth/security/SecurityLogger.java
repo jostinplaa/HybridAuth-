@@ -54,6 +54,23 @@ public class SecurityLogger {
         RATE_LIMIT,
         SUSPICIOUS,
         LOGOUT,
-        PASSWORD_CHANGE
+        PASSWORD_CHANGE,
+        IMPOSTOR_DETECTED,
+        PREMIUM_AUTO_LOGIN,
+        PREMIUM_AUTO_REGISTER,
+        MIGRATION
+    }
+
+    // Helper methods para logging simplificado
+    public void logInfo(String message) {
+        plugin.getLogger().info("[Security] " + message);
+    }
+
+    public void logWarning(String message) {
+        plugin.getLogger().warning("[Security] " + message);
+    }
+
+    public void logCritical(String message) {
+        plugin.getLogger().severe("[Security] ⚠ CRITICAL: " + message);
     }
 }

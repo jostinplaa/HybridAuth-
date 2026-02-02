@@ -69,6 +69,23 @@ public class RegisterCommand implements CommandExecutor {
         String password = args[0];
         String confirm = args[1];
 
+        // 4.5. Verificar rate limit (protección contra spam de registros)
+        String ip = player.getAddress().getAddress().getHostAddress();
+        if (!plugin.getRateLimitService().checkLimit(ip)) {
+            long remainingSeconds = plugin.getRateLimitService().getSecondsRemaining(ip);
+
+            // KICKEAR AL JUGADOR con mensaje personalizado
+            String kickMessage = buildRateLimitKickMessage(remainingSeconds);
+            player.kickPlayer(kickMessage);
+
+            // Log del evento
+            plugin.getLogger()
+                    .warning("[Rate Limit] " + player.getName() + " kicked during register - IP blocked for " +
+                            formatTime(remainingSeconds));
+
+            return true;
+        }
+
         // 4. Verificar base de datos (Usuario existe?) -> Usamos comprobación rápida si
         // es posible
         // Nota: Para optimización, esto podría revisarse antes, pero asumimos que el
@@ -115,80 +132,108 @@ public class RegisterCommand implements CommandExecutor {
         // 7. Hash de la contraseña
         String hash = plugin.getPasswordService().hashPassword(password);
 
-        // 8. Crear objeto Usuario
-        // Verificar asíncronamente si es Premium para marcarlo correctamente
-        plugin.getEncryptionHandler().checkMojangStatus(player.getName()).thenAccept(isPremium -> {
+        // 8. Crear objeto Usuario (siempre CRACKED porque los premium hacen auto-login)
+        User newUser = new User(uuid, player.getName(), User.AuthType.CRACKED);
+        newUser.setPasswordHash(hash);
+        newUser.setLastIp(player.getAddress().getAddress().getHostAddress());
+        newUser.setStatus("ACTIVE");
 
-            User.AuthType authType = isPremium ? User.AuthType.PREMIUM : User.AuthType.CRACKED;
-            User newUser = new User(uuid, player.getName(), authType);
+        // 9. Feedback visual de procesamiento
+        messages.sendActionBar(player, "success.processing");
 
-            // Si es premium, intentamos obtener su UUID real (aunque en offline mode usamos
-            // el offline UUID para ID)
-            // Guardamos el UUID premium en el campo premium_uuid si quisiéramos, pero por
-            // ahora AuthType es lo importante.
+        // 10. Guardar en BD asíncronamente
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                plugin.getDatabaseManager().getUserDAO().createUser(newUser);
 
-            newUser.setPasswordHash(hash);
-            newUser.setLastIp(player.getAddress().getAddress().getHostAddress());
-            newUser.setStatus("ACTIVE");
+                // Log Security Event
+                plugin.getSecurityLogger().log(
+                        net.hybridauth.security.SecurityLogger.EventType.REGISTER,
+                        newUser.getUsername(),
+                        newUser.getUuid(),
+                        newUser.getLastIp(),
+                        "Registered via Command (AuthType: CRACKED)");
 
-            // 9. Feedback visual de procesamiento
-            messages.sendActionBar(player, "success.processing");
+                // Resetear Rate Limit por si acaso
+                plugin.getRateLimitService().resetLimit(newUser.getLastIp());
 
-            // 10. Guardar en BD asíncronamente
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-                try {
-                    plugin.getDatabaseManager().getUserDAO().createUser(newUser);
+                // Crear sesión persistente inmediata
+                plugin.getSessionManager().createSession(newUser.getUuid(), newUser.getLastIp());
 
-                    // Log Security Event
-                    plugin.getSecurityLogger().log(
-                            net.hybridauth.security.SecurityLogger.EventType.REGISTER,
-                            newUser.getUsername(),
-                            newUser.getUuid(),
-                            newUser.getLastIp(),
-                            "Registered via Command (AuthType: " + authType + ")");
+                //// Volver al thread principal para acciones de Bukkit API
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    // Autenticar
+                    plugin.getAuthStateManager().setAuthState(player, AuthState.AUTHENTICATED);
 
-                    // Resetear Rate Limit por si acaso
-                    plugin.getRateLimitService().resetLimit(newUser.getLastIp());
+                    // Remover restricciones
+                    player.removePotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS);
+                    player.removePotionEffect(org.bukkit.potion.PotionEffectType.SLOW);
 
-                    // Crear sesión persistente inmediata
-                    plugin.getSessionManager().createSession(newUser.getUuid(), newUser.getLastIp());
+                    // Enviar mensajes de éxito
+                    messages.send(player, "success.registered",
+                            MessageManager.placeholder()
+                                    .add("player", player.getName())
+                                    .build());
 
-                    // Volver al thread principal para acciones de Bukkit API
-                    plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        // Autenticar
-                        plugin.getAuthStateManager().setAuthState(player, AuthState.AUTHENTICATED);
+                    messages.send(player, "success.enjoy");
 
-                        // Remover restricciones
-                        player.removePotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS);
-                        player.removePotionEffect(org.bukkit.potion.PotionEffectType.SLOW);
+                    // Títulos y Sonidos
+                    messages.sendTitle(player, "titles.register_success.title", "titles.register_success.subtitle");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f,
+                            1.2f);
+                });
 
-                        // Enviar mensajes de éxito
-                        messages.send(player, "success.registered",
-                                MessageManager.placeholder()
-                                        .add("player", player.getName())
-                                        .build());
-
-                        messages.send(player, "success.enjoy");
-
-                        // Mensaje extra si se detectó premium
-                        if (isPremium) {
-                            player.sendMessage("§a§l[!] §aTu cuenta ha sido marcada como §6Premium§a.");
-                        }
-
-                        // Títulos y Sonidos
-                        messages.sendTitle(player, "titles.register_success.title", "titles.register_success.subtitle");
-                        player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f,
-                                1.2f);
-                    });
-
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    plugin.getServer().getScheduler().runTask(plugin,
-                            () -> messages.send(player, "error.database_error"));
-                }
-            });
+            } catch (SQLException e) {
+                e.printStackTrace();
+                plugin.getServer().getScheduler().runTask(plugin,
+                        () -> messages.send(player, "error.database_error"));
+            }
         });
 
         return true;
+    }
+
+    /**
+     * Construye el mensaje de kick por rate limiting
+     */
+    private String buildRateLimitKickMessage(long seconds) {
+        String timeFormatted = formatTime(seconds);
+
+        return """
+                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                §c§lHybridAuth Security
+                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                §7Tu dirección IP está §ctemporalmente bloqueada§7.
+
+                §eRazón: §fDemasiados intentos fallidos de autenticación
+                §eExpira en: §f%s
+
+                §7Si crees que esto es un error, contacta
+                §7a un administrador del servidor.
+
+                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                """.formatted(timeFormatted);
+    }
+
+    /**
+     * Formatea segundos a un string legible (Xm Ys o Xs)
+     */
+    private String formatTime(long seconds) {
+        if (seconds >= 60) {
+            long minutes = seconds / 60;
+            long remainingSeconds = seconds % 60;
+
+            if (remainingSeconds > 0) {
+                return String.format("%d minuto%s %d segundo%s",
+                        minutes, minutes != 1 ? "s" : "",
+                        remainingSeconds, remainingSeconds != 1 ? "s" : "");
+            } else {
+                return String.format("%d minuto%s", minutes, minutes != 1 ? "s" : "");
+            }
+        } else {
+            return String.format("%d segundo%s", seconds, seconds != 1 ? "s" : "");
+        }
     }
 }

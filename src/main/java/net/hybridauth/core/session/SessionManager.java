@@ -20,10 +20,16 @@ public class SessionManager {
     public SessionManager(HybridAuthPlugin plugin) {
         this.plugin = plugin;
         FileConfiguration config = plugin.getConfig();
-        // Default 24 hours
-        this.sessionDurationMillis = config.getLong("sessions.duration_hours", 24) * 3600 * 1000;
 
-        // Cleanup expired sessions on startup/periodically
+        // ANTES: config.getLong("sessions.duration_hours", 24)
+        // AHORA: Leer de la ruta correcta en config.yml
+
+        long durationSeconds = config.getLong("security.sessions.duration", 86400); // 24 horas en segundos
+        this.sessionDurationMillis = durationSeconds * 1000;
+
+        plugin.getLogger().info(
+                "SessionManager initialized - Duration: " + durationSeconds + "s (" + (durationSeconds / 3600) + "h)");
+
         cleanExpiredSessions();
     }
 
@@ -68,35 +74,82 @@ public class SessionManager {
     }
 
     public boolean validateSession(UUID uuid, String ip) {
-        // Synchronous check usually needed for pre-login, but we can do it async if we
-        // suspend login event.
-        // For simplicity/performance in this MVP, we might check Cache if we
-        // implemented it, or DB.
-        // Since this is typically called in AsyncPreLogin or LoginListener (async), DB
-        // is fine.
+        String sql;
+        boolean isSQLite = false;
 
-        String sql = "SELECT * FROM hybrid_sessions WHERE user_uuid = ? AND active = 1"; // AND player_ip = ? (Optional
-                                                                                         // IP lock)
+        try (Connection conn = plugin.getDatabaseManager().getConnection()) {
+            isSQLite = conn.getMetaData().getURL().contains("sqlite");
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Failed to detect database type: " + e.getMessage());
+            return false;
+        }
+
+        if (isSQLite) {
+            // SQLite: Comparar timestamps como strings
+            sql = "SELECT * FROM hybrid_sessions WHERE user_uuid = ? AND active = 1 " +
+                    "AND datetime(expires_at) > datetime('now')";
+        } else {
+            // MySQL: Comparar timestamps normales
+            sql = "SELECT * FROM hybrid_sessions WHERE user_uuid = ? AND active = 1 " +
+                    "AND expires_at > NOW()";
+        }
 
         try (Connection conn = plugin.getDatabaseManager().getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, uuid.toString());
-            // stmt.setString(2, ip); // If we want to IP lock sessions
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    // Check expiry
-                    // ... (Implementation depends on how we read timestamps from SQLite/MySQL
-                    // generic)
-                    // Simplified: just return true if record exists and active
+                    // Sesión válida y NO expirada
+                    plugin.getLogger().info("[Session] Valid session found for " + uuid);
+
+                    // Actualizar last_activity (opcional)
+                    updateLastActivity(uuid);
+
                     return true;
+                } else {
+                    plugin.getLogger().info("[Session] No valid session for " + uuid + " (expired or not found)");
+                    return false;
                 }
             }
         } catch (SQLException e) {
+            plugin.getLogger().severe("Error validating session: " + e.getMessage());
             e.printStackTrace();
         }
         return false;
+    }
+
+    /**
+     * Actualiza el timestamp de última actividad de una sesión
+     */
+    private void updateLastActivity(UUID uuid) {
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            boolean isSQLite = false;
+
+            try (Connection conn = plugin.getDatabaseManager().getConnection()) {
+                isSQLite = conn.getMetaData().getURL().contains("sqlite");
+            } catch (SQLException e) {
+                return;
+            }
+
+            String sql;
+            if (isSQLite) {
+                sql = "UPDATE hybrid_sessions SET last_activity = datetime('now') WHERE user_uuid = ? AND active = 1";
+            } else {
+                sql = "UPDATE hybrid_sessions SET last_activity = NOW() WHERE user_uuid = ? AND active = 1";
+            }
+
+            try (Connection conn = plugin.getDatabaseManager().getConnection();
+                    PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+                stmt.setString(1, uuid.toString());
+                stmt.executeUpdate();
+
+            } catch (SQLException e) {
+                plugin.getLogger().warning("Failed to update session activity: " + e.getMessage());
+            }
+        });
     }
 
     public void invalidateSession(UUID uuid) {

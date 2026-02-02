@@ -46,9 +46,19 @@ public class AdminCommand implements CommandExecutor {
 
         switch (args[0].toLowerCase()) {
             case "reload":
+                // 1. Recargar config.yml del disco
                 plugin.reloadConfig();
+
+                // 2. Recargar messages.yml
                 plugin.getMessageManager().reload();
+
+                // 3. CRÍTICO: Reinicializar servicios
+                plugin.reinitializeServices();
+
                 messages.send(sender, "admin.reload.success");
+                sender.sendMessage("§a✓ Config reloaded");
+                sender.sendMessage("§a✓ Messages reloaded");
+                sender.sendMessage("§a✓ Services reinitialized");
                 break;
 
             case "unregister":
@@ -61,6 +71,10 @@ public class AdminCommand implements CommandExecutor {
 
             case "stats":
                 handleStats(sender);
+                break;
+
+            case "migrate":
+                handleMigrate(sender, args);
                 break;
 
             default:
@@ -205,6 +219,79 @@ public class AdminCommand implements CommandExecutor {
     }
 
     /**
+     * Migra una cuenta cracked a premium
+     */
+    private void handleMigrate(CommandSender sender, String[] args) {
+        // Solo jugadores pueden migrar su propia cuenta
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("§cThis command can only be used by players.");
+            return;
+        }
+
+        if (args.length < 2) {
+            messages.send(sender, "auth.migration.usage");
+            return;
+        }
+
+        Player player = (Player) sender;
+        String password = args[1];
+
+        // Verificar que sea premium
+        if (!net.hybridauth.network.netty.PremiumDetector.isPremium(player.getName())) {
+            messages.send(sender, "auth.migration.not_premium");
+            return;
+        }
+
+        UUID premiumUUID = net.hybridauth.network.netty.PremiumDetector.getRealUUID(player.getName());
+        if (premiumUUID == null) {
+            player.sendMessage("§c§l✖ §cCould not detect your premium UUID. Try reconnecting.");
+            return;
+        }
+
+        // Procesar migración
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                Optional<User> userOpt = plugin.getDatabaseManager().getUserDAO().getUserByUsername(player.getName());
+
+                if (userOpt.isEmpty()) {
+                    plugin.getServer().getScheduler().runTask(plugin,
+                            () -> player.sendMessage("§c§l✖ §cYou are not registered!"));
+                    return;
+                }
+
+                User user = userOpt.get();
+
+                // Ya es premium
+                if (user.isPremium()) {
+                    plugin.getServer().getScheduler().runTask(plugin,
+                            () -> player.sendMessage("§e§l⚠ §eYour account is already premium!"));
+                    return;
+                }
+
+                // Verificar contraseña
+                if (!plugin.getPasswordService().verifyPassword(password, user.getPasswordHash())) {
+                    messages.send(sender, "auth.migration.wrong_password");
+                    plugin.getSecurityLogger().logWarning("Failed migration attempt for " + player.getName());
+                    return;
+                }
+
+                // Migrar
+                plugin.getDatabaseManager().getUserDAO().upgradeToPremium(player.getName(), premiumUUID).thenRun(() -> {
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        messages.send(sender, "auth.migration.success");
+                        plugin.getSecurityLogger().logInfo("Account migrated to premium: " + player.getName());
+                    });
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                plugin.getServer().getScheduler().runTask(plugin,
+                        () -> messages.send(sender, "auth.migration.failed"));
+            }
+        });
+    }
+
+    /**
      * Clase auxiliar para almacenar el contexto de una confirmación.
      */
     private static class ConfirmationContext {
@@ -216,4 +303,8 @@ public class AdminCommand implements CommandExecutor {
             this.action = action;
         }
     }
+
+    /**
+     * Comando administrativo para gestionar HybridAuth.
+     */
 }

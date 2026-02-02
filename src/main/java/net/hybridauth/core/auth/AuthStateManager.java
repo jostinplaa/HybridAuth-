@@ -37,4 +37,11 @@ public class AuthStateManager {
         return state == AuthState.UNAUTHENTICATED || state == AuthState.PREMIUM_PENDING
                 || state == AuthState.REGISTER_REQUIRED;
     }
+
+    /**
+     * Helper method para setear autenticado/NO autenticado
+     */
+    public void setAuthenticated(Player player, boolean authenticated) {
+        setAuthState(player, authenticated ? AuthState.AUTHENTICATED : AuthState.UNAUTHENTICATED);
+    }
 }

@@ -1,94 +1,228 @@
-# HybridAuth Premium 🛡️
+# HybridAuth - Sistema de Autenticación Híbrida
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg) ![Java](https://img.shields.io/badge/Java-17-orange.svg) ![Spigot](https://img.shields.io/badge/Spigot-1.20+-yellow.svg)
+[![Minecraft Version](https://img.shields.io/badge/Minecraft-1.20.4+-brightgreen)](https://www.spigotmc.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Size](https://img.shields.io/badge/Size-213KB-orange)](https://github.com/jostinplaa/HybridAuth/releases)
 
-**HybridAuth** es una solución de autenticación avanzada para servidores de Minecraft híbridos (Premium/Cracked). Diseñado con seguridad de nivel empresarial y una experiencia de usuario fluida.
+**Plugin de autenticación híbrida para servidores Minecraft que soporta tanto jugadores Premium como No-Premium.**
 
 ---
 
-## 🚀 Características Premium
+## 🌟 Características Principales
+
+### ✅ Detección Premium Automática
+- **Consulta Mojang API** para verificación real en servidores offline-mode
+- Auto-login instantáneo para cuentas premium
+- Sin necesidad de ProtocolLib
 
 ### 🔐 Seguridad Avanzada
-- **Autenticación Híbrida**: Detección automática de jugadores Premium (Mojang) para auto-login seguro sin contraseñas.
-- **BCrypt Hashing**: Las contraseñas se almacenan utilizando encriptación de grado militar.
-- **Protección Anti-Bot**: Rate limiting inteligente con bloqueo progresivo de IPs.
-- **Validación de Contraseñas**: Reglas configurables para forzar contraseñas fuertes.
-- **Sanitización de Inputs**: Protección contra inyecciones y exploits.
+- **Rate Limiting** con bloqueo de IP temporal
+- **BCrypt** para hashing de contraseñas
+- Detección de intentos de impostor
+- Sistema de sesiones persistentes
+- Registro de eventos de seguridad
 
-### 💎 Experiencia de Usuario (UX)
-- **Sistema de Mensajes Centralizado**: Todos los mensajes son configurables en `messages.yml`.
-- **Soporte RGB**: Colores HEX y gradientes en todos los mensajes.
-- **Feedback Visual**: Títulos, subtítulos y action bars interactivos.
-- **Sonidos**: Efectos de sonido para eventos de éxito o error.
-- **Restricciones Visuales**: Efectos de ceguera/lentitud configurables para usuarios no autenticados.
+### 💾 Almacenamiento Flexible
+- **SQLite** (por defecto) - Sin configuración
+- **MySQL/MariaDB** - Para servidores en red
+- **HikariCP** para optimización de conexiones
 
-### 🛠️ Herramientas Administrativas
-- **Comandos Seguros**: Sistema de confirmación para acciones destructivas (`unregister`).
-- **Tab Completion**: Autocompletado inteligente para todos los comandos.
-- **Estadísticas en Tiempo Real**: Visualiza usuarios totales, premium, cracked y sesiones activas.
-- **Reload en Caliente**: Actualiza configuración y mensajes sin reiniciar.
+### 🎨 Experiencia de Usuario
+- Mensajes totalmente personalizables (`messages.yml`)
+- Títulos y action bars animados
+- Sistema de placeholders dinámicos
+- Efectos de partículas y sonidos
+
+### ⚡ Ultra-Ligero
+- **Solo 213 KB** - Reducción del 99% vs versión anterior
+- Paper Library Loader - Dependencias auto-descargadas
+- Sin impacto en rendimiento
 
 ---
 
 ## 📦 Instalación
 
-1. Descarga el archivo `.jar` de la [sección de Releases](#).
-2. Colócalo en la carpeta `plugins/` de tu servidor.
-3. **Reinicia** el servidor.
-4. (Opcional) Configura `config.yml` y `messages.yml` a tu gusto.
+### Requisitos
+- **Servidor:** Paper/Spigot 1.16.5+
+- **Java:** 17+
+- **Dependencias:** Ninguna (se descargan automáticamente)
 
-### Dependencias Requeridas
-- **Java 17** o superior.
-- **ProtocolLib** (necesario para la detección de paquetes Premium).
+### Pasos
+1. Descarga `HybridAuth-1.1.0.jar` desde [Releases](https://github.com/jostinplaa/HybridAuth/releases)
+2. Arrastra el archivo a la carpeta `plugins/` de tu servidor
+3. Reinicia el servidor
+4. ¡Listo! Las dependencias se descargan automáticamente
 
 ---
 
 ## ⚙️ Configuración
 
-### base de datos
-Soporta **SQLite** (por defecto) y **MySQL** para redes BungeeCord/Velocity.
-
+### config.yml
 ```yaml
 database:
-  type: sqlite # o mysql
-```
+  type: SQLITE  # o MYSQL
+  
+mysql:
+  host: localhost
+  port: 3306
+  database: hybridauth
+  username: root
+  password: ''
 
-### Seguridad
-Configura los límites de intentos y reglas de contraseña en `config.yml`.
+authentication:
+  timeout-seconds: 60
+  max-password-length: 30
+  min-password-length: 6
 
-```yaml
 security:
-  password:
-    min-length: 8
-    require-special-char: true
   rate-limit:
-    max-attempts-per-ip: 5
-    block-duration-seconds: 300
+    enabled: true
+    max-attempts: 5
+    lockout-duration-seconds: 300
 ```
+
+### Personalizar Mensajes
+Edita `messages.yml` para cambiar todos los textos del plugin a tu idioma o estilo.
 
 ---
 
-## 📝 Comandos y Permisos
+## 📖 Comandos
 
 | Comando | Descripción | Permiso |
 |---------|-------------|---------|
-| `/login <pass>` | Iniciar sesión | N/A |
-| `/register <pass> <pass>` | Registrarse | N/A |
-| `/changepassword <old> <new>` | Cambiar contraseña | N/A |
-| `/logout` | Cerrar sesión actual | N/A |
+| `/register <pass> <pass>` | Registrarse | - |
+| `/login <pass>` | Iniciar sesión | - |
+| `/changepassword <old> <new>` | Cambiar contraseña | - |
+| `/logout` | Cerrar sesión | - |
 | `/hybridauth reload` | Recargar config | `hybridauth.admin` |
-| `/hybridauth unregister <user>` | Borrar cuenta de usuario | `hybridauth.admin` |
-| `/hybridauth stats` | Ver estadísticas | `hybridauth.admin` |
+| `/hybridauth resetpassword <player>` | Resetear contraseña | `hybridauth.admin` |
 
 ---
 
-## 🏗️ Audit & Compliance
-Este plugin ha pasado una **Auditoría de Seguridad** completa (Enero 2026), resolviendo vulnerabilidades críticas como:
-- ✅ Mensajes hardcodeados (Ahora 100% configurables)
-- ✅ Validaciones de seguridad faltantes
-- ✅ Feedback de usuario inexistente
-- ✅ Gestión de sesiones insegura
+## 🔧 Cómo Funciona
+
+### Detección Premium en Offline Mode
+
+```
+┌─────────────────────────────────────┐
+│  Player connects (offline-mode)     │
+│  UUID = v3 (always, for everyone)   │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│  Query Mojang API (async)           │
+│  GET /users/profiles/minecraft/NAME │
+└──────────────┬──────────────────────┘
+               │
+       ┌───────┴────────┐
+       │                │
+    200 OK           404 Not Found
+       │                │
+       ▼                ▼
+   PREMIUM          CRACKED
+  Auto-login    Require /register
+```
+
+### Flujo de Autenticación
+
+**Jugador Premium:**
+1. Conexión → Consulta Mojang API
+2. Cuenta existe → Auto-registro/login
+3. Acceso inmediato ✅
+
+**Jugador Cracked:**
+1. Conexión → Consulta Mojang API
+2. Cuenta NO existe → Mostrar mensaje
+3. `/register <pass> <pass>` → Registrado
+4. Próximas conexiones: `/login <pass>`
 
 ---
 
-**Desarrollado con ❤️ para la comunidad de Minecraft.**
+## 🏗️ Arquitectura
+
+```
+HybridAuth/
+├── src/main/java/net/hybridauth/
+│   ├── HybridAuthPlugin.java          # Plugin principal
+│   ├── commands/                      # Comandos del jugador
+│   │   ├── LoginCommand.java
+│   │   ├── RegisterCommand.java
+│   │   └── AdminCommand.java
+│   ├── listeners/                     # Event listeners
+│   │   ├── LoginListener.java         # Auto-login premium
+│   │   └── SecurityListener.java
+│   ├── network/netty/                 # Detección premium
+│   │   └── PremiumDetector.java       # Mojang API query
+│   ├── data/                          # Capa de datos
+│   │   ├── DatabaseManager.java
+│   │   ├── dao/
+│   │   └── model/
+│   ├── security/                      # Servicios de seguridad
+│   │   ├── PasswordService.java       # BCrypt hashing
+│   │   ├── RateLimitService.java      # Anti-spam
+│   │   └── SecurityLogger.java
+│   └── core/                          # Lógica central
+│       ├── auth/
+│       ├── session/
+│       └── messages/
+└── src/main/resources/
+    ├── plugin.yml                     # Metadata del plugin
+    ├── config.yml                     # Configuración
+    └── messages.yml                   # Mensajes personalizables
+```
+
+---
+
+## 🚀 Optimizaciones Realizadas
+
+### Antes: 18.34 MB ❌
+- Todos los drivers embebidos en el JAR
+- Caffeine Cache incluido
+- ProtocolLib como dependencia
+
+### Ahora: 213 KB ✅
+- Paper Library Loader
+- Guava (viene con Spigot)
+- Sin ProtocolLib
+- **Reducción del 99%**
+
+---
+
+## 🤝 Contribuir
+
+Las contribuciones son bienvenidas! Por favor:
+1. Fork el repositorio
+2. Crea una rama (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit tus cambios (`git commit -m 'Añadir nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Abre un Pull Request
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT - ver [LICENSE](LICENSE) para detalles.
+
+---
+
+## 💬 Soporte
+
+¿Necesitas ayuda?
+- 🐛 [Reportar un bug](https://github.com/jostinplaa/HybridAuth/issues)
+- 💡 [Sugerir una funcionalidad](https://github.com/jostinplaa/HybridAuth/issues)
+
+---
+
+## 🙏 Créditos
+
+Desarrollado con ❤️ para la comunidad de Minecraft
+
+**Inspirado por:**
+- FastLogin
+- nLogin
+- OpeNLogin
+
+---
+
+**⭐ Si te gusta este proyecto, dale una estrella en GitHub!**

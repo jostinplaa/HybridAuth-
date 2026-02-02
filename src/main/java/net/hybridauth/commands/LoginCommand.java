@@ -12,37 +12,16 @@ import org.bukkit.entity.Player;
 import java.sql.SQLException;
 import java.util.Optional;
 
-/**
- * Comando de inicio de sesión para jugadores.
- * Permite a los usuarios autenticarse en el servidor.
- * 
- * @author TuNombre
- * @version 1.1.0
- */
 public class LoginCommand implements CommandExecutor {
 
     private final HybridAuthPlugin plugin;
     private final MessageManager messages;
 
-    /**
-     * Constructor del comando de login.
-     * 
-     * @param plugin Instancia del plugin principal
-     */
     public LoginCommand(HybridAuthPlugin plugin) {
         this.plugin = plugin;
         this.messages = plugin.getMessageManager();
     }
 
-    /**
-     * Ejecuta el comando de login.
-     * 
-     * @param sender  Quien ejecuta el comando
-     * @param command El comando ejecutado
-     * @param label   El alias usado
-     * @param args    Argumentos del comando
-     * @return true si el comando se ejecutó correctamente
-     */
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         // 1. Verificar que sea un jugador
@@ -71,13 +50,16 @@ public class LoginCommand implements CommandExecutor {
 
         // 5. Verificar rate limit
         if (!plugin.getRateLimitService().checkLimit(ip)) {
-            long remaining = plugin.getRateLimitService().getSecondsRemaining(ip);
+            long remainingSeconds = plugin.getRateLimitService().getSecondsRemaining(ip);
 
-            messages.send(player, "rate_limit.exceeded");
-            messages.send(player, "rate_limit.wait",
-                    MessageManager.placeholder()
-                            .add("time", remaining)
-                            .build());
+            // KICKEAR AL JUGADOR con mensaje personalizado
+            String kickMessage = buildRateLimitKickMessage(remainingSeconds);
+            player.kickPlayer(kickMessage);
+
+            // Log del evento
+            plugin.getLogger().warning("[Rate Limit] " + player.getName() + " kicked - IP blocked for " +
+                    formatTime(remainingSeconds));
+
             return true;
         }
 
@@ -93,12 +75,49 @@ public class LoginCommand implements CommandExecutor {
     }
 
     /**
-     * Maneja el proceso de login de forma asíncrona.
-     * 
-     * @param player   El jugador que intenta hacer login
-     * @param password La contraseña proporcionada
-     * @param ip       La dirección IP del jugador
+     * Construye el mensaje de kick por rate limiting
      */
+    private String buildRateLimitKickMessage(long seconds) {
+        String timeFormatted = formatTime(seconds);
+
+        return """
+                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                §c§lHybridAuth Security
+                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                §7Tu dirección IP está §ctemporalmente bloqueada§7.
+
+                §eRazón: §fDemasiados intentos fallidos de autenticación
+                §eExpira en: §f%s
+
+                §7Si crees que esto es un error, contacta
+                §7a un administrador del servidor.
+
+                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                """.formatted(timeFormatted);
+    }
+
+    /**
+     * Formatea segundos a un string legible (Xm Ys o Xs)
+     */
+    private String formatTime(long seconds) {
+        if (seconds >= 60) {
+            long minutes = seconds / 60;
+            long remainingSeconds = seconds % 60;
+
+            if (remainingSeconds > 0) {
+                return String.format("%d minuto%s %d segundo%s",
+                        minutes, minutes != 1 ? "s" : "",
+                        remainingSeconds, remainingSeconds != 1 ? "s" : "");
+            } else {
+                return String.format("%d minuto%s", minutes, minutes != 1 ? "s" : "");
+            }
+        } else {
+            return String.format("%d segundo%s", seconds, seconds != 1 ? "s" : "");
+        }
+    }
+
     private void handleLoginAsync(Player player, String password, String ip) {
         // 1. Buscar usuario en la base de datos
         Optional<User> userOpt = plugin.getDatabaseManager().getUserDAO().getUserByUUID(player.getUniqueId());
@@ -124,13 +143,6 @@ public class LoginCommand implements CommandExecutor {
         }
     }
 
-    /**
-     * Maneja un login exitoso.
-     * 
-     * @param player El jugador
-     * @param user   Datos del usuario
-     * @param ip     Dirección IP
-     */
     private void handleLoginSuccess(Player player, User user, String ip) {
         // 1. Resetear rate limit
         plugin.getRateLimitService().resetLimit(ip);
@@ -187,13 +199,6 @@ public class LoginCommand implements CommandExecutor {
         });
     }
 
-    /**
-     * Maneja un login fallido.
-     * 
-     * @param player El jugador
-     * @param user   Datos del usuario
-     * @param ip     Dirección IP
-     */
     private void handleLoginFailure(Player player, User user, String ip) {
         // 1. Incrementar contador de rate limit
         plugin.getRateLimitService().incrementAttempt(ip);
@@ -211,7 +216,21 @@ public class LoginCommand implements CommandExecutor {
                 ip,
                 "Wrong Password - Attempt " + currentAttempts + "/" + maxAttempts);
 
-        // 4. Notificar al jugador en el thread principal
+        // 4. Si llegó al límite, KICKEAR
+        if (remainingAttempts == 0) {
+            long lockoutSeconds = plugin.getRateLimitService().getSecondsRemaining(ip);
+
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                String kickMessage = buildRateLimitKickMessage(lockoutSeconds);
+                player.kickPlayer(kickMessage);
+
+                plugin.getLogger().warning("[Rate Limit] " + player.getName() +
+                        " kicked after " + maxAttempts + " failed attempts");
+            });
+            return;
+        }
+
+        // 5. Notificar al jugador en el thread principal
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             messages.send(player, "password.incorrect",
                     MessageManager.placeholder()
@@ -225,7 +244,7 @@ public class LoginCommand implements CommandExecutor {
             player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_ANVIL_LAND, 1.0f, 1.0f);
         });
 
-        // 5. Log en consola
+        // 6. Log en consola
         plugin.getLogger().warning(player.getName() + " failed login attempt from " + ip +
                 " (" + remainingAttempts + " attempts remaining)");
     }
