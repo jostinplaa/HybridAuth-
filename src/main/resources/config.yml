@@ -58,11 +58,6 @@ security:
     timeout-seconds: 30
     max-attempts: 3
     
-  # v1.3.0 - Sistema de Captcha
-  captcha:
-    enabled: true
-    timeout-seconds: 30
-    max-attempts: 3
 
 authentication:
   timeout-seconds: 60

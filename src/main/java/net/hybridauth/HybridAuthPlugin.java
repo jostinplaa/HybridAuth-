@@ -56,7 +56,6 @@ public class HybridAuthPlugin extends JavaPlugin {
         }
 
         // 2. Cargar configuración
-        // 2. Cargar configuración
         loadConfiguration();
 
         // 3. Inicializar sistema de mensajes
@@ -166,9 +165,9 @@ public class HybridAuthPlugin extends JavaPlugin {
         this.passwordService = new PasswordService(this);
         getLogger().info("✓ PasswordService reinitialized");
 
-        // 4. Limpiar cache de EncryptionHandler
-        this.encryptionHandler.clearCache();
-        getLogger().info("✓ EncryptionHandler cache cleared");
+        // 4. EncryptionHandler no se usa actualmente (comentado en onEnable)
+        // Si se reactiva, descomentar: this.encryptionHandler.clearCache();
+        getLogger().info("✓ Services reinitialized (EncryptionHandler inactive)");
 
         getLogger().info("All services reinitialized successfully!");
     }

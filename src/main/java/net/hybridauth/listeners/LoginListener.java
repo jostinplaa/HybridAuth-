@@ -39,7 +39,7 @@ public class LoginListener implements Listener {
         this.authStateManager = authStateManager;
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.LOW)
     public void onPreLogin(AsyncPlayerPreLoginEvent event) {
         String username = event.getName();
         UUID uuid = event.getUniqueId();
@@ -81,17 +81,13 @@ public class LoginListener implements Listener {
             }
 
             // PRIMERA CONEXIÓN DEL DÍA (sin sesión válida)
-            // Mostrar mensaje de LOGIN
-            String warningMessage = buildLoginWarning(username);
+            // Mostrar mensaje de LOGIN (desde messages.yml)
+            String warningMessage = plugin.getMessageManager().getMessage("login.warning_kick",
+                    net.hybridauth.core.messages.MessageManager.placeholder()
+                            .add("player", username)
+                            .build());
 
-            // DELAY para que lea (3 segundos)
-            try {
-                Thread.sleep(3000); // 3 segundos
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            // Marcar que ya vio el mensaje
+            // Marcar que ya vio el mensaje (sin delay — el mensaje se muestran en el kick)
             hasSeenWarning.add(uuid);
 
             // Programar limpieza (5 minutos)
@@ -115,17 +111,13 @@ public class LoginListener implements Listener {
         }
 
         // PRIMERA VEZ conectando
-        // Mostrar mensaje de REGISTRO
-        String warningMessage = buildRegisterWarning(username);
+        // Mostrar mensaje de REGISTRO (desde messages.yml)
+        String warningMessage = plugin.getMessageManager().getMessage("register.warning_kick",
+                net.hybridauth.core.messages.MessageManager.placeholder()
+                        .add("player", username)
+                        .build());
 
-        // DELAY para que lea (5 segundos porque es más texto)
-        try {
-            Thread.sleep(5000); // 5 segundos
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        // Marcar que ya vio el mensaje
+        // Marcar que ya vio el mensaje (sin delay — el mensaje se muestran en el kick)
         hasSeenWarning.add(uuid);
 
         // Programar limpieza (5 minutos)
@@ -139,57 +131,7 @@ public class LoginListener implements Listener {
         plugin.getLogger().info("[PreLogin] " + username + " - New user, showed register warning, disconnecting");
     }
 
-    /**
-     * Construye el mensaje de advertencia para usuarios que deben hacer /login
-     */
-    private String buildLoginWarning(String username) {
-        return """
-                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-                §c§lBIENVENIDO DE VUELTA
-                §7%s
-
-                §7Tu sesión ha expirado.
-                §7Por favor, §avuelve a conectar
-                §7y usa el comando:
-
-                §f/login <contraseña>
-
-                §7para acceder al servidor.
-
-                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                """.formatted(username);
-    }
-
-    /**
-     * Construye el mensaje de advertencia para usuarios nuevos
-     */
-    private String buildRegisterWarning(String username) {
-        return """
-                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-                §a§l¡BIENVENIDO AL SERVIDOR!
-                §7%s
-
-                §e⚠ IMPORTANTE - Lee con atención:
-
-                §71. Este es un servidor §b§lHÍBRIDO
-                §7   (Premium y No-Premium pueden jugar)
-
-                §72. §cNO USES NOMBRE DE JUGADORES PREMIUM
-                §7   Si usas nombre "Notch", "Dream", etc.
-                §7   el dueño real no podrá entrar.
-
-                §73. §aElige un nombre único y original
-
-                §74. Vuelve a conectar y usa:
-                §f   /register <contraseña> <contraseña>
-
-                §7Al registrarte, aceptas las reglas.
-
-                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                """.formatted(username);
-    }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
@@ -317,7 +259,7 @@ public class LoginListener implements Listener {
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                     if (player.isOnline() && authStateManager.isPending(player)) {
                         plugin.getLogger().warning("[Timeout] Kicking " + player.getName());
-                        player.kickPlayer("§c§lHybridAuth\n\n§7Tiempo de autenticación agotado.");
+                        player.kickPlayer(plugin.getMessageManager().getMessage("authentication.timeout"));
                     }
                 }, timeoutSeconds * 20L);
             });

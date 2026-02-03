@@ -27,11 +27,10 @@ public class SecurityLogger {
                 stmt.setString(4, ip);
                 stmt.setString(5, details);
 
-                // SQLite uses TEXT, MySQL uses TIMESTAMP. both compatible with
-                // setString/setObject or default CURRENT_TIMESTAMP
-                // But we set it manually to be sure
+                // Usar la MISMA conexión para detectar tipo de DB (no abrir otra)
                 long now = System.currentTimeMillis();
-                if (plugin.getDatabaseManager().getConnection().getMetaData().getURL().contains("sqlite")) {
+                boolean isSQLite = conn.getMetaData().getURL().contains("sqlite");
+                if (isSQLite) {
                     stmt.setString(6,
                             new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date(now)));
                 } else {

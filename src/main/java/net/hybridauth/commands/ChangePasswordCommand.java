@@ -115,8 +115,7 @@ public class ChangePasswordCommand implements CommandExecutor {
                 } else {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
                         messages.send(player, "password.incorrect",
-                                MessageManager.placeholder().add("attempts", "X").build() // No trackeamos intentos aquí
-                                                                                          // por ahora
+                                MessageManager.placeholder().add("attempts", "-").build() // Cambio de contraseña no tiene límite de intentos
                         );
                     });
                 }

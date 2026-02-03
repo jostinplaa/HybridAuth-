@@ -23,39 +23,47 @@ public class MojangAPI {
         }
 
         // 2. Request to Mojang
+        HttpURLConnection connection = null;
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(API_URL + username).openConnection();
+            connection = (HttpURLConnection) new URL(API_URL + username).openConnection();
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
 
-            if (connection.getResponseCode() == 200) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
+            int responseCode = connection.getResponseCode();
+
+            if (responseCode == 200) {
+                // try-with-resources para garantizar cierre del stream
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+
+                    JsonObject json = JsonParser.parseString(response.toString()).getAsJsonObject();
+                    String uuidStr = json.get("id").getAsString();
+
+                    // Format UUID with hyphens
+                    String formattedUUID = uuidStr.replaceFirst(
+                            "(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})", "$1-$2-$3-$4-$5");
+
+                    UUID uuid = UUID.fromString(formattedUUID);
+                    cache.put(username.toLowerCase(), uuid);
+                    return Optional.of(uuid);
                 }
-                reader.close();
-
-                JsonObject json = JsonParser.parseString(response.toString()).getAsJsonObject();
-                String uuidStr = json.get("id").getAsString();
-
-                // Format UUID with hyphens
-                String formattedUUID = uuidStr.replaceFirst(
-                        "(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})", "$1-$2-$3-$4-$5");
-
-                UUID uuid = UUID.fromString(formattedUUID);
-                cache.put(username.toLowerCase(), uuid);
-                return Optional.of(uuid);
-            } else if (connection.getResponseCode() == 204) {
-                // No content = Not premium (or name unused)
-                return Optional.empty();
             }
+            // 204 o cualquier otro código = no premium
+            return Optional.empty();
+
         } catch (Exception e) {
             e.printStackTrace();
+            return Optional.empty();
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
-        return Optional.empty();
     }
 
     public Optional<JsonObject> checkSession(String username, String serverHash) {

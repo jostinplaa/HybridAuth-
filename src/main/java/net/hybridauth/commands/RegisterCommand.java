@@ -84,13 +84,12 @@ public class RegisterCommand implements CommandExecutor {
             long remainingSeconds = plugin.getRateLimitService().getSecondsRemaining(ip);
 
             // KICKEAR AL JUGADOR con mensaje personalizado
-            String kickMessage = buildRateLimitKickMessage(remainingSeconds);
+            String kickMessage = messages.getMessage("rate_limit.kick_message",
+                    MessageManager.placeholder().add("remaining", remainingSeconds).build());
             player.kickPlayer(kickMessage);
 
             // Log del evento
-            plugin.getLogger()
-                    .warning("[Rate Limit] " + player.getName() + " kicked during register - IP blocked for " +
-                            formatTime(remainingSeconds));
+            plugin.getLogger().warning("[Rate Limit] " + player.getName() + " kicked during register - IP blocked for " + remainingSeconds + "s");
 
             return true;
         }
@@ -202,47 +201,5 @@ public class RegisterCommand implements CommandExecutor {
         return true;
     }
 
-    /**
-     * Construye el mensaje de kick por rate limiting
-     */
-    private String buildRateLimitKickMessage(long seconds) {
-        String timeFormatted = formatTime(seconds);
 
-        return """
-                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-                §c§lHybridAuth Security
-                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-                §7Tu dirección IP está §ctemporalmente bloqueada§7.
-
-                §eRazón: §fDemasiados intentos fallidos de autenticación
-                §eExpira en: §f%s
-
-                §7Si crees que esto es un error, contacta
-                §7a un administrador del servidor.
-
-                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                """.formatted(timeFormatted);
-    }
-
-    /**
-     * Formatea segundos a un string legible (Xm Ys o Xs)
-     */
-    private String formatTime(long seconds) {
-        if (seconds >= 60) {
-            long minutes = seconds / 60;
-            long remainingSeconds = seconds % 60;
-
-            if (remainingSeconds > 0) {
-                return String.format("%d minuto%s %d segundo%s",
-                        minutes, minutes != 1 ? "s" : "",
-                        remainingSeconds, remainingSeconds != 1 ? "s" : "");
-            } else {
-                return String.format("%d minuto%s", minutes, minutes != 1 ? "s" : "");
-            }
-        } else {
-            return String.format("%d segundo%s", seconds, seconds != 1 ? "s" : "");
-        }
-    }
 }
