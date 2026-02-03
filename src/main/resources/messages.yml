@@ -383,3 +383,278 @@ actionbar:
 #   register_success: UI_TOAST_CHALLENGE_COMPLETE
 #   error: BLOCK_NOTE_BLOCK_BASS
 #   click: UI_BUTTON_CLICK
+
+# ===================================================
+# CAPTCHA SYSTEM
+# ===================================================
+captcha:
+  # Prompt multilínea
+  prompt: |-
+    {no-prefix}
+    &c&l╔════════════════════════════════════╗
+    &c&l║   ⚠ VERIFICATION REQUIRED ⚠      ║
+    &c&l╠════════════════════════════════════╣
+    &7
+    &7  Please solve this simple math problem
+    &7  to verify you're not a bot:
+    &7
+    &e&l     {question}
+    &7
+    &7  Type your answer in chat
+    &7  You have &c30 seconds
+    &7  Attempts remaining: &a{attempts}
+    &7
+    &8  Reason: {reason}
+    &7
+    &c&l╚════════════════════════════════════╝
+  
+  invalid_number: "&c&l✖ &cPlease enter a valid number"
+  
+  success: |-
+    {no-prefix}
+    &a&l✔ VERIFICATION SUCCESSFUL
+    &7Thank you for verifying!
+  
+  failed: |-
+    {no-prefix}
+    &c&l✖ INCORRECT ANSWER
+    &7Please try again
+    &7Attempts remaining: &e{attempts}
+    &7Question: &e&l{question}
+  
+  timeout_kick: |-
+    {no-prefix}&c&l⚠ VERIFICATION TIMEOUT ⚠
+    
+    &7You failed to complete the verification
+    &7in time. Please try again.
+  
+  failed_kick: |-
+    {no-prefix}&c&l⚠ VERIFICATION FAILED ⚠
+    
+    &7You failed to solve the verification
+    &7challenge. Please try again later.
+  
+  pending: "&e&l⚠ &ePlease solve the captcha first before logging in"
+  solve_first: "&c&l✖ &cYou must complete the verification challenge first"
+
+# ===================================================
+# SECURITY COMMANDS
+# ===================================================
+security:
+  no_permission: "&c&l✖ &cNo tienes permiso para usar este comando."
+  
+  # Blacklist Add
+  blacklist:
+    add:
+      usage: |-
+        &c&l✖ &cUso: &f/security blacklist add <ip> [duration] [reason]
+        &7Duración: &fpermanent &7o tiempo en segundos (ej: &f3600&7)
+        &7Ejemplo: &f/security blacklist add 123.45.67.89 3600 Spam
+      
+      invalid_ip: |-
+        &c&l✖ &cFormato de IP inválido: &f{ip}
+        &7Ejemplo: &f123.45.67.89
+      
+      already_blocked: |-
+        &e&l⚠ &eEsta IP ya está en la blacklist
+        &7Usa &f/security blacklist info {ip} &7para ver detalles
+      
+      invalid_duration: |-
+        &c&l✖ &cDuración inválida: &f{duration}
+        &7Usa &fpermanent &7o un número en segundos
+      
+      duration_zero: "&c&l✖ &cLa duración debe ser mayor a 0"
+      
+      success_permanent: |-
+        {no-prefix}
+        &4&l✔ IP BLOQUEADA PERMANENTEMENTE
+        &7IP: &f{ip}
+        &7Razón: &f{reason}
+        &7Bloqueada por: &f{blocked_by}
+      
+      success_temporary: |-
+        {no-prefix}
+        &6&l✔ IP BLOQUEADA TEMPORALMENTE
+        &7IP: &f{ip}
+        &7Duración: &f{duration}
+        &7Razón: &f{reason}
+        &7Bloqueada por: &f{blocked_by}
+      
+      players_kicked: "&7Jugadores kickeados: &f{count}"
+    
+    # Blacklist Remove
+    remove:
+      usage: "&c&l✖ &cUso: &f/security blacklist remove <ip>"
+      
+      success: |-
+        {no-prefix}
+        &a&l✔ IP DESBLOQUEADA
+        &7IP: &f{ip}
+        &7Desbloqueada por: &f{unblocked_by}
+      
+      not_found: "&c&l✖ &cEsta IP no está en la blacklist"
+    
+    # Blacklist List
+    list:
+      empty: "&a&l✔ &aNo hay IPs en la blacklist"
+      
+      invalid_page: "&c&l✖ &cPágina inválida. Total: &f{total_pages}"
+      
+      header: "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n&4&l  IP BLACKLIST &7(Página {page}/{total_pages})\n&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      
+      entry_permanent: |-
+        &7{index}. &4[PERM] &f{ip}
+           &7Razón: &f{reason}
+           &7Por: &f{blocked_by}
+      
+      entry_temporary: |-
+        &7{index}. &6[TEMP] &f{ip}
+           &7Razón: &f{reason}
+           &7Por: &f{blocked_by}
+           &7Expira en: &e{time_remaining}
+      
+      footer: |-
+        &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        &7Total de IPs bloqueadas: &f{total}
+      
+      next_page: "&7Siguiente página: &f/security blacklist list {next_page}"
+    
+    # Blacklist Info
+    info:
+      usage: "&c&l✖ &cUso: &f/security blacklist info <ip>"
+      
+      not_found: "&c&l✖ &cEsta IP no está en la blacklist"
+      
+      display: |-
+        &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        &4&l  INFORMACIÓN DE BLACKLIST
+        &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        
+        &7IP: &f{ip}
+        &7Tipo: {type}
+        &7Razón: &f{reason}
+        &7Bloqueada por: &f{blocked_by}
+        &7Bloqueada el: &f{blocked_at}
+        {expiry_info}
+        
+        &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+      type_permanent: "&4&lPERMANENTE"
+      type_temporary: "&6&lTEMPORAL"
+      
+      expiry_lines: |-
+        &7Expira el: &f{expires_at}
+        &7Tiempo restante: &e{time_remaining}
+    
+    # Blacklist Cleanup
+    cleanup:
+      processing: "&e&l⏳ &eLimpiando entradas expiradas..."
+      
+      success: |-
+        &a&l✔ &aLimpieza completada
+        &7Entradas removidas: &f{removed}
+        &7Entradas restantes: &f{remaining}
+  
+  # Stats
+  stats:
+    header: "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n&4&l  ESTADÍSTICAS DE SEGURIDAD\n&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    total_blocked: "&7Total IPs bloqueadas: &f{total}"
+    permanent_count: "&7  &4● &7Permanentes: &f{permanent}"
+    temporary_count: "&7  &6● &7Temporales: &f{temporary}"
+    
+    footer: "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  
+  # Help
+  help:
+    header: "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n&4&l  COMANDOS DE SEGURIDAD\n&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    add: |-
+      &7/security blacklist add <ip> [duration] [reason]
+        &8→ &fBloquear una IP
+    
+    remove: |-
+      &7/security blacklist remove <ip>
+        &8→ &fDesbloquear una IP
+    
+    list: |-
+      &7/security blacklist list [page]
+        &8→ &fListar IPs bloqueadas
+    
+    info: |-
+      &7/security blacklist info <ip>
+        &8→ &fVer información de una IP
+    
+    cleanup: |-
+      &7/security blacklist cleanup
+        &8→ &fLimpiar entradas expiradas
+    
+    stats: |-
+      &7/security stats
+        &8→ &fEstadísticas de seguridad
+    
+    footer: "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  
+  # Kick Messages
+  blacklist_kick: |-
+    {no-prefix}&4&l╔════════════════════════════════════╗
+    &4&l║    ⚠  IP BLACKLISTED  ⚠           ║
+    &4&l╠════════════════════════════════════╣
+    &c
+    &c  Your IP address has been blocked
+    &c  from accessing this server.
+    &7
+    &7  IP: &f{ip}
+    &7  Reason: &c{reason}
+    &7  Blocked by: &f{blocked_by}
+    &7  Blocked at: &f{blocked_at}
+    &7
+    {duration_info}
+    &7
+    &7  If you believe this is an error,
+    &7  contact a server administrator.
+    &7
+    &4&l╚════════════════════════════════════╝
+  
+  blacklist_duration_permanent: "&4&l  Duration: PERMANENT"
+  blacklist_duration_temporary: |-
+    &e  Expires: &f{expires_at}
+    &e  Time remaining: &f{time_remaining}
+  
+  impostor_kick: |-
+    {no-prefix}&4&l╔════════════════════════════════════╗
+    &4&l║      ⚠  IMPOSTOR DETECTED  ⚠      ║
+    &4&l╠════════════════════════════════════╣
+    &c
+    &c  This account belongs to another
+    &c  Mojang account.
+    &7
+    &7  Account: &f{username}
+    &7  Expected UUID: &a{expected_uuid}
+    &7  Your UUID:     &c{actual_uuid}
+    &7
+    &4&l║ Attempting to use stolen accounts    ║
+    &4&l║ will result in a PERMANENT BAN.      ║
+    &4&l╚════════════════════════════════════╝
+
+# ===================================================
+# AUTO-LOGIN PREMIUM
+# ===================================================
+premium:
+  cracked_to_premium_prompt: |-
+    {no-prefix}
+    &e&l⚠ &eYou are registered as CRACKED
+    
+    &7We detected you're using a PREMIUM account now.
+    &7To upgrade your account to premium, use:
+    &a  /hybridauth migrate <your_password>
+    
+    &8This will convert your account to auto-login.
+  
+  impostor_alert_admin: |-
+    {no-prefix}
+    &c&l⚠ IMPOSTOR ATTEMPT DETECTED:
+    &7Player: &f{username}
+    &7IP: &f{ip}
+    &7Expected UUID: &a{expected_uuid}
+    &7Actual UUID: &c{actual_uuid}

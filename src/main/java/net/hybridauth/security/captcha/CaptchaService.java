@@ -1,6 +1,7 @@
 package net.hybridauth.security.captcha;
 
 import net.hybridauth.HybridAuthPlugin;
+import net.hybridauth.core.messages.MessageManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -27,10 +28,10 @@ public class CaptchaService implements Listener {
 
     private final HybridAuthPlugin plugin;
     private final SecureRandom random;
-    
+
     // UUID -> CaptchaChallenge
     private final Map<UUID, CaptchaChallenge> activeChallenges;
-    
+
     private final boolean enabled;
 
     public CaptchaService(HybridAuthPlugin plugin) {
@@ -38,7 +39,7 @@ public class CaptchaService implements Listener {
         this.random = new SecureRandom();
         this.activeChallenges = new ConcurrentHashMap<>();
         this.enabled = plugin.getConfig().getBoolean("security.captcha.enabled", true);
-        
+
         if (enabled) {
             plugin.getServer().getPluginManager().registerEvents(this, plugin);
             plugin.getLogger().info("✓ Captcha system enabled");
@@ -49,7 +50,8 @@ public class CaptchaService implements Listener {
      * Requiere que el jugador resuelva un captcha
      */
     public void requireCaptcha(Player player, CaptchaReason reason) {
-        if (!enabled) return;
+        if (!enabled)
+            return;
 
         // Si ya tiene un captcha activo, no crear otro
         if (activeChallenges.containsKey(player.getUniqueId())) {
@@ -66,20 +68,16 @@ public class CaptchaService implements Listener {
         // Programar timeout (30 segundos)
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             CaptchaChallenge current = activeChallenges.get(player.getUniqueId());
-            
+
             if (current != null && current == challenge) {
                 // Timeout - kickear
                 activeChallenges.remove(player.getUniqueId());
-                
-                player.kickPlayer(
-                    "§c§l⚠ VERIFICATION TIMEOUT ⚠\n\n" +
-                    "§7You failed to complete the verification\n" +
-                    "§7in time. Please try again."
-                );
-                
+
+                String kickMsg = plugin.getMessageManager().getMessage("captcha.timeout_kick");
+                player.kickPlayer(kickMsg);
+
                 plugin.getLogger().warning(
-                    "Captcha timeout: " + player.getName() + " (Reason: " + reason + ")"
-                );
+                        "Captcha timeout: " + player.getName() + " (Reason: " + reason + ")");
             }
         }, 30 * 20L); // 30 segundos
     }
@@ -96,7 +94,7 @@ public class CaptchaService implements Listener {
      */
     private CaptchaChallenge generateChallenge(CaptchaReason reason) {
         CaptchaType type = CaptchaType.values()[random.nextInt(CaptchaType.values().length)];
-        
+
         int a = random.nextInt(20) + 1;
         int b = random.nextInt(20) + 1;
         int answer;
@@ -107,7 +105,7 @@ public class CaptchaService implements Listener {
                 answer = a + b;
                 question = a + " + " + b + " = ?";
                 break;
-                
+
             case SUBTRACTION:
                 // Asegurar que no sea negativo
                 if (a < b) {
@@ -118,7 +116,7 @@ public class CaptchaService implements Listener {
                 answer = a - b;
                 question = a + " - " + b + " = ?";
                 break;
-                
+
             case MULTIPLICATION:
                 // Números más pequeños para multiplicación
                 a = random.nextInt(10) + 1;
@@ -126,7 +124,7 @@ public class CaptchaService implements Listener {
                 answer = a * b;
                 question = a + " × " + b + " = ?";
                 break;
-                
+
             default:
                 answer = a + b;
                 question = a + " + " + b + " = ?";
@@ -140,28 +138,17 @@ public class CaptchaService implements Listener {
      * Muestra el captcha al jugador
      */
     private void showCaptcha(Player player, CaptchaChallenge challenge) {
-        player.sendMessage("");
-        player.sendMessage("§c§l╔════════════════════════════════════╗");
-        player.sendMessage("§c§l║   ⚠ VERIFICATION REQUIRED ⚠      ║");
-        player.sendMessage("§c§l╠════════════════════════════════════╣");
-        player.sendMessage("§7");
-        player.sendMessage("§7  Please solve this simple math problem");
-        player.sendMessage("§7  to verify you're not a bot:");
-        player.sendMessage("§7");
-        player.sendMessage("§e§l     " + challenge.question);
-        player.sendMessage("§7");
-        player.sendMessage("§7  Type your answer in chat");
-        player.sendMessage("§7  You have §c30 seconds");
-        player.sendMessage("§7  Attempts remaining: §a" + challenge.attemptsRemaining);
-        player.sendMessage("§7");
-        player.sendMessage("§8  Reason: " + challenge.reason.getDescription());
-        player.sendMessage("§7");
-        player.sendMessage("§c§l╚════════════════════════════════════╝");
-        player.sendMessage("");
+        String prompt = plugin.getMessageManager().getMessage("captcha.prompt",
+                MessageManager.placeholder()
+                        .add("question", challenge.question)
+                        .add("attempts", String.valueOf(challenge.attemptsRemaining))
+                        .add("reason", challenge.reason.getDescription())
+                        .build());
+        player.sendMessage(prompt);
 
         // Sonido
-        player.playSound(player.getLocation(), 
-            org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.5f);
+        player.playSound(player.getLocation(),
+                org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.5f);
     }
 
     /**
@@ -186,7 +173,7 @@ public class CaptchaService implements Listener {
         try {
             answer = Integer.parseInt(message);
         } catch (NumberFormatException e) {
-            player.sendMessage("§c§l✖ §cPlease enter a valid number");
+            plugin.getMessageManager().send(player, "captcha.invalid_number");
             return;
         }
 
@@ -194,57 +181,47 @@ public class CaptchaService implements Listener {
         if (answer == challenge.correctAnswer) {
             // ¡CORRECTO!
             activeChallenges.remove(uuid);
-            
-            player.sendMessage("");
-            player.sendMessage("§a§l✔ VERIFICATION SUCCESSFUL");
-            player.sendMessage("§7Thank you for verifying!");
-            player.sendMessage("");
-            
-            player.playSound(player.getLocation(), 
-                org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-            
+
+            plugin.getMessageManager().send(player, "captcha.success");
+
+            player.playSound(player.getLocation(),
+                    org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+
             plugin.getLogger().info(
-                "Captcha solved: " + player.getName() + " (Reason: " + challenge.reason + ")"
-            );
-            
+                    "Captcha solved: " + player.getName() + " (Reason: " + challenge.reason + ")");
+
         } else {
             // INCORRECTO
             challenge.attemptsRemaining--;
-            
+
             if (challenge.attemptsRemaining <= 0) {
                 // Sin intentos - kickear
                 activeChallenges.remove(uuid);
-                
-                player.kickPlayer(
-                    "§c§l⚠ VERIFICATION FAILED ⚠\n\n" +
-                    "§7You failed to solve the verification\n" +
-                    "§7challenge. Please try again later."
-                );
-                
+
+                String kickMsg = plugin.getMessageManager().getMessage("captcha.failed_kick");
+                player.kickPlayer(kickMsg);
+
                 plugin.getLogger().warning(
-                    "Captcha failed: " + player.getName() + " (Reason: " + challenge.reason + ")"
-                );
-                
+                        "Captcha failed: " + player.getName() + " (Reason: " + challenge.reason + ")");
+
                 // Considerar bloquear IP temporalmente
                 String ip = player.getAddress().getAddress().getHostAddress();
                 plugin.getBlacklistManager().blockIP(
-                    ip, 
-                    300, // 5 minutos
-                    "Failed captcha verification", 
-                    "SYSTEM"
-                );
-                
+                        ip,
+                        300, // 5 minutos
+                        "Failed captcha verification",
+                        "SYSTEM");
+
             } else {
                 // Aún tiene intentos
-                player.sendMessage("");
-                player.sendMessage("§c§l✖ INCORRECT ANSWER");
-                player.sendMessage("§7Please try again");
-                player.sendMessage("§7Attempts remaining: §e" + challenge.attemptsRemaining);
-                player.sendMessage("§7Question: §e§l" + challenge.question);
-                player.sendMessage("");
-                
-                player.playSound(player.getLocation(), 
-                    org.bukkit.Sound.BLOCK_ANVIL_LAND, 1.0f, 1.0f);
+                plugin.getMessageManager().send(player, "captcha.failed",
+                        MessageManager.placeholder()
+                                .add("attempts", String.valueOf(challenge.attemptsRemaining))
+                                .add("question", challenge.question)
+                                .build());
+
+                player.playSound(player.getLocation(),
+                        org.bukkit.Sound.BLOCK_ANVIL_LAND, 1.0f, 1.0f);
             }
         }
     }

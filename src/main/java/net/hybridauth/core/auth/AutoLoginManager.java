@@ -1,6 +1,7 @@
 package net.hybridauth.core.auth;
 
 import net.hybridauth.HybridAuthPlugin;
+import net.hybridauth.core.messages.MessageManager;
 import net.hybridauth.data.model.User;
 import net.hybridauth.network.netty.PremiumDetector;
 import org.bukkit.entity.Player;
@@ -158,15 +159,7 @@ public class AutoLoginManager implements Listener {
     private void handleCrackedToPremiumAttempt(Player player, String username) {
         plugin.getAuthStateManager().setAuthenticated(player, false);
 
-        player.sendMessage("");
-        player.sendMessage("§e§l⚠ §eYou are registered as CRACKED");
-        player.sendMessage("");
-        player.sendMessage("§7We detected you're using a PREMIUM account now.");
-        player.sendMessage("§7To upgrade your account to premium, use:");
-        player.sendMessage("§a  /hybridauth migrate <your_password>");
-        player.sendMessage("");
-        player.sendMessage("§8This will convert your account to auto-login.");
-        player.sendMessage("");
+        plugin.getMessageManager().send(player, "premium.cracked_to_premium_prompt");
 
         plugin.getSecurityLogger().logInfo("Cracked→Premium attempt: " + username);
     }
@@ -175,60 +168,50 @@ public class AutoLoginManager implements Listener {
      * Maneja detección de impostores (UUID mismatch)
      */
     private void handleImpostor(Player player, String username, UUID expectedUUID, UUID actualUUID) {
-        player.kickPlayer(
-                "§4§l╔════════════════════════════════════╗\n" +
-                        "§4§l║      ⚠  IMPOSTOR DETECTED  ⚠      ║\n" +
-                        "§4§l╠════════════════════════════════════╣\n" +
-                        "§c\n" +
-                        "§c  This account belongs to another\n" +
-                        "§c  Mojang account.\n" +
-                        "§7\n" +
-                        "§7  Account: §f" + username + "\n" +
-                        "§7  Expected UUID: §a" + expectedUUID + "\n" +
-                        "§7  Your UUID:     §c" + actualUUID + "\n" +
-                        "§7\n" +
-                        "§4§l║ Attempting to use stolen accounts    ║\n" +
-                        "§4§l║ will result in a PERMANENT BAN.      ║\n" +
-                        "§4§l╚════════════════════════════════════╝");
+        String kickMsg = plugin.getMessageManager().getMessage("security.impostor_kick",
+                MessageManager.placeholder()
+                        .add("username", username)
+                        .add("expected_uuid", expectedUUID.toString())
+                        .add("actual_uuid", actualUUID.toString())
+                        .build());
+        player.kickPlayer(kickMsg);
 
-        // Notificar a admins online
+        // Notify admins
+        String ip = player.getAddress().getAddress().getHostAddress();
         plugin.getServer().getOnlinePlayers().stream()
                 .filter(p -> p.hasPermission("hybridauth.admin"))
                 .forEach(admin -> {
-                    admin.sendMessage("");
-                    admin.sendMessage("§c§l⚠ IMPOSTOR ATTEMPT DETECTED:");
-                    admin.sendMessage("§7Player: §f" + username);
-                    admin.sendMessage("§7IP: §f" + player.getAddress().getAddress().getHostAddress());
-                    admin.sendMessage("§7Expected UUID: §a" + expectedUUID);
-                    admin.sendMessage("§7Actual UUID: §c" + actualUUID);
-                    admin.sendMessage("");
+                    plugin.getMessageManager().send(admin, "premium.impostor_alert_admin",
+                            MessageManager.placeholder()
+                                    .add("username", username)
+                                    .add("ip", ip)
+                                    .add("expected_uuid", expectedUUID.toString())
+                                    .add("actual_uuid", actualUUID.toString())
+                                    .build());
                 });
 
-        // Log crítico
+        // Log crítico (moved IP declaration up)
         plugin.getSecurityLogger().logCritical(
                 "IMPOSTOR_DETECTED: player=" + username +
-                        ", ip=" + player.getAddress().getAddress().getHostAddress() +
+                        ", ip=" + ip +
                         ", expected_uuid=" + expectedUUID +
                         ", actual_uuid=" + actualUUID);
 
         // Blacklist IP automáticamente por 1 hora
-        String ip = player.getAddress().getAddress().getHostAddress();
         plugin.getBlacklistManager().blockIP(
-            ip, 
-            3600, // 1 hora
-            "IMPOSTOR ATTEMPT: " + username, 
-            "SYSTEM"
-        );
-        
+                ip,
+                3600, // 1 hora
+                "IMPOSTOR ATTEMPT: " + username,
+                "SYSTEM");
+
         plugin.getLogger().severe("IP BLACKLISTED: " + ip + " (impostor attempt)");
-        
+
         // Alerta Discord
         plugin.getDiscordWebhook().notifyImpostor(
-            username, 
-            ip, 
-            expectedUUID.toString(), 
-            actualUUID.toString()
-        );
+                username,
+                ip,
+                expectedUUID.toString(),
+                actualUUID.toString());
     }
 
     @EventHandler

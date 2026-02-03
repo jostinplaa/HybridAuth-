@@ -47,7 +47,13 @@ public class LoginCommand implements CommandExecutor {
             return true;
         }
 
-        // 3. Verificar argumentos
+        // 3.5. NUEVO: Verificar si tiene captcha pendiente
+        if (plugin.getCaptchaService().hasPendingCaptcha(player)) {
+            messages.send(player, "captcha.pending");
+            return true;
+        }
+
+        // 4. Verificar argumentos
         if (args.length < 1) {
             messages.send(player, "usage.login");
             return true;
@@ -224,6 +230,16 @@ public class LoginCommand implements CommandExecutor {
                 user.getUuid(),
                 ip,
                 "Wrong Password - Attempt " + currentAttempts + "/" + maxAttempts);
+
+        // 3.5. NUEVO: Si tiene 3+ intentos, requerir CAPTCHA
+        if (currentAttempts >= 3) {
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                plugin.getCaptchaService().requireCaptcha(
+                        player,
+                        net.hybridauth.security.captcha.CaptchaService.CaptchaReason.MULTIPLE_FAILED_LOGINS);
+            });
+            return;
+        }
 
         // 4. Si llegó al límite, KICKEAR
         if (remainingAttempts == 0) {

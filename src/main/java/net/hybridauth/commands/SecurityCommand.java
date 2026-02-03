@@ -1,6 +1,7 @@
 package net.hybridauth.commands;
 
 import net.hybridauth.HybridAuthPlugin;
+import net.hybridauth.core.messages.MessageManager;
 import net.hybridauth.security.blacklist.BlacklistManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -10,29 +11,24 @@ import org.bukkit.entity.Player;
 import java.util.List;
 
 /**
- * Comando /security para gestionar la seguridad del servidor
- * 
- * Subcomandos:
- * - /security blacklist <add|remove|list|info> - Gestionar blacklist de IPs
- * - /security alerts - Ver alertas de seguridad recientes
- * - /security stats - Estadísticas de seguridad
- * 
- * @version 1.2.0
+ * Comando /security - VERSIÓN CORREGIDA SIN MENSAJES HARDCODEADOS
  */
 public class SecurityCommand implements CommandExecutor {
 
     private final HybridAuthPlugin plugin;
     private final BlacklistManager blacklistManager;
+    private final MessageManager messages;
 
     public SecurityCommand(HybridAuthPlugin plugin) {
         this.plugin = plugin;
         this.blacklistManager = plugin.getBlacklistManager();
+        this.messages = plugin.getMessageManager();
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("hybridauth.security")) {
-            sender.sendMessage("§c§l✖ §cNo tienes permiso para usar este comando.");
+            messages.send(sender, "security.no_permission");
             return true;
         }
 
@@ -45,116 +41,92 @@ public class SecurityCommand implements CommandExecutor {
             case "blacklist":
                 handleBlacklist(sender, args);
                 break;
-
             case "stats":
                 handleStats(sender);
                 break;
-
             case "help":
                 sendHelp(sender);
                 break;
-
             default:
-                sender.sendMessage("§c§l✖ §cSubcomando desconocido: §f" + args[0]);
-                sender.sendMessage("§7Usa §f/security help §7para ver los comandos disponibles");
+                messages.send(sender, "error.unknown_command");
+                sendHelp(sender);
                 break;
         }
 
         return true;
     }
 
-    /**
-     * Maneja subcomandos de blacklist
-     */
     private void handleBlacklist(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("§c§l✖ §cUso: §f/security blacklist <add|remove|list|info|cleanup>");
+            messages.send(sender, "security.blacklist.add.usage");
             return;
         }
 
-        String action = args[1].toLowerCase();
-
-        switch (action) {
+        switch (args[1].toLowerCase()) {
             case "add":
                 handleBlacklistAdd(sender, args);
                 break;
-
             case "remove":
                 handleBlacklistRemove(sender, args);
                 break;
-
             case "list":
                 handleBlacklistList(sender, args);
                 break;
-
             case "info":
                 handleBlacklistInfo(sender, args);
                 break;
-
             case "cleanup":
                 handleBlacklistCleanup(sender);
                 break;
-
             default:
-                sender.sendMessage("§c§l✖ §cAcción inválida: §f" + action);
-                sender.sendMessage("§7Usa: §fadd§7, §fremove§7, §flist§7, §finfo§7, §fcleanup");
+                messages.send(sender, "error.unknown_command");
                 break;
         }
     }
 
-    /**
-     * /security blacklist add <ip> [duration] [reason]
-     */
     private void handleBlacklistAdd(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage("§c§l✖ §cUso: §f/security blacklist add <ip> [duration] [reason]");
-            sender.sendMessage("§7Duración: §fpermanent §7o tiempo en segundos (ej: §f3600§7)");
-            sender.sendMessage("§7Ejemplo: §f/security blacklist add 123.45.67.89 3600 Spam");
+            messages.send(sender, "security.blacklist.add.usage");
             return;
         }
 
         String ip = args[2];
         String blockedBy = sender.getName();
 
-        // Validar formato de IP básico
         if (!ip.matches("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}")) {
-            sender.sendMessage("§c§l✖ §cFormato de IP inválido: §f" + ip);
-            sender.sendMessage("§7Ejemplo: §f123.45.67.89");
+            messages.send(sender, "security.blacklist.add.invalid_ip",
+                MessageManager.placeholder().add("ip", ip).build());
             return;
         }
 
-        // Verificar si ya está bloqueada
         if (blacklistManager.isBlocked(ip)) {
-            sender.sendMessage("§e§l⚠ §eEsta IP ya está en la blacklist");
-            sender.sendMessage("§7Usa §f/security blacklist info " + ip + " §7para ver detalles");
+            messages.send(sender, "security.blacklist.add.already_blocked",
+                MessageManager.placeholder().add("ip", ip).build());
             return;
         }
 
-        // Parsear duración
         boolean permanent = false;
-        long duration = 3600; // 1 hora por defecto
+        long duration = 3600;
 
         if (args.length >= 4) {
             String durationArg = args[3].toLowerCase();
-
             if (durationArg.equals("permanent") || durationArg.equals("perm")) {
                 permanent = true;
             } else {
                 try {
                     duration = Long.parseLong(durationArg);
                     if (duration <= 0) {
-                        sender.sendMessage("§c§l✖ §cLa duración debe ser mayor a 0");
+                        messages.send(sender, "security.blacklist.add.duration_zero");
                         return;
                     }
                 } catch (NumberFormatException e) {
-                    sender.sendMessage("§c§l✖ §cDuración inválida: §f" + durationArg);
-                    sender.sendMessage("§7Usa §fpermanent §7o un número en segundos");
+                    messages.send(sender, "security.blacklist.add.invalid_duration",
+                        MessageManager.placeholder().add("duration", durationArg).build());
                     return;
                 }
             }
         }
 
-        // Parsear razón
         String reason = "No reason specified";
         if (args.length >= 5) {
             StringBuilder reasonBuilder = new StringBuilder();
@@ -164,78 +136,66 @@ public class SecurityCommand implements CommandExecutor {
             reason = reasonBuilder.toString().trim();
         }
 
-        // Bloquear
         if (permanent) {
             blacklistManager.blockIPPermanent(ip, reason, blockedBy);
-            
-            sender.sendMessage("");
-            sender.sendMessage("§4§l✔ IP BLOQUEADA PERMANENTEMENTE");
-            sender.sendMessage("§7IP: §f" + ip);
-            sender.sendMessage("§7Razón: §f" + reason);
-            sender.sendMessage("§7Bloqueada por: §f" + blockedBy);
-            sender.sendMessage("");
+            messages.send(sender, "security.blacklist.add.success_permanent",
+                MessageManager.placeholder()
+                    .add("ip", ip)
+                    .add("reason", reason)
+                    .add("blocked_by", blockedBy)
+                    .build());
         } else {
             blacklistManager.blockIP(ip, duration, reason, blockedBy);
-            
-            String timeStr = formatDuration(duration);
-            
-            sender.sendMessage("");
-            sender.sendMessage("§6§l✔ IP BLOQUEADA TEMPORALMENTE");
-            sender.sendMessage("§7IP: §f" + ip);
-            sender.sendMessage("§7Duración: §f" + timeStr);
-            sender.sendMessage("§7Razón: §f" + reason);
-            sender.sendMessage("§7Bloqueada por: §f" + blockedBy);
-            sender.sendMessage("");
+            messages.send(sender, "security.blacklist.add.success_temporary",
+                MessageManager.placeholder()
+                    .add("ip", ip)
+                    .add("duration", formatDuration(duration))
+                    .add("reason", reason)
+                    .add("blocked_by", blockedBy)
+                    .build());
         }
 
-        // Kickear jugadores con esa IP
-        kickPlayersWithIP(sender, ip);
+        int kicked = kickPlayersWithIP(ip);
+        if (kicked > 0) {
+            messages.send(sender, "security.blacklist.add.players_kicked",
+                MessageManager.placeholder().add("count", kicked).build());
+        }
     }
 
-    /**
-     * /security blacklist remove <ip>
-     */
     private void handleBlacklistRemove(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage("§c§l✖ §cUso: §f/security blacklist remove <ip>");
+            messages.send(sender, "security.blacklist.remove.usage");
             return;
         }
 
         String ip = args[2];
-        String unblockedBy = sender.getName();
-
-        boolean removed = blacklistManager.unblockIP(ip, unblockedBy);
+        boolean removed = blacklistManager.unblockIP(ip, sender.getName());
 
         if (removed) {
-            sender.sendMessage("");
-            sender.sendMessage("§a§l✔ IP DESBLOQUEADA");
-            sender.sendMessage("§7IP: §f" + ip);
-            sender.sendMessage("§7Desbloqueada por: §f" + unblockedBy);
-            sender.sendMessage("");
+            messages.send(sender, "security.blacklist.remove.success",
+                MessageManager.placeholder()
+                    .add("ip", ip)
+                    .add("unblocked_by", sender.getName())
+                    .build());
         } else {
-            sender.sendMessage("§c§l✖ §cEsta IP no está en la blacklist");
+            messages.send(sender, "security.blacklist.remove.not_found");
         }
     }
 
-    /**
-     * /security blacklist list [page]
-     */
     private void handleBlacklistList(CommandSender sender, String[] args) {
         List<BlacklistManager.BlacklistEntry> entries = blacklistManager.getAllEntries();
 
         if (entries.isEmpty()) {
-            sender.sendMessage("§a§l✔ §aNo hay IPs en la blacklist");
+            messages.send(sender, "security.blacklist.list.empty");
             return;
         }
 
-        // Paginación
         int page = 1;
         if (args.length >= 3) {
             try {
                 page = Integer.parseInt(args[2]);
             } catch (NumberFormatException e) {
-                sender.sendMessage("§c§l✖ §cNúmero de página inválido");
-                return;
+                page = 1;
             }
         }
 
@@ -243,48 +203,51 @@ public class SecurityCommand implements CommandExecutor {
         int totalPages = (int) Math.ceil((double) entries.size() / perPage);
 
         if (page < 1 || page > totalPages) {
-            sender.sendMessage("§c§l✖ §cPágina inválida. Total: §f" + totalPages);
+            messages.send(sender, "security.blacklist.list.invalid_page",
+                MessageManager.placeholder().add("total_pages", totalPages).build());
             return;
         }
 
         int start = (page - 1) * perPage;
         int end = Math.min(start + perPage, entries.size());
 
-        sender.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        sender.sendMessage("§4§l  IP BLACKLIST §7(Página " + page + "/" + totalPages + ")");
-        sender.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        messages.send(sender, "security.blacklist.list.header",
+            MessageManager.placeholder()
+                .add("page", page)
+                .add("total_pages", totalPages)
+                .build());
 
         for (int i = start; i < end; i++) {
             BlacklistManager.BlacklistEntry entry = entries.get(i);
+            String key = entry.permanent ? 
+                "security.blacklist.list.entry_permanent" : 
+                "security.blacklist.list.entry_temporary";
             
-            String typeColor = entry.permanent ? "§4" : "§6";
-            String type = entry.permanent ? "[PERM]" : "[TEMP]";
-            
-            sender.sendMessage("");
-            sender.sendMessage("§7" + (i + 1) + ". " + typeColor + type + " §f" + entry.ip);
-            sender.sendMessage("   §7Razón: §f" + entry.reason);
-            sender.sendMessage("   §7Por: §f" + entry.blockedBy);
+            MessageManager.PlaceholderBuilder pb = MessageManager.placeholder()
+                .add("index", i + 1)
+                .add("ip", entry.ip)
+                .add("reason", entry.reason)
+                .add("blocked_by", entry.blockedBy);
             
             if (!entry.permanent) {
-                sender.sendMessage("   §7Expira en: §e" + entry.getTimeRemaining());
+                pb.add("time_remaining", entry.getTimeRemaining());
             }
+            
+            messages.send(sender, key, pb.build());
         }
 
-        sender.sendMessage("");
-        sender.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        sender.sendMessage("§7Total de IPs bloqueadas: §f" + entries.size());
+        messages.send(sender, "security.blacklist.list.footer",
+            MessageManager.placeholder().add("total", entries.size()).build());
         
         if (page < totalPages) {
-            sender.sendMessage("§7Siguiente página: §f/security blacklist list " + (page + 1));
+            messages.send(sender, "security.blacklist.list.next_page",
+                MessageManager.placeholder().add("next_page", page + 1).build());
         }
     }
 
-    /**
-     * /security blacklist info <ip>
-     */
     private void handleBlacklistInfo(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage("§c§l✖ §cUso: §f/security blacklist info <ip>");
+            messages.send(sender, "security.blacklist.info.usage");
             return;
         }
 
@@ -292,128 +255,99 @@ public class SecurityCommand implements CommandExecutor {
         BlacklistManager.BlacklistEntry entry = blacklistManager.getEntry(ip);
 
         if (entry == null) {
-            sender.sendMessage("§c§l✖ §cEsta IP no está en la blacklist");
+            messages.send(sender, "security.blacklist.info.not_found");
             return;
         }
 
-        sender.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        sender.sendMessage("§4§l  INFORMACIÓN DE BLACKLIST");
-        sender.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        sender.sendMessage("");
-        sender.sendMessage("§7IP: §f" + entry.ip);
-        sender.sendMessage("§7Tipo: " + (entry.permanent ? "§4§lPERMANENTE" : "§6§lTEMPORAL"));
-        sender.sendMessage("§7Razón: §f" + entry.reason);
-        sender.sendMessage("§7Bloqueada por: §f" + entry.blockedBy);
-        sender.sendMessage("§7Bloqueada el: §f" + entry.getFormattedBlockedAt());
+        String typeKey = entry.permanent ? 
+            "security.blacklist.info.type_permanent" : 
+            "security.blacklist.info.type_temporary";
+        String type = messages.getMessage(typeKey);
         
+        String expiryInfo = "";
         if (!entry.permanent) {
-            sender.sendMessage("§7Expira el: §f" + entry.getFormattedExpiry());
-            sender.sendMessage("§7Tiempo restante: §e" + entry.getTimeRemaining());
+            expiryInfo = messages.getMessage("security.blacklist.info.expiry_lines",
+                MessageManager.placeholder()
+                    .add("expires_at", entry.getFormattedExpiry())
+                    .add("time_remaining", entry.getTimeRemaining())
+                    .build());
         }
         
-        sender.sendMessage("");
-        sender.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        messages.send(sender, "security.blacklist.info.display",
+            MessageManager.placeholder()
+                .add("ip", entry.ip)
+                .add("type", type)
+                .add("reason", entry.reason)
+                .add("blocked_by", entry.blockedBy)
+                .add("blocked_at", entry.getFormattedBlockedAt())
+                .add("expiry_info", expiryInfo)
+                .build());
     }
 
-    /**
-     * /security blacklist cleanup
-     */
     private void handleBlacklistCleanup(CommandSender sender) {
-        sender.sendMessage("§e§l⏳ §eLimpiando entradas expiradas...");
-        
+        messages.send(sender, "security.blacklist.cleanup.processing");
         int before = blacklistManager.getAllEntries().size();
         int after = blacklistManager.cleanupAll();
-        int removed = before - after;
-        
-        sender.sendMessage("§a§l✔ §aLimpieza completada");
-        sender.sendMessage("§7Entradas removidas: §f" + removed);
-        sender.sendMessage("§7Entradas restantes: §f" + after);
+        messages.send(sender, "security.blacklist.cleanup.success",
+            MessageManager.placeholder()
+                .add("removed", before - after)
+                .add("remaining", after)
+                .build());
     }
 
-    /**
-     * /security stats
-     */
     private void handleStats(CommandSender sender) {
         BlacklistManager.BlacklistStats stats = blacklistManager.getStats();
-
-        sender.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        sender.sendMessage("§4§l  ESTADÍSTICAS DE SEGURIDAD");
-        sender.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        sender.sendMessage("");
-        sender.sendMessage("§7Total IPs bloqueadas: §f" + stats.total);
-        sender.sendMessage("§7  §4● §7Permanentes: §f" + stats.permanent);
-        sender.sendMessage("§7  §6● §7Temporales: §f" + stats.temporary);
-        sender.sendMessage("");
-        sender.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        messages.send(sender, "security.stats.header");
+        messages.send(sender, "security.stats.total_blocked",
+            MessageManager.placeholder().add("total", stats.total).build());
+        messages.send(sender, "security.stats.permanent_count",
+            MessageManager.placeholder().add("permanent", stats.permanent).build());
+        messages.send(sender, "security.stats.temporary_count",
+            MessageManager.placeholder().add("temporary", stats.temporary).build());
+        messages.send(sender, "security.stats.footer");
     }
 
-    /**
-     * Muestra ayuda
-     */
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        sender.sendMessage("§4§l  COMANDOS DE SEGURIDAD");
-        sender.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        sender.sendMessage("");
-        sender.sendMessage("§7/security blacklist add <ip> [duration] [reason]");
-        sender.sendMessage("  §8→ §fBloquear una IP");
-        sender.sendMessage("");
-        sender.sendMessage("§7/security blacklist remove <ip>");
-        sender.sendMessage("  §8→ §fDesbloquear una IP");
-        sender.sendMessage("");
-        sender.sendMessage("§7/security blacklist list [page]");
-        sender.sendMessage("  §8→ §fListar IPs bloqueadas");
-        sender.sendMessage("");
-        sender.sendMessage("§7/security blacklist info <ip>");
-        sender.sendMessage("  §8→ §fVer información de una IP");
-        sender.sendMessage("");
-        sender.sendMessage("§7/security blacklist cleanup");
-        sender.sendMessage("  §8→ §fLimpiar entradas expiradas");
-        sender.sendMessage("");
-        sender.sendMessage("§7/security stats");
-        sender.sendMessage("  §8→ §fEstadísticas de seguridad");
-        sender.sendMessage("");
-        sender.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        messages.send(sender, "security.help.header");
+        messages.send(sender, "security.help.add");
+        messages.send(sender, "security.help.remove");
+        messages.send(sender, "security.help.list");
+        messages.send(sender, "security.help.info");
+        messages.send(sender, "security.help.cleanup");
+        messages.send(sender, "security.help.stats");
+        messages.send(sender, "security.help.footer");
     }
 
-    /**
-     * Formatea duración en segundos a texto legible
-     */
     private String formatDuration(long seconds) {
         long days = seconds / 86400;
         long hours = (seconds % 86400) / 3600;
         long minutes = (seconds % 3600) / 60;
         long secs = seconds % 60;
-
         StringBuilder sb = new StringBuilder();
         if (days > 0) sb.append(days).append("d ");
         if (hours > 0) sb.append(hours).append("h ");
         if (minutes > 0) sb.append(minutes).append("m ");
         if (secs > 0 || sb.length() == 0) sb.append(secs).append("s");
-
         return sb.toString().trim();
     }
 
-    /**
-     * Kickea jugadores conectados con la IP bloqueada
-     */
-    private void kickPlayersWithIP(CommandSender sender, String ip) {
+    private int kickPlayersWithIP(String ip) {
         int kicked = 0;
+        String kickMsg = messages.getMessage("security.blacklist_kick",
+            MessageManager.placeholder()
+                .add("ip", ip)
+                .add("reason", "IP Blacklisted")
+                .add("blocked_by", "SYSTEM")
+                .add("blocked_at", "Just now")
+                .add("duration_info", "")
+                .build());
         
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            String playerIP = player.getAddress().getAddress().getHostAddress();
-            
-            if (playerIP.equals(ip)) {
-                player.kickPlayer(
-                    "§4§l⚠ TU IP HA SIDO BLOQUEADA ⚠\n\n" +
-                    "§cContacta a un administrador del servidor"
-                );
+            if (player.getAddress().getAddress().getHostAddress().equals(ip)) {
+                player.kickPlayer(kickMsg);
                 kicked++;
             }
         }
-        
-        if (kicked > 0) {
-            sender.sendMessage("§7Jugadores kickeados: §f" + kicked);
-        }
+        return kicked;
     }
 }

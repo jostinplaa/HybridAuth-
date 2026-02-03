@@ -1,6 +1,7 @@
 package net.hybridauth.listeners;
 
 import net.hybridauth.HybridAuthPlugin;
+import net.hybridauth.core.messages.MessageManager;
 import net.hybridauth.security.blacklist.BlacklistManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -25,69 +26,58 @@ public class BlacklistListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPreLogin(AsyncPlayerPreLoginEvent event) {
         String ip = event.getAddress().getHostAddress();
-        
+
         // Verificar si está en blacklist
         if (blacklistManager.isBlocked(ip)) {
             BlacklistManager.BlacklistEntry entry = blacklistManager.getEntry(ip);
-            
+
             if (entry == null) {
                 return; // Expiró entre medio
             }
-            
+
             // Construir mensaje de kick
             String kickMessage = buildKickMessage(entry);
-            
+
             // Denegar conexión
             event.disallow(
-                AsyncPlayerPreLoginEvent.Result.KICK_BANNED, 
-                kickMessage
-            );
-            
+                    AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
+                    kickMessage);
+
             plugin.getLogger().warning(
-                String.format("BLOCKED CONNECTION: %s from blacklisted IP %s (Reason: %s)",
-                    event.getName(), ip, entry.reason)
-            );
-            
+                    String.format("BLOCKED CONNECTION: %s from blacklisted IP %s (Reason: %s)",
+                            event.getName(), ip, entry.reason));
+
             // Log de seguridad
             plugin.getSecurityLogger().logWarning(
-                String.format("BLACKLIST_BLOCK: player=%s, ip=%s, reason=%s",
-                    event.getName(), ip, entry.reason)
-            );
+                    String.format("BLACKLIST_BLOCK: player=%s, ip=%s, reason=%s",
+                            event.getName(), ip, entry.reason));
         }
     }
 
     /**
-     * Construye mensaje de kick formateado
+     * Construye mensaje de kick formateado usando MessageManager
      */
     private String buildKickMessage(BlacklistManager.BlacklistEntry entry) {
-        StringBuilder msg = new StringBuilder();
-        
-        msg.append("§4§l╔════════════════════════════════════╗\n");
-        msg.append("§4§l║    ⚠  IP BLACKLISTED  ⚠           ║\n");
-        msg.append("§4§l╠════════════════════════════════════╣\n");
-        msg.append("§c\n");
-        msg.append("§c  Your IP address has been blocked\n");
-        msg.append("§c  from accessing this server.\n");
-        msg.append("§7\n");
-        msg.append("§7  IP: §f").append(entry.ip).append("\n");
-        msg.append("§7  Reason: §c").append(entry.reason).append("\n");
-        msg.append("§7  Blocked by: §f").append(entry.blockedBy).append("\n");
-        msg.append("§7  Blocked at: §f").append(entry.getFormattedBlockedAt()).append("\n");
-        msg.append("§7\n");
-        
+        String durationInfo;
         if (entry.permanent) {
-            msg.append("§4§l  Duration: PERMANENT\n");
+            durationInfo = plugin.getMessageManager()
+                    .getMessage("security.blacklist_duration_permanent");
         } else {
-            msg.append("§e  Expires: §f").append(entry.getFormattedExpiry()).append("\n");
-            msg.append("§e  Time remaining: §f").append(entry.getTimeRemaining()).append("\n");
+            durationInfo = plugin.getMessageManager().getMessage(
+                    "security.blacklist_duration_temporary",
+                    MessageManager.placeholder()
+                            .add("expires_at", entry.getFormattedExpiry())
+                            .add("time_remaining", entry.getTimeRemaining())
+                            .build());
         }
-        
-        msg.append("§7\n");
-        msg.append("§7  If you believe this is an error,\n");
-        msg.append("§7  contact a server administrator.\n");
-        msg.append("§7\n");
-        msg.append("§4§l╚════════════════════════════════════╝");
-        
-        return msg.toString();
+
+        return plugin.getMessageManager().getMessage("security.blacklist_kick",
+                MessageManager.placeholder()
+                        .add("ip", entry.ip)
+                        .add("reason", entry.reason)
+                        .add("blocked_by", entry.blockedBy)
+                        .add("blocked_at", entry.getFormattedBlockedAt())
+                        .add("duration_info", durationInfo)
+                        .build());
     }
 }
