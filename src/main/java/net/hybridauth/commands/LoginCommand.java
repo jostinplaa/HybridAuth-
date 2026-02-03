@@ -59,21 +59,27 @@ public class LoginCommand implements CommandExecutor {
             return true;
         }
 
-        // 4. Obtener datos
+        // 4. Obtener datos con NULL SAFETY
         String password = args[0];
-        String ip = player.getAddress().getAddress().getHostAddress();
+        
+        java.net.InetSocketAddress address = player.getAddress();
+        if (address == null || address.getAddress() == null) {
+            messages.send(player, "error.connection_lost");
+            return true;
+        }
+        String ip = address.getAddress().getHostAddress();
 
         // 5. Verificar rate limit
         if (!plugin.getRateLimitService().checkLimit(ip)) {
             long remainingSeconds = plugin.getRateLimitService().getSecondsRemaining(ip);
 
             // KICKEAR AL JUGADOR con mensaje personalizado
-            String kickMessage = messages.getMessage("rate_limit.kick_message",
-                    MessageManager.placeholder().add("remaining", remainingSeconds).build());
+            String kickMessage = buildRateLimitKickMessage(remainingSeconds);
             player.kickPlayer(kickMessage);
 
             // Log del evento
-            plugin.getLogger().warning("[Rate Limit] " + player.getName() + " kicked - IP blocked for " + remainingSeconds + "s");
+            plugin.getLogger().warning("[Rate Limit] " + player.getName() + " kicked - IP blocked for " +
+                    formatTime(remainingSeconds));
 
             return true;
         }
@@ -89,7 +95,49 @@ public class LoginCommand implements CommandExecutor {
         return true;
     }
 
+    /**
+     * Construye el mensaje de kick por rate limiting
+     */
+    private String buildRateLimitKickMessage(long seconds) {
+        String timeFormatted = formatTime(seconds);
 
+        return """
+                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                §c§lHybridAuth Security
+                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                §7Tu dirección IP está §ctemporalmente bloqueada§7.
+
+                §eRazón: §fDemasiados intentos fallidos de autenticación
+                §eExpira en: §f%s
+
+                §7Si crees que esto es un error, contacta
+                §7a un administrador del servidor.
+
+                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                """.formatted(timeFormatted);
+    }
+
+    /**
+     * Formatea segundos a un string legible (Xm Ys o Xs)
+     */
+    private String formatTime(long seconds) {
+        if (seconds >= 60) {
+            long minutes = seconds / 60;
+            long remainingSeconds = seconds % 60;
+
+            if (remainingSeconds > 0) {
+                return String.format("%d minuto%s %d segundo%s",
+                        minutes, minutes != 1 ? "s" : "",
+                        remainingSeconds, remainingSeconds != 1 ? "s" : "");
+            } else {
+                return String.format("%d minuto%s", minutes, minutes != 1 ? "s" : "");
+            }
+        } else {
+            return String.format("%d segundo%s", seconds, seconds != 1 ? "s" : "");
+        }
+    }
 
     private void handleLoginAsync(Player player, String password, String ip) {
         // 1. Buscar usuario en la base de datos
@@ -204,8 +252,7 @@ public class LoginCommand implements CommandExecutor {
             long lockoutSeconds = plugin.getRateLimitService().getSecondsRemaining(ip);
 
             plugin.getServer().getScheduler().runTask(plugin, () -> {
-                String kickMessage = messages.getMessage("rate_limit.kick_message",
-                        MessageManager.placeholder().add("remaining", lockoutSeconds).build());
+                String kickMessage = buildRateLimitKickMessage(lockoutSeconds);
                 player.kickPlayer(kickMessage);
 
                 plugin.getLogger().warning("[Rate Limit] " + player.getName() +

@@ -182,6 +182,14 @@ public class CaptchaService implements Listener {
             // ¡CORRECTO!
             activeChallenges.remove(uuid);
 
+            // FIX CRÍTICO: Resetear rate limit
+            try {
+                java.net.InetSocketAddress addr = player.getAddress();
+                if (addr != null && addr.getAddress() != null) {
+                    plugin.getRateLimitService().resetLimit(addr.getAddress().getHostAddress());
+                }
+            } catch (Exception ignored) {}
+
             plugin.getMessageManager().send(player, "captcha.success");
 
             player.playSound(player.getLocation(),
@@ -204,13 +212,15 @@ public class CaptchaService implements Listener {
                 plugin.getLogger().warning(
                         "Captcha failed: " + player.getName() + " (Reason: " + challenge.reason + ")");
 
-                // Considerar bloquear IP temporalmente
-                String ip = player.getAddress().getAddress().getHostAddress();
-                plugin.getBlacklistManager().blockIP(
-                        ip,
-                        300, // 5 minutos
-                        "Failed captcha verification",
-                        "SYSTEM");
+                // Bloquear IP con NULL SAFETY
+                try {
+                    java.net.InetSocketAddress addr = player.getAddress();
+                    if (addr != null && addr.getAddress() != null) {
+                        plugin.getBlacklistManager().blockIP(
+                                addr.getAddress().getHostAddress(),
+                                300, "Failed captcha", "SYSTEM");
+                    }
+                } catch (Exception ignored) {}
 
             } else {
                 // Aún tiene intentos

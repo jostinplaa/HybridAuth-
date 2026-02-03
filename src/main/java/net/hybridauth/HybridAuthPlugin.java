@@ -20,7 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class HybridAuthPlugin extends JavaPlugin {
 
-    private static HybridAuthPlugin instance;
+    private static volatile HybridAuthPlugin instance;  // THREAD-SAFE
     private DatabaseManager databaseManager;
     private AuthStateManager authStateManager;
     private PasswordService passwordService;
@@ -110,6 +110,7 @@ public class HybridAuthPlugin extends JavaPlugin {
         getCommand("register").setTabCompleter(tabCompleter);
         getCommand("changepassword").setTabCompleter(tabCompleter);
         getCommand("hybridauth").setTabCompleter(tabCompleter);
+        getCommand("security").setTabCompleter(tabCompleter);  // FIX
 
         // 10. Finalizar carga
         long loadTime = System.currentTimeMillis() - startTime;
@@ -165,15 +166,14 @@ public class HybridAuthPlugin extends JavaPlugin {
         this.passwordService = new PasswordService(this);
         getLogger().info("✓ PasswordService reinitialized");
 
-        // 4. EncryptionHandler no se usa actualmente (comentado en onEnable)
-        // Si se reactiva, descomentar: this.encryptionHandler.clearCache();
-        getLogger().info("✓ Services reinitialized (EncryptionHandler inactive)");
-
         getLogger().info("All services reinitialized successfully!");
     }
 
     // Getters
     public static HybridAuthPlugin getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("Plugin not initialized!");
+        }
         return instance;
     }
 
