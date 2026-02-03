@@ -3,6 +3,7 @@ package net.hybridauth.commands;
 import net.hybridauth.HybridAuthPlugin;
 import net.hybridauth.core.messages.MessageManager;
 import net.hybridauth.data.model.User;
+import net.hybridauth.util.AccountTypeUtil;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -14,7 +15,7 @@ import java.util.Optional;
 /**
  * Comando para cambiar la contraseña del usuario.
  * 
- * @version 1.1.0
+ * @version 1.4.0
  */
 public class ChangePasswordCommand implements CommandExecutor {
 
@@ -34,6 +35,14 @@ public class ChangePasswordCommand implements CommandExecutor {
         }
 
         Player player = (Player) sender;
+
+        // Check tipo de cuenta (Premium no tiene contraseña local)
+        AccountTypeUtil.AccountType accountType = AccountTypeUtil.getAccountType(player);
+        if (accountType == AccountTypeUtil.AccountType.PREMIUM) {
+            messages.send(player, "error.premium_cannot_changepass");
+            messages.send(player, "error.premium_cannot_changepass_info");
+            return true;
+        }
 
         // Check if logged in
         if (!plugin.getAuthStateManager().isAuthenticated(player)) {

@@ -1,5 +1,5 @@
 name: HybridAuth
-version: 2.2.0
+version: 1.4.0
 main: net.hybridauth.HybridAuthPlugin
 api-version: 1.20
 description: Sistema de autenticación híbrida (Premium/Cracked)
@@ -23,16 +23,21 @@ commands:
     description: Cambiar tu contraseña
     usage: /changepassword <antigua> <nueva>
     aliases: [changepass, cp]
-  logout:
-    description: Cerrar sesión actual
-    usage: /logout
   hybridauth:
     description: Comandos de administración
     usage: /hybridauth help
     aliases: [ha, auth]
     permission: hybridauth.admin
+  security:
+    description: Gestión de seguridad (blacklist, stats)
+    usage: /security help
+    aliases: [sec, blacklist]
+    permission: hybridauth.security
 
 permissions:
   hybridauth.admin:
     description: Permiso de administrador
+    default: op
+  hybridauth.security:
+    description: Permiso para gestionar seguridad
     default: op

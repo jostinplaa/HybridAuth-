@@ -66,6 +66,27 @@ error:
   
   # Cuando un usuario no está registrado en la base de datos
   user_not_registered: "&cEl usuario &e{player} &cno está registrado en el sistema."
+  
+  # === ERRORES DE TIPO DE CUENTA (v1.4.0) ===
+  # Cuando un premium intenta registrarse
+  premium_cannot_register: "&c⚠ Las cuentas premium no necesitan registrarse."
+  premium_cannot_register_info: "&7ℹ Tu cuenta usa auto-login automático de Mojang."
+  
+  # Cuando un premium intenta hacer login
+  premium_cannot_login: "&c⚠ Las cuentas premium no necesitan hacer login."
+  premium_cannot_login_info: "&7ℹ Tu cuenta se autentica automáticamente."
+  
+  # Cuando un premium intenta cambiar contraseña
+  premium_cannot_changepass: "&c⚠ Las cuentas premium no tienen contraseña local."
+  premium_cannot_changepass_info: "&7ℹ Tu contraseña es la de tu cuenta de Mojang."
+  
+  # Cuando admin intenta desregistrar a un premium
+  premium_cannot_unregister: "&c⚠ No puedes desregistrar cuentas premium."
+  premium_cannot_unregister_info: "&7ℹ Las cuentas premium están protegidas automáticamente."
+  
+  # Cuando admin intenta resetear contraseña de premium
+  premium_has_no_password: "&c⚠ Las cuentas premium no tienen contraseña local."
+  premium_has_no_password_info: "&7ℹ Su contraseña es la de su cuenta de Mojang."
 
 # ===================================================
 # ERRORES DE CONTRASEÑA

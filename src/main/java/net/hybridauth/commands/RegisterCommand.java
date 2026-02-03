@@ -4,6 +4,7 @@ import net.hybridauth.HybridAuthPlugin;
 import net.hybridauth.core.auth.AuthStateManager.AuthState;
 import net.hybridauth.core.messages.MessageManager;
 import net.hybridauth.data.model.User;
+import net.hybridauth.util.AccountTypeUtil;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -17,7 +18,7 @@ import java.util.UUID;
  * Permite crear una cuenta en el sistema de autenticación.
  * 
  * @author TuNombre
- * @version 1.1.0
+ * @version 1.4.0
  */
 public class RegisterCommand implements CommandExecutor {
 
@@ -54,7 +55,15 @@ public class RegisterCommand implements CommandExecutor {
         Player player = (Player) sender;
         UUID uuid = player.getUniqueId();
 
-        // 2. Verificar si ya está autenticado
+        // 2. Verificar tipo de cuenta (Premium no puede registrarse)
+        AccountTypeUtil.AccountType accountType = AccountTypeUtil.getAccountType(player);
+        if (accountType == AccountTypeUtil.AccountType.PREMIUM) {
+            messages.send(player, "error.premium_cannot_register");
+            messages.send(player, "error.premium_cannot_register_info");
+            return true;
+        }
+
+        // 3. Verificar si ya está autenticado
         if (plugin.getAuthStateManager().isAuthenticated(player)) {
             messages.send(player, "error.already_authenticated");
             return true;

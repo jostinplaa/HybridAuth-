@@ -4,6 +4,7 @@ import net.hybridauth.HybridAuthPlugin;
 import net.hybridauth.core.auth.AuthStateManager.AuthState;
 import net.hybridauth.core.messages.MessageManager;
 import net.hybridauth.data.model.User;
+import net.hybridauth.util.AccountTypeUtil;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -32,7 +33,15 @@ public class LoginCommand implements CommandExecutor {
 
         Player player = (Player) sender;
 
-        // 2. Verificar si ya está autenticado
+        // 2. Verificar tipo de cuenta (Premium usa auto-login)
+        AccountTypeUtil.AccountType accountType = AccountTypeUtil.getAccountType(player);
+        if (accountType == AccountTypeUtil.AccountType.PREMIUM) {
+            messages.send(player, "error.premium_cannot_login");
+            messages.send(player, "error.premium_cannot_login_info");
+            return true;
+        }
+
+        // 3. Verificar si ya está autenticado
         if (plugin.getAuthStateManager().isAuthenticated(player)) {
             messages.send(player, "error.already_authenticated");
             return true;

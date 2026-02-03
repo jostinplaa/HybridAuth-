@@ -256,7 +256,7 @@ public class LoginListener implements Listener {
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     authStateManager.setAuthState(player, AuthState.AUTHENTICATED);
                     removeAuthRestrictions(player);
-                    player.sendMessage("§a§lHybridAuth §8» §aAutenticado automáticamente (Cuenta Premium Mojang).");
+                    plugin.getMessageManager().send(player, "authentication.premium_detected");
 
                     // Crear sesión
                     plugin.getSessionManager().createSession(player.getUniqueId(),
@@ -270,7 +270,7 @@ public class LoginListener implements Listener {
                 e.printStackTrace();
 
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    player.sendMessage("§c§lHybridAuth §8» §cError en auto-login. Contacta a un admin.");
+                    plugin.getMessageManager().send(player, "auth.premium-verification-failed");
                 });
             }
         });
@@ -292,7 +292,7 @@ public class LoginListener implements Listener {
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     authStateManager.setAuthState(player, AuthState.AUTHENTICATED);
                     removeAuthRestrictions(player);
-                    player.sendMessage("§a§lHybridAuth §8» §aSesión restaurada correctamente.");
+                    plugin.getMessageManager().send(player, "authentication.session_resumed");
                 });
                 return;
             }
@@ -304,10 +304,9 @@ public class LoginListener implements Listener {
 
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 if (isRegistered) {
-                    player.sendMessage("§c§lHybridAuth §8» §7Por favor, usa §f/login <pass> §7para entrar.");
+                    plugin.getMessageManager().send(player, "auth.login-required");
                 } else {
-                    player.sendMessage(
-                            "§c§lHybridAuth §8» §7Por favor, usa §f/register <pass> <pass> §7para registrarte.");
+                    plugin.getMessageManager().send(player, "auth.register-required");
                 }
 
                 // Apply restrictions
@@ -368,7 +367,7 @@ public class LoginListener implements Listener {
     public void onChat(AsyncPlayerChatEvent event) {
         if (authStateManager.isPending(event.getPlayer())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage("§cDebes autenticarte primero.");
+            plugin.getMessageManager().send(event.getPlayer(), "error.not_authenticated");
         }
     }
 

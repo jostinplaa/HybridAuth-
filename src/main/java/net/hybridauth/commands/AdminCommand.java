@@ -56,9 +56,6 @@ public class AdminCommand implements CommandExecutor {
                 plugin.reinitializeServices();
 
                 messages.send(sender, "admin.reload.success");
-                sender.sendMessage("§a✓ Config reloaded");
-                sender.sendMessage("§a✓ Messages reloaded");
-                sender.sendMessage("§a✓ Services reinitialized");
                 break;
 
             case "unregister":
@@ -159,6 +156,16 @@ public class AdminCommand implements CommandExecutor {
                 }
 
                 User user = userOpt.get();
+
+                // NUEVO: Verificar si es premium (NO se puede desregistrar)
+                if (user.isPremium()) {
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        messages.send(sender, "error.premium_cannot_unregister");
+                        messages.send(sender, "error.premium_cannot_unregister_info");
+                    });
+                    return;
+                }
+
                 plugin.getDatabaseManager().getUserDAO().deleteUser(user.getUuid());
 
                 // Invalidate session if exists
@@ -224,7 +231,7 @@ public class AdminCommand implements CommandExecutor {
     private void handleMigrate(CommandSender sender, String[] args) {
         // Solo jugadores pueden migrar su propia cuenta
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players.");
+            messages.send(sender, "error.only_players");
             return;
         }
 
@@ -244,7 +251,7 @@ public class AdminCommand implements CommandExecutor {
 
         UUID premiumUUID = net.hybridauth.network.netty.PremiumDetector.getRealUUID(player.getName());
         if (premiumUUID == null) {
-            player.sendMessage("§c§l✖ §cCould not detect your premium UUID. Try reconnecting.");
+            messages.send(sender, "auth.migration.premium_uuid_error");
             return;
         }
 
@@ -255,7 +262,7 @@ public class AdminCommand implements CommandExecutor {
 
                 if (userOpt.isEmpty()) {
                     plugin.getServer().getScheduler().runTask(plugin,
-                            () -> player.sendMessage("§c§l✖ §cYou are not registered!"));
+                            () -> messages.send(sender, "error.not_registered"));
                     return;
                 }
 
@@ -264,7 +271,7 @@ public class AdminCommand implements CommandExecutor {
                 // Ya es premium
                 if (user.isPremium()) {
                     plugin.getServer().getScheduler().runTask(plugin,
-                            () -> player.sendMessage("§e§l⚠ §eYour account is already premium!"));
+                            () -> messages.send(sender, "auth.migration.already_premium"));
                     return;
                 }
 

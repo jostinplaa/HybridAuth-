@@ -51,6 +51,18 @@ security:
     max-connections-per-minute: 10
     block-suspicious-usernames: true
     check-vpn: false  # Requiere API key
+    
+  # v1.3.0 - Sistema de Captcha
+  captcha:
+    enabled: true
+    timeout-seconds: 30
+    max-attempts: 3
+    
+  # v1.3.0 - Sistema de Captcha
+  captcha:
+    enabled: true
+    timeout-seconds: 30
+    max-attempts: 3
 
 authentication:
   timeout-seconds: 60
@@ -75,10 +87,12 @@ integrations:
   discord:
     enabled: false
     webhook-url: ""
-    notify-on:
-      - new-registration
-      - suspicious-activity
-      - admin-actions
+    notify:
+      impostor-detected: true
+      ip-blacklisted: true
+      brute-force: true
+      suspicious-login: true
+      premium-register: false
       
   email:
     enabled: false

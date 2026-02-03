@@ -3,11 +3,16 @@ package net.hybridauth;
 import net.hybridauth.commands.AdminCommand;
 import net.hybridauth.commands.LoginCommand;
 import net.hybridauth.commands.RegisterCommand;
+import net.hybridauth.commands.SecurityCommand;
 import net.hybridauth.core.auth.AuthStateManager;
 import net.hybridauth.core.auth.PasswordService;
 import net.hybridauth.data.DatabaseManager;
+import net.hybridauth.integrations.discord.DiscordWebhook;
+import net.hybridauth.listeners.BlacklistListener;
 import net.hybridauth.listeners.LoginListener;
 import net.hybridauth.network.packet.EncryptionHandler;
+import net.hybridauth.security.blacklist.BlacklistManager;
+import net.hybridauth.security.captcha.CaptchaService;
 import net.hybridauth.security.fingerprint.ClientFingerprintService;
 import net.hybridauth.security.ratelimit.RateLimitService;
 import org.bukkit.Bukkit;
@@ -27,6 +32,11 @@ public class HybridAuthPlugin extends JavaPlugin {
     private net.hybridauth.security.SecurityLogger securityLogger;
     private net.hybridauth.core.session.SessionManager sessionManager;
     private net.hybridauth.core.messages.MessageManager messageManager;
+
+    // v1.3.0 Security Features
+    private BlacklistManager blacklistManager;
+    private DiscordWebhook discordWebhook;
+    private CaptchaService captchaService;
 
     @Override
     public void onLoad() {
@@ -73,9 +83,16 @@ public class HybridAuthPlugin extends JavaPlugin {
         this.securityLogger = new net.hybridauth.security.SecurityLogger(this);
         this.sessionManager = new net.hybridauth.core.session.SessionManager(this);
 
+        // 6.5. Inicializar v1.3.0 Security Features
+        this.blacklistManager = new BlacklistManager(this);
+        this.discordWebhook = new DiscordWebhook(this);
+        this.captchaService = new CaptchaService(this);
+        getLogger().info("✓ v1.3.0 Security features loaded (Blacklist, Discord, Captcha)");
+
         // 7. Registrar listeners
         getServer().getPluginManager().registerEvents(new LoginListener(this, authStateManager), this);
         getServer().getPluginManager().registerEvents(new net.hybridauth.listeners.SecurityListener(this), this);
+        getServer().getPluginManager().registerEvents(new BlacklistListener(this), this);
 
         // 7.5. Registrar AUTO-LOGIN para premium (¡LA NUEVA FEATURE!)
         getServer().getPluginManager().registerEvents(new net.hybridauth.core.auth.AutoLoginManager(this), this);
@@ -84,9 +101,9 @@ public class HybridAuthPlugin extends JavaPlugin {
         // 8. Registrar Comandos
         getCommand("login").setExecutor(new LoginCommand(this));
         getCommand("register").setExecutor(new RegisterCommand(this));
-        getCommand("logout").setExecutor(new net.hybridauth.commands.LogoutCommand(this));
         getCommand("changepassword").setExecutor(new net.hybridauth.commands.ChangePasswordCommand(this));
         getCommand("hybridauth").setExecutor(new AdminCommand(this));
+        getCommand("security").setExecutor(new SecurityCommand(this));
 
         // 9. Registrar Tab Completer
         net.hybridauth.commands.HybridAuthTabCompleter tabCompleter = new net.hybridauth.commands.HybridAuthTabCompleter();
@@ -103,6 +120,12 @@ public class HybridAuthPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Cerrar BlacklistManager (v1.3.0)
+        if (blacklistManager != null) {
+            blacklistManager.shutdown();
+        }
+
+        // Cerrar base de datos
         if (databaseManager != null) {
             databaseManager.close();
         }
@@ -189,5 +212,18 @@ public class HybridAuthPlugin extends JavaPlugin {
 
     public net.hybridauth.core.messages.MessageManager getMessageManager() {
         return messageManager;
+    }
+
+    // v1.3.0 Security Features Getters
+    public BlacklistManager getBlacklistManager() {
+        return blacklistManager;
+    }
+
+    public DiscordWebhook getDiscordWebhook() {
+        return discordWebhook;
+    }
+
+    public CaptchaService getCaptchaService() {
+        return captchaService;
     }
 }

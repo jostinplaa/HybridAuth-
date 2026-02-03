@@ -104,9 +104,7 @@ public class AutoLoginManager implements Listener {
                     plugin.getMessageManager().getMessage("auth.premium-auto-registered"),
                     10, 70, 20);
 
-            player.sendMessage("§a§l✔ §aWelcome! Auto-registered as PREMIUM player.");
-            player.sendMessage("§7Your account is protected by Mojang authentication.");
-            player.sendMessage("§8You will never need a password on this server.");
+            plugin.getMessageManager().send(player, "auth.premium-registered-success");
 
             plugin.getSecurityLogger().logInfo("Premium auto-register: " + username + " (UUID: " + premiumUUID + ")");
         });
@@ -137,12 +135,18 @@ public class AutoLoginManager implements Listener {
                 plugin.getMessageManager().getMessage("auth.premium-auto-login"),
                 10, 50, 20);
 
-        player.sendMessage("§a§l✔ §aWelcome back! Auto-logged in as PREMIUM.");
+        plugin.getMessageManager().send(player, "auth.premium-login-success");
 
         // Mostrar stats si está configurado
         if (plugin.getConfig().getBoolean("features.show-login-stats", true)) {
-            player.sendMessage("§8Last login: §7" + user.getLastLoginDate());
-            player.sendMessage("§8Total logins: §7" + user.getTotalLogins());
+            plugin.getMessageManager().send(player, "auth.stats-last-login",
+                    net.hybridauth.core.messages.MessageManager.placeholder()
+                            .add("date", user.getLastLoginDate().toString())
+                            .build());
+            plugin.getMessageManager().send(player, "auth.stats-total-logins",
+                    net.hybridauth.core.messages.MessageManager.placeholder()
+                            .add("total", user.getTotalLogins())
+                            .build());
         }
 
         plugin.getSecurityLogger().logInfo("Premium auto-login: " + user.getUsername());
@@ -207,12 +211,24 @@ public class AutoLoginManager implements Listener {
                         ", expected_uuid=" + expectedUUID +
                         ", actual_uuid=" + actualUUID);
 
-        // Blacklist IP temporalmente
-        // TODO: Implement blockIP in RateLimitService
-        // plugin.getRateLimitService().blockIP(
-        // player.getAddress().getAddress().getHostAddress(),
-        // 3600 // 1 hora
-        // );
+        // Blacklist IP automáticamente por 1 hora
+        String ip = player.getAddress().getAddress().getHostAddress();
+        plugin.getBlacklistManager().blockIP(
+            ip, 
+            3600, // 1 hora
+            "IMPOSTOR ATTEMPT: " + username, 
+            "SYSTEM"
+        );
+        
+        plugin.getLogger().severe("IP BLACKLISTED: " + ip + " (impostor attempt)");
+        
+        // Alerta Discord
+        plugin.getDiscordWebhook().notifyImpostor(
+            username, 
+            ip, 
+            expectedUUID.toString(), 
+            actualUUID.toString()
+        );
     }
 
     @EventHandler
