@@ -109,9 +109,10 @@ public class BackupService {
                 filename = "backup_" + timestamp + ".sql";
                 backupFile = new File(backupFolder, filename);
 
-                // TODO: Implementar mysqldump si se usa MySQL
-                // Por ahora retornar que no est soportado
-                return new BackupResult(false, null, "MySQL backup not yet implemented (use mysqldump manually)");
+                
+                if (!backupMySQL(backupFile)) {
+                    return new BackupResult(false, null, "MySQL backup process failed (check logs for details)");
+                }
             }
 
             long size = backupFile.length();
@@ -238,6 +239,60 @@ public class BackupService {
         }
 
         return null;
+    }
+
+    /**
+     * Executes mysqldump system command to backup MySQL database
+     */
+    private boolean backupMySQL(File targetFile) {
+        try {
+            FileConfiguration config = plugin.getConfig();
+            String host = config.getString("database.mysql.host", "localhost");
+            int port = config.getInt("database.mysql.port", 3306);
+            String db = config.getString("database.mysql.database", "hybridauth");
+            String user = config.getString("database.mysql.username", "root");
+            String pass = config.getString("database.mysql.password", "");
+
+            // Construct command: mysqldump -h [host] -P [port] -u [user] --password=[pass] [db] -r [file]
+            // NOTE: Ideally password should be in a cnf file to avoid process listing exposure, 
+            // but for simple plugin usage this is the standard approach.
+            List<String> command = new ArrayList<>();
+            command.add("mysqldump");
+            command.add("-h");
+            command.add(host);
+            command.add("-P");
+            command.add(String.valueOf(port));
+            command.add("-u");
+            command.add(user);
+            
+            if (!pass.isEmpty()) {
+                command.add("--password=" + pass);
+            }
+            
+            command.add("--no-tablespaces"); // Avoid error if user doesn't have PROCESS privilege
+            command.add("--column-statistics=0"); // Fix for some version mismatches
+            command.add(db);
+            command.add("-r");
+            command.add(targetFile.getAbsolutePath());
+
+            ProcessBuilder pb = new ProcessBuilder(command);
+            pb.redirectError(ProcessBuilder.Redirect.INHERIT); // Show errors in console
+            
+            Process process = pb.start();
+            int exitCode = process.waitFor();
+
+            if (exitCode == 0) {
+                return true;
+            } else {
+                plugin.getLogger().severe("[BackupService] mysqldump failed with exit code: " + exitCode);
+                return false;
+            }
+
+        } catch (IOException | InterruptedException e) {
+            plugin.getLogger().severe("[BackupService] Error running mysqldump: " + e.getMessage());
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Exception details:", e);
+            return false;
+        }
     }
 
     private void notifyAdminsAboutBackup(String filename) {

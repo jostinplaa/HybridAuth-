@@ -79,7 +79,7 @@ public class RateLimitService {
 
         // 2. Check Global Limit (Async)
         if (plugin.getSyncManager() != null && plugin.getSyncManager().isEnabled()) {
-            final int localAttempts = attempts;
+
             plugin.getSyncManager().incrementRateLimit(ip, 600) // Keep global count for 10 min
                     .thenAccept(globalCount -> {
                         if (globalCount >= maxAttempts) {

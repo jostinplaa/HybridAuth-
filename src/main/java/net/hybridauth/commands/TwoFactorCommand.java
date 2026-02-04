@@ -24,7 +24,7 @@ public class TwoFactorCommand implements CommandExecutor {
 
     public TwoFactorCommand(HybridAuthPlugin plugin) {
         this.plugin = plugin;
-        this.twoFactorService = new TwoFactorService(plugin);
+        this.twoFactorService = new TwoFactorService();
     }
 
     public TwoFactorService getService() {

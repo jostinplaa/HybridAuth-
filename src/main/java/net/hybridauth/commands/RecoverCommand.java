@@ -1,7 +1,7 @@
 package net.hybridauth.commands;
 
 import net.hybridauth.HybridAuthPlugin;
-import net.hybridauth.core.messages.MessageManager;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -22,12 +22,12 @@ import java.util.Map;
 public class RecoverCommand implements CommandExecutor {
 
     private final HybridAuthPlugin plugin;
-    private final MessageManager messages;
+
     private final Map<String, Long> cooldowns = new HashMap<>();
 
     public RecoverCommand(HybridAuthPlugin plugin) {
         this.plugin = plugin;
-        this.messages = plugin.getMessageManager();
+
     }
 
     @Override
@@ -256,6 +256,3 @@ public class RecoverCommand implements CommandExecutor {
         return email.charAt(0) + "***" + email.substring(atIndex);
     }
 }
-
-
-

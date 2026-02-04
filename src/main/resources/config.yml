@@ -44,7 +44,7 @@ security:
     base-delay: 5  # segundos
     progressive-backoff: true
     whitelisted-ips:
-      - 127.0.0.1
+    #  - 127.0.0.1
       - 192.168.1.1
     
   sessions:
@@ -68,7 +68,7 @@ security:
     
   # v1.3.0 - Sistema de Captcha
   captcha:
-    enabled: true
+    enabled: false
     timeout-seconds: 30
     max-attempts: 3
     

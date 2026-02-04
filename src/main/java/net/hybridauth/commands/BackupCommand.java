@@ -3,8 +3,6 @@ package net.hybridauth.commands;
 import net.hybridauth.HybridAuthPlugin;
 import net.hybridauth.backup.BackupService;
 import net.hybridauth.core.messages.MessageManager;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 import java.util.HashMap;
@@ -154,4 +152,3 @@ public class BackupCommand {
         });
     }
 }
-

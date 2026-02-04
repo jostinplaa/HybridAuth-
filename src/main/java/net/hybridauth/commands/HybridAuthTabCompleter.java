@@ -3,7 +3,7 @@ package net.hybridauth.commands;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
-import org.bukkit.entity.Player;
+
 import org.bukkit.util.StringUtil;
 
 import java.util.ArrayList;
@@ -71,4 +71,3 @@ public class HybridAuthTabCompleter implements TabCompleter {
         return Collections.emptyList();
     }
 }
-

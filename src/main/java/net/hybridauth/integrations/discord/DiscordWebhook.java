@@ -41,7 +41,7 @@ public class DiscordWebhook {
 
         this.enabled = config.getBoolean("integrations.discord.enabled", false);
         this.webhookUrl = config.getString("integrations.discord.webhook-url", "");
-        
+
         this.notifyImpostor = config.getBoolean("integrations.discord.notify.impostor-detected", true);
         this.notifyBlacklist = config.getBoolean("integrations.discord.notify.ip-blacklisted", true);
         this.notifyBruteForce = config.getBoolean("integrations.discord.notify.brute-force", true);
@@ -64,17 +64,17 @@ public class DiscordWebhook {
      * Alerta de impostor detectado
      */
     public void notifyImpostor(String playerName, String ip, String expectedUUID, String actualUUID) {
-        if (!isEnabled() || !notifyImpostor) return;
+        if (!isEnabled() || !notifyImpostor)
+            return;
 
         String description = String.format(
-            "** IMPOSTOR DETECTED **\n\n" +
-            "**Player:** `%s`\n" +
-            "**IP:** `%s`\n" +
-            "**Expected UUID:** `%s`\n" +
-            "**Actual UUID:** `%s`\n\n" +
-            "**Action:** Player kicked and IP auto-blacklisted for 1 hour",
-            playerName, ip, expectedUUID, actualUUID
-        );
+                "** IMPOSTOR DETECTED **\n\n" +
+                        "**Player:** `%s`\n" +
+                        "**IP:** `%s`\n" +
+                        "**Expected UUID:** `%s`\n" +
+                        "**Actual UUID:** `%s`\n\n" +
+                        "**Action:** Player kicked and IP auto-blacklisted for 1 hour",
+                playerName, ip, expectedUUID, actualUUID);
 
         sendEmbed(" IMPOSTOR ALERT", description, 0xFF0000); // Rojo
     }
@@ -83,18 +83,18 @@ public class DiscordWebhook {
      * Alerta de IP blacklisteada
      */
     public void notifyIPBlacklisted(String ip, String reason, String blockedBy, boolean permanent) {
-        if (!isEnabled() || !notifyBlacklist) return;
+        if (!isEnabled() || !notifyBlacklist)
+            return;
 
         String type = permanent ? "PERMANENT" : "TEMPORARY";
         String emoji = permanent ? "" : "";
 
         String description = String.format(
-            "%s **IP BLACKLISTED (%s)**\n\n" +
-            "**IP:** `%s`\n" +
-            "**Reason:** %s\n" +
-            "**Blocked by:** %s",
-            emoji, type, ip, reason, blockedBy
-        );
+                "%s **IP BLACKLISTED (%s)**\n\n" +
+                        "**IP:** `%s`\n" +
+                        "**Reason:** %s\n" +
+                        "**Blocked by:** %s",
+                emoji, type, ip, reason, blockedBy);
 
         int color = permanent ? 0x8B0000 : 0xFF8C00; // Rojo oscuro o naranja
         sendEmbed(" Security Alert", description, color);
@@ -104,16 +104,16 @@ public class DiscordWebhook {
      * Alerta de intento de brute force
      */
     public void notifyBruteForce(String playerName, String ip, int attempts) {
-        if (!isEnabled() || !notifyBruteForce) return;
+        if (!isEnabled() || !notifyBruteForce)
+            return;
 
         String description = String.format(
-            "** BRUTE FORCE ATTEMPT**\n\n" +
-            "**Player:** `%s`\n" +
-            "**IP:** `%s`\n" +
-            "**Failed attempts:** %d\n\n" +
-            "**Action:** IP temporarily blocked",
-            playerName, ip, attempts
-        );
+                "** BRUTE FORCE ATTEMPT**\n\n" +
+                        "**Player:** `%s`\n" +
+                        "**IP:** `%s`\n" +
+                        "**Failed attempts:** %d\n\n" +
+                        "**Action:** IP temporarily blocked",
+                playerName, ip, attempts);
 
         sendEmbed(" Brute Force Alert", description, 0xFFA500); // Naranja
     }
@@ -122,15 +122,15 @@ public class DiscordWebhook {
      * Alerta de login sospechoso
      */
     public void notifySuspiciousLogin(String playerName, String ip, String reason) {
-        if (!isEnabled() || !notifySuspicious) return;
+        if (!isEnabled() || !notifySuspicious)
+            return;
 
         String description = String.format(
-            "** SUSPICIOUS LOGIN DETECTED**\n\n" +
-            "**Player:** `%s`\n" +
-            "**IP:** `%s`\n" +
-            "**Reason:** %s",
-            playerName, ip, reason
-        );
+                "** SUSPICIOUS LOGIN DETECTED**\n\n" +
+                        "**Player:** `%s`\n" +
+                        "**IP:** `%s`\n" +
+                        "**Reason:** %s",
+                playerName, ip, reason);
 
         sendEmbed(" Suspicious Activity", description, 0xFFFF00); // Amarillo
     }
@@ -139,15 +139,15 @@ public class DiscordWebhook {
      * Notificacin de registro premium (opcional)
      */
     public void notifyPremiumRegister(String playerName, String uuid) {
-        if (!isEnabled() || !notifyPremium) return;
+        if (!isEnabled() || !notifyPremium)
+            return;
 
         String description = String.format(
-            "** NEW PREMIUM PLAYER**\n\n" +
-            "**Player:** `%s`\n" +
-            "**UUID:** `%s`\n" +
-            "**Status:** Auto-registered as premium",
-            playerName, uuid
-        );
+                "** NEW PREMIUM PLAYER**\n\n" +
+                        "**Player:** `%s`\n" +
+                        "**UUID:** `%s`\n" +
+                        "**Status:** Auto-registered as premium",
+                playerName, uuid);
 
         sendEmbed(" Premium Register", description, 0x00FF00); // Verde
     }
@@ -156,14 +156,14 @@ public class DiscordWebhook {
      * Notificacin de IP desbloqueada
      */
     public void notifyIPUnblocked(String ip, String unblockedBy) {
-        if (!isEnabled() || !notifyBlacklist) return;
+        if (!isEnabled() || !notifyBlacklist)
+            return;
 
         String description = String.format(
-            "** IP UNBLOCKED**\n\n" +
-            "**IP:** `%s`\n" +
-            "**Unblocked by:** %s",
-            ip, unblockedBy
-        );
+                "** IP UNBLOCKED**\n\n" +
+                        "**IP:** `%s`\n" +
+                        "**Unblocked by:** %s",
+                ip, unblockedBy);
 
         sendEmbed(" IP Unblocked", description, 0x00FF00); // Verde
     }
@@ -171,6 +171,7 @@ public class DiscordWebhook {
     /**
      * Enva un embed al webhook
      */
+    @SuppressWarnings("unchecked")
     private void sendEmbed(String title, String description, int color) {
         CompletableFuture.runAsync(() -> {
             try {
@@ -179,7 +180,7 @@ public class DiscordWebhook {
                 embed.put("description", description);
                 embed.put("color", color);
                 embed.put("timestamp", Instant.now().toString());
-                
+
                 JSONObject footer = new JSONObject();
                 footer.put("text", "HybridAuth Security System");
                 embed.put("footer", footer);
@@ -218,11 +219,10 @@ public class DiscordWebhook {
             }
 
             int responseCode = connection.getResponseCode();
-            
+
             if (responseCode != 204 && responseCode != 200) {
                 plugin.getLogger().warning(
-                    "Discord webhook failed with code: " + responseCode
-                );
+                        "Discord webhook failed with code: " + responseCode);
             }
 
             connection.disconnect();
@@ -235,8 +235,10 @@ public class DiscordWebhook {
     /**
      * Enva mensaje simple (sin embed)
      */
+    @SuppressWarnings("unchecked")
     public void sendSimpleMessage(String message) {
-        if (!isEnabled()) return;
+        if (!isEnabled())
+            return;
 
         CompletableFuture.runAsync(() -> {
             try {
@@ -252,4 +254,3 @@ public class DiscordWebhook {
         });
     }
 }
-

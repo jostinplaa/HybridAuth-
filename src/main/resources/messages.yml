@@ -65,16 +65,16 @@ password:
   reset_success: "&a&l✓ &aContraseña restablecida para &e{player}&a."
 
   requirements:
-    length:    "&8  &8└&7 Al menos &e8 caracteres"
+    length: "&8  &8└&7 Al menos &e8 caracteres"
     uppercase: "&8  &8└&7 Al menos &euna letra mayúscula &8(A-Z)"
     lowercase: "&8  &8└&7 Al menos &euna letra minúscula &8(a-z)"
-    number:    "&8  &8└&7 Al menos &eun número &8(0-9)"
-    special:   "&8  &8└&7 Al menos &eun carácter especial &8(!@#$%^&*)"
+    number: "&8  &8└&7 Al menos &eun número &8(0-9)"
+    special: "&8  &8└&7 Al menos &eun carácter especial &8(!@#$%^&*)"
 
   strength:
-    weak:       "&c&lDÉBIL"
-    medium:     "&e&lMEDIA"
-    strong:     "&a&lFUERTE"
+    weak: "&c&lDÉBIL"
+    medium: "&e&lMEDIA"
+    strong: "&a&lFUERTE"
     very_strong: "&a&l&nMUY FUERTE"
 
 # ===================================================
@@ -105,23 +105,23 @@ rate_limit:
 # USO DE COMANDOS
 # ===================================================
 usage:
-  login:          "&8→ &7Uso: &e/login <contraseña>"
-  register:       "&8→ &7Uso: &e/register <contraseña> <confirmar>"
+  login: "&8→ &7Uso: &e/login <contraseña>"
+  register: "&8→ &7Uso: &e/register <contraseña> <confirmar>"
   changepassword: "&8→ &7Uso: &e/changepassword <antigua> <nueva> <confirmar>"
-  logout:         "&8→ &7Uso: &e/logout"
-  unregister:     "&8→ &7Uso: &e/hybridauth unregister <jugador>"
-  resetpassword:  "&8→ &7Uso: &e/hybridauth resetpassword <jugador> <nueva>"
+  logout: "&8→ &7Uso: &e/logout"
+  unregister: "&8→ &7Uso: &e/hybridauth unregister <jugador>"
+  resetpassword: "&8→ &7Uso: &e/hybridauth resetpassword <jugador> <nueva>"
 
 # ===================================================
 # ÉXITO
 # ===================================================
 success:
-  registered:   "&a&l✓ &a¡Registrado correctamente! Bienvenido, &e{player}&a."
-  logged_in:    "&a&l✓ &a¡Sesión iniciada correctamente!"
+  registered: "&a&l✓ &a¡Registrado correctamente! Bienvenido, &e{player}&a."
+  logged_in: "&a&l✓ &a¡Sesión iniciada correctamente!"
   welcome_back: "&7Bienvenido de nuevo, &e{player}&7."
-  logged_out:   "&a&l✓ &aSesión cerrada correctamente."
-  processing:   "&7⏳ Procesando..."
-  enjoy:        "&8→ &7¡Disfruta tu estancia en el servidor!"
+  logged_out: "&a&l✓ &aSesión cerrada correctamente."
+  processing: "&7⏳ Procesando..."
+  enjoy: "&8→ &7¡Disfruta tu estancia en el servidor!"
 
 # ===================================================
 # ADMINISTRACIÓN
@@ -129,52 +129,56 @@ success:
 admin:
   reload:
     success: "&a&l✓ &aConfiguración y mensajes recargados."
-    error:   "&c&l✗ &cError al recargar. Revisa la consola."
+    error: "&c&l✗ &cError al recargar. Revisa la consola."
 
   unregister:
-    confirm:              "&e&l⚠ &eEstás a punto de desregistrar a &c{player}&e."
-    confirm_instruction:  "&8→ &7Escribe &a/hybridauth confirm &7para confirmar."
-    success:              "&a&l✓ &aEl usuario &e{player} &afue desregistrado."
-    cancelled:            "&7Operación cancelada."
-    timeout:              "&cEl tiempo de confirmación expiró. Operación cancelada."
+    confirm: "&e&l⚠ &eEstás a punto de desregistrar a &c{player}&e."
+    confirm_instruction: "&8→ &7Escribe &a/hybridauth confirm &7para confirmar."
+    success: "&a&l✓ &aEl usuario &e{player} &afue desregistrado."
+    cancelled: "&7Operación cancelada."
+    timeout: "&cEl tiempo de confirmación expiró. Operación cancelada."
     console_no_confirmation: "&7La consola no requiere confirmación."
     no_pending_confirmation: "&cNo tienes acción pendiente de confirmación."
 
   stats:
-    header:          "&8&m━━━━━━━━━━━ &r&b&lHA &r&7Stats &8&m━━━━━━━━━━━"
-    version:         "&8  Versión:  &f{version}"
-    total_users:     "&8  Usuarios: &f{total}"
-    premium_users:   "&8  Premium:  &a{premium}"
-    cracked_users:   "&8  Cracked:  &7{cracked}"
+    header: "&8&m━━━━━━━━━━━ &r&b&lHA &r&7Stats &8&m━━━━━━━━━━━"
+    version: "&8  Versión:  &f{version}"
+    total_users: "&8  Usuarios: &f{total}"
+    premium_users: "&8  Premium:  &a{premium}"
+    cracked_users: "&8  Cracked:  &7{cracked}"
     active_sessions: "&8  Sesiones: &b{sessions}"
-    footer:          "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    footer: "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   help:
-    header:        "&8&m━━━━━━━━━━━ &r&b&lHA &r&7Admin &8&m━━━━━━━━━━━"
-    reload:        "&8  &e/hybridauth reload &8— &fRecargar configuración"
-    unregister:    "&8  &e/hybridauth unregister <jugador> &8— &fDesregistrar"
+    header: "&8&m━━━━━━━━━━━ &r&b&lHA &r&7Admin &8&m━━━━━━━━━━━"
+    reload: "&8  &e/hybridauth reload &8— &fRecargar configuración"
+    unregister: "&8  &e/hybridauth unregister <jugador> &8— &fDesregistrar"
     resetpassword: "&8  &e/hybridauth resetpassword <jugador> <pass> &8— &fReset pass"
-    stats:         "&8  &e/hybridauth stats &8— &fEstadísticas"
-    migrate:       "&8  &e/hybridauth migrate <contraseña> &8— &fMigrar a premium"
-    footer:        "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    stats: "&8  &e/hybridauth stats &8— &fEstadísticas"
+    migrate: "&8  &e/hybridauth migrate <contraseña> &8— &fMigrar a premium"
+    footer: "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # ===================================================
 # AUTENTICACIÓN — PROCESOS
 # ===================================================
 authentication:
-  timeout:           "&c&l⏰ Tiempo agotado &8— &7Has sido desconectado por no autenticarte."
-  session_created:   "&a&l✓ &7Sesión segura creada."
-  session_expired:   "&e&l⚠ &eTu sesión ha expirado. Inicia sesión de nuevo."
-  session_resumed:   "&a&l✓ &aSesión anterior restaurada. ¡Bienvenido!"
-  premium_detected:  "&b&l★ &bCuenta Premium detectada &8— &aLogin automático activado."
-  bedrock_player:    "&b&l⛏ &bJugador Bedrock detectado &8— &7Sistema compatible activado."
+  timeout: "&c&l⏰ Tiempo agotado &8— &7Has sido desconectado por no autenticarte."
+  session_created: "&a&l✓ &7Sesión segura creada."
+  session_expired: "&e&l⚠ &eTu sesión ha expirado. Inicia sesión de nuevo."
+  session_resumed: "&a&l✓ &aSesión anterior restaurada. ¡Bienvenido!"
+  premium_detected: "&b&l★ &bCuenta Premium detectada &8— &aLogin automático activado."
+  bedrock_player: "&b&l⛏ &bJugador Bedrock detectado &8— &7Sistema compatible activado."
 
 # ===================================================
 # AUTO-LOGIN PREMIUM
 # ===================================================
 auth:
   register-required: "&e&l⚠ &eDebe registrarte: &f/register <contraseña> <contraseña>"
-  login-required:    "&e&l⚠ &eDebe iniciar sesión: &f/login <contraseña>"
+  login-required: "&e&l⚠ &eDebe iniciar sesión: &f/login <contraseña>"
+
+  premium-login-success: "&a&l✓ &aAutenticado exitosamente como Premium."
+  stats-last-login: "&8Último login: &7{time}"
+  stats-total-logins: "&8Total logins: &7{total}"
 
   premium-verification-failed: |-
     {no-prefix}
@@ -190,10 +194,10 @@ auth:
     &7
     &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  welcome-title:            "&a&l✓ BIENVENIDO"
-  premium-auto-registered:  "&7Cuenta premium registrada automáticamente"
-  welcome-back-title:       "&a&lBIENVENIDO DE VUELTA"
-  premium-auto-login:       "&7Login automático como premium"
+  welcome-title: "&a&l✓ BIENVENIDO"
+  premium-auto-registered: "&7Cuenta premium registrada automáticamente"
+  welcome-back-title: "&a&lBIENVENIDO DE VUELTA"
+  premium-auto-login: "&7Login automático como premium"
 
   migration:
     success: |-
@@ -206,41 +210,41 @@ auth:
       &a    ✓ Funciona en todos los servidores Java
       &7
       &e  Reconecta para activar los cambios.
-    failed:         "&c&l✗ &cError al actualizar cuenta. Contacta a un admin."
-    not_premium:    "&c&l✗ &c¡No eres jugador premium!"
+    failed: "&c&l✗ &cError al actualizar cuenta. Contacta a un admin."
+    not_premium: "&c&l✗ &c¡No eres jugador premium!"
     wrong_password: "&c&l✗ &c¡Contraseña incorrecta!"
-    usage:          "&8→ &7Uso: &e/hybridauth migrate <tu_contraseña>"
+    usage: "&8→ &7Uso: &e/hybridauth migrate <tu_contraseña>"
     already_premium: "&e&l⚠ &eTu cuenta ya es premium."
-    2fa_required:    "&e&l⚠ &eAutenticación de Dos Factores requerida."
+    2fa_required: "&e&l⚠ &eAutenticación de Dos Factores requerida."
 
 # ===================================================
 # TÍTULOS Y SUBTÍTULOS
 # ===================================================
 titles:
   login_required:
-    title:    "&c&lAUTENTICACIÓN"
+    title: "&c&lAUTENTICACIÓN"
     subtitle: "&7Usa &e/login <contraseña>"
 
   register_required:
-    title:    "&b&lREGISTRO REQUERIDO"
+    title: "&b&lREGISTRO REQUERIDO"
     subtitle: "&7Usa &e/register <contraseña> <confirmar>"
 
   login_success:
-    title:    "&a&l✓ BIENVENIDO"
+    title: "&a&l✓ BIENVENIDO"
     subtitle: "&7Sesión iniciada correctamente"
 
   register_success:
-    title:    "&a&l✓ REGISTRADO"
+    title: "&a&l✓ REGISTRADO"
     subtitle: "&7¡Disfruta del servidor!"
 
 # ===================================================
 # SEGURIDAD — LOGS Y ALERTAS
 # ===================================================
 security:
-  suspicious_ip:        "&c&l[ALERTA] &7IP sospechosa detectada para &e{player}"
-  multiple_sessions:    "&e&l[AVISO] &7Sesiones múltiples detectadas para &e{player}"
+  suspicious_ip: "&c&l[ALERTA] &7IP sospechosa detectada para &e{player}"
+  multiple_sessions: "&e&l[AVISO] &7Sesiones múltiples detectadas para &e{player}"
   brute_force_detected: "&c&l[CRÍTICO] &7Posible fuerza bruta desde IP &e{ip}"
-  admin_action:         "&b&l[ADMIN] &7{admin} &fejecutó: &e{action}"
+  admin_action: "&b&l[ADMIN] &7{admin} &fejecutó: &e{action}"
 
   no_permission: "&c&l✗ &cNo tienes permiso para usar este comando."
 
@@ -260,7 +264,6 @@ security:
         &c&l✗ &cDuración inválida: &f{duration}
         &8→ &7Usa &fpermanent &7o un número en segundos.
       duration_zero: "&c&l✗ &cLa duración debe ser mayor a 0."
-
       success_permanent: |-
         {no-prefix}
         &8  &4&l✓ IP BLOQUEADA PERMANENTEMENTE
@@ -279,7 +282,7 @@ security:
       players_kicked: "&8  &7Jugadores kickeados: &f{count}"
 
     remove:
-      usage:     "&8→ &7Uso: &e/security blacklist remove <ip>"
+      usage: "&8→ &7Uso: &e/security blacklist remove <ip>"
       success: |-
         {no-prefix}
         &8  &a&l✓ IP DESBLOQUEADA
@@ -288,7 +291,7 @@ security:
       not_found: "&c&l✗ &cEsta IP no está en la blacklist."
 
     list:
-      empty:        "&a&l✓ &aNo hay IPs en la blacklist."
+      empty: "&a&l✓ &aNo hay IPs en la blacklist."
       invalid_page: "&c&l✗ &cPágina inválida. Total: &f{total_pages}"
       header: |-
         {no-prefix}
@@ -307,7 +310,7 @@ security:
       next_page: "&8  → &7Siguiente: &e/security blacklist list {next_page}"
 
     info:
-      usage:     "&8→ &7Uso: &e/security blacklist info <ip>"
+      usage: "&8→ &7Uso: &e/security blacklist info <ip>"
       not_found: "&c&l✗ &cEsta IP no está en la blacklist."
       display: |-
         {no-prefix}
@@ -340,10 +343,10 @@ security:
       &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       &8  &4&l ESTADÍSTICAS DE SEGURIDAD
       &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    total_blocked:    "&8  Total bloqueadas: &f{total}"
-    permanent_count:  "&8  &4● &7Permanentes: &f{permanent}"
-    temporary_count:  "&8  &6● &7Temporales:  &f{temporary}"
-    footer:           "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    total_blocked: "&8  Total bloqueadas: &f{total}"
+    permanent_count: "&8  &4● &7Permanentes: &f{permanent}"
+    temporary_count: "&8  &6● &7Temporales:  &f{temporary}"
+    footer: "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   # ─── Help de seguridad ───────────────────────────
   help:
@@ -352,13 +355,13 @@ security:
       &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       &8  &b&lHA &8&m  &4&l COMANDOS DE SEGURIDAD
       &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    add:     "&8  &e/security blacklist add <ip> [dur] [razón]\n&8      &8→ &fBloquear una IP"
-    remove:  "&8  &e/security blacklist remove <ip>\n&8      &8→ &fDesbloquear una IP"
-    list:    "&8  &e/security blacklist list [página]\n&8      &8→ &fListar IPs bloqueadas"
-    info:    "&8  &e/security blacklist info <ip>\n&8      &8→ &fVer información"
+    add: "&8  &e/security blacklist add <ip> [dur] [razón]\n&8      &8→ &fBloquear una IP"
+    remove: "&8  &e/security blacklist remove <ip>\n&8      &8→ &fDesbloquear una IP"
+    list: "&8  &e/security blacklist list [página]\n&8      &8→ &fListar IPs bloqueadas"
+    info: "&8  &e/security blacklist info <ip>\n&8      &8→ &fVer información"
     cleanup: "&8  &e/security blacklist cleanup\n&8      &8→ &fLimpiar expiradas"
-    stats:   "&8  &e/security stats\n&8      &8→ &fEstadísticas de seguridad"
-    footer:  "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    stats: "&8  &e/security stats\n&8      &8→ &fEstadísticas de seguridad"
+    footer: "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   # ─── Kick messages ──────────────────────────────
   blacklist_kick: |-
@@ -409,21 +412,21 @@ security:
 # PLACEHOLDERS ESPECIALES
 # ===================================================
 placeholders:
-  loading:    "&7⏳ Cargando..."
+  loading: "&7⏳ Cargando..."
   processing: "&7⏳ Procesando..."
-  done:       "&a✓ Completado"
-  error:      "&c✗ Error"
-  arrow:      "&8→ &7"
-  separator:  "&8&m━━━━━━━━━━━━━━━━━━━━━━━━"
+  done: "&a✓ Completado"
+  error: "&c✗ Error"
+  arrow: "&8→ &7"
+  separator: "&8&m━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # ===================================================
 # ACTION BAR
 # ===================================================
 actionbar:
   authenticating: "&7⏳ &eAutenticando..."
-  success:        "&a&l✓ &aAutenticación exitosa"
-  error:          "&c&l✗ &cError de autenticación"
-  waiting:        "&7⏱ Esperando autenticación... &e{time}s"
+  success: "&a&l✓ &aAutenticación exitosa"
+  error: "&c&l✗ &cError de autenticación"
+  waiting: "&7⏱ Esperando autenticación... &e{time}s"
 
 # ===================================================
 # CAPTCHA
@@ -470,13 +473,34 @@ captcha:
 
   failed_kick: |-
     {no-prefix}
-    &c&l✗ &cVERIFICACIÓN FALLIDA
+        &c&l✗ &cVERIFICACIÓN FALLIDA
     &7
     &7  Agotaste todos los intentos.
     &7  Intenta de nuevo más tarde.
 
-  pending:     "&e&l⚠ &eResuelve el captcha primero antes de hacer login."
+  pending: "&e&l⚠ &eResuelve el captcha primero antes de hacer login."
   solve_first: "&c&l✗ &cDebes completar la verificación primero."
+
+# ===================================================
+# KICK PRE-LOGIN (Anti-Bot / Security)
+# ===================================================
+register:
+  warning_kick: |-
+    {no-prefix}
+    &c&lPROTECCIÓN DE SEGURIDAD
+    &7
+    &e  Por favor, vuelve a entrar para
+    &e  completar tu registro.
+    &7
+    &7  Esta medida evita ataques de bots.
+
+login:
+  warning_kick: |-
+    {no-prefix}
+    &c&lSEGURIDAD
+    &7
+    &e  Por favor, vuelve a entrar para
+    &e  iniciar sesión.
 
 # ===================================================
 # AUTO-LOGIN PREMIUM — Prompts

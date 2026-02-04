@@ -72,6 +72,7 @@ public class RedisSyncBackend implements SyncBackend {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public boolean initialize() {
         try {
             plugin.getLogger().info("[MultiServerSync] Connecting to Redis at " + host + ":" + port + "...");
@@ -391,6 +392,3 @@ public class RedisSyncBackend implements SyncBackend {
         }, executor);
     }
 }
-
-
-

@@ -1,9 +1,5 @@
 package net.hybridauth;
 
-import net.hybridauth.commands.AdminCommand;
-import net.hybridauth.commands.LoginCommand;
-import net.hybridauth.commands.RegisterCommand;
-import net.hybridauth.commands.SecurityCommand;
 import net.hybridauth.core.auth.AuthStateManager;
 import net.hybridauth.core.auth.PasswordService;
 import net.hybridauth.data.DatabaseManager;
@@ -24,7 +20,6 @@ public class HybridAuthPlugin extends JavaPlugin {
     private DatabaseManager databaseManager;
     private AuthStateManager authStateManager;
     private PasswordService passwordService;
-    private EncryptionHandler encryptionHandler;
 
     // Security Services
     private RateLimitService rateLimitService;
@@ -55,6 +50,9 @@ public class HybridAuthPlugin extends JavaPlugin {
     // v1.7.0 GeoIP
     private net.hybridauth.security.geoip.GeoLocationService geoLocationService;
 
+    // Refactoring for testing
+    private net.hybridauth.core.PlayerFeedbackService feedbackService;
+
     @Override
     public void onLoad() {
         instance = this;
@@ -72,13 +70,16 @@ public class HybridAuthPlugin extends JavaPlugin {
             return;
         }
 
-        // 2. Cargar configuracin
+        // 2. Cargar configuracion
         loadConfiguration();
 
-        // 3. Inicializar configuracin y sistema de mensajes
+        // 3. Inicializar configuracion y sistema de mensajes
         saveDefaultConfig();
         this.messageManager = new net.hybridauth.core.messages.MessageManager(this);
         getLogger().info(" Message system loaded");
+
+        // 3.5 Initialize Feedback Service
+        this.feedbackService = new net.hybridauth.core.BukkitPlayerFeedbackService(this);
 
         // v1.7.0 Initialize Alert Manager
         this.alertManager = new net.hybridauth.alerts.AlertManager(this);
@@ -103,8 +104,7 @@ public class HybridAuthPlugin extends JavaPlugin {
         this.authStateManager = new AuthStateManager(this);
         getServer().getPluginManager().registerEvents(authStateManager, this); // FIX BUG #3: Register listener
         this.passwordService = new PasswordService(this);
-        // this.encryptionHandler = new EncryptionHandler(this); // Ya no se usa
-        // (requiere ProtocolLib)
+
         this.securityLogger = new net.hybridauth.security.SecurityLogger(this);
         this.sessionManager = new net.hybridauth.core.session.SessionManager(this);
 
@@ -136,7 +136,7 @@ public class HybridAuthPlugin extends JavaPlugin {
             getLogger().info(" v1.5.0 Enhanced logging disabled");
         }
 
-        // 6.9. Inicializar v1.7.0 Features - Geolocalizacin
+        // 6.9. Inicializar v1.7.0 Features - Geolocalizacion
         this.geoLocationService = new net.hybridauth.security.geoip.GeoLocationService(this);
         if (geoLocationService.isEnabled()) {
             getLogger().info(" v1.7.0 GeoIP system enabled");
@@ -293,7 +293,8 @@ public class HybridAuthPlugin extends JavaPlugin {
     }
 
     /**
-     * @deprecated EncryptionHandler was removed in v1.4.0 due to ProtocolLib dependency.
+     * @deprecated EncryptionHandler was removed in v1.4.0 due to ProtocolLib
+     *             dependency.
      *             Premium detection now uses reflection-based PremiumDetector.
      * @return null (always)
      */
@@ -345,5 +346,8 @@ public class HybridAuthPlugin extends JavaPlugin {
     public net.hybridauth.security.geoip.GeoLocationService getGeoLocationService() {
         return geoLocationService;
     }
+    
+    public net.hybridauth.core.PlayerFeedbackService getFeedbackService() {
+        return feedbackService;
+    }
 }
-

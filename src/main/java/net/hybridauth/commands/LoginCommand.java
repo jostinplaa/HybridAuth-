@@ -108,7 +108,7 @@ public class LoginCommand implements CommandExecutor {
 
             // KICKEAR AL JUGADOR con mensaje personalizado
             String kickMessage = buildRateLimitKickMessage(remainingSeconds);
-            player.kickPlayer(kickMessage);
+            plugin.getFeedbackService().kickPlayer(player, kickMessage);
 
             // Log del evento
             plugin.getLogger().warning("[Rate Limit] " + player.getName() + " kicked - IP blocked for " +
@@ -250,8 +250,7 @@ public class LoginCommand implements CommandExecutor {
             plugin.getAuthStateManager().setAuthState(player, AuthState.AUTHENTICATED);
 
             // Remover efectos de restriccin
-            player.removePotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS);
-            player.removePotionEffect(org.bukkit.potion.PotionEffectType.SLOW);
+            plugin.getFeedbackService().removeRestrictions(player);
 
             // Enviar mensajes de xito
             messages.send(player, "success.logged_in");
@@ -261,13 +260,13 @@ public class LoginCommand implements CommandExecutor {
                             .build());
 
             // Enviar ttulo de bienvenida
-            messages.sendTitle(player, "titles.login_success.title", "titles.login_success.subtitle");
+            plugin.getFeedbackService().sendTitle(player, "titles.login_success.title", "titles.login_success.subtitle");
 
             // Action bar de xito
             messages.sendActionBar(player, "actionbar.success");
 
             // Reproducir sonido de xito
-            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+            plugin.getFeedbackService().playSoundSuccess(player);
 
             // Log en consola
             plugin.getLogger().info(player.getName() + " logged in successfully from " + ip);
@@ -307,7 +306,7 @@ public class LoginCommand implements CommandExecutor {
 
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 String kickMessage = buildRateLimitKickMessage(lockoutSeconds);
-                player.kickPlayer(kickMessage);
+                plugin.getFeedbackService().kickPlayer(player, kickMessage);
 
                 plugin.getLogger().warning("[Rate Limit] " + player.getName() +
                         " kicked after " + maxAttempts + " failed attempts");
@@ -326,7 +325,7 @@ public class LoginCommand implements CommandExecutor {
             messages.sendActionBar(player, "actionbar.error");
 
             // Reproducir sonido de error
-            player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_ANVIL_LAND, 1.0f, 1.0f);
+            plugin.getFeedbackService().playSoundError(player);
         });
 
         // 6. Log en consola

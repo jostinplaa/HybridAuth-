@@ -3,21 +3,19 @@ package net.hybridauth.security.totp;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 import com.warrenstrange.googleauth.GoogleAuthenticatorQRGenerator;
-import net.hybridauth.HybridAuthPlugin;
-import net.hybridauth.data.model.User;
 
-import java.util.concurrent.CompletableFuture;
+
+
+
 
 /**
  * Service to handle Two-Factor Authentication (TOTP).
  */
 public class TwoFactorService {
 
-    private final HybridAuthPlugin plugin;
     private final GoogleAuthenticator gAuth;
 
-    public TwoFactorService(HybridAuthPlugin plugin) {
-        this.plugin = plugin;
+    public TwoFactorService() {
         this.gAuth = new GoogleAuthenticator();
     }
 

@@ -17,7 +17,7 @@ public class ClientFingerprintService {
             String uuid = player.getUniqueId().toString();
 
             // Simple fingerprint base: IP + UUID
-            // TODO: Enhance with protocol version or brand if available via other listeners
+           
             String rawFingerprint = ip + ":" + uuid;
 
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

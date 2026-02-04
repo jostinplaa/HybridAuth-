@@ -65,7 +65,6 @@ public class LoginListener implements Listener {
                 .getUserByUsername(username);
 
         if (userOpt.isPresent()) {
-            User user = userOpt.get();
 
             // Usuario cracked YA REGISTRADO
             // Verificar si tiene sesin vlida
@@ -87,7 +86,7 @@ public class LoginListener implements Listener {
                             .add("player", username)
                             .build());
 
-            // Marcar que ya vio el mensaje (sin delay  el mensaje se muestran en el kick)
+            // Marcar que ya vio el mensaje (sin delay el mensaje se muestran en el kick)
             hasSeenWarning.add(uuid);
 
             // Programar limpieza (5 minutos)
@@ -117,7 +116,7 @@ public class LoginListener implements Listener {
                         .add("player", username)
                         .build());
 
-        // Marcar que ya vio el mensaje (sin delay  el mensaje se muestran en el kick)
+        // Marcar que ya vio el mensaje (sin delay el mensaje se muestran en el kick)
         hasSeenWarning.add(uuid);
 
         // Programar limpieza (5 minutos)
@@ -130,8 +129,6 @@ public class LoginListener implements Listener {
 
         plugin.getLogger().info("[PreLogin] " + username + " - New user, showed register warning, disconnecting");
     }
-
-
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
@@ -335,6 +332,3 @@ public class LoginListener implements Listener {
         }
     }
 }
-
-
-

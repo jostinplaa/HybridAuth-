@@ -86,7 +86,7 @@ public class RegisterCommand implements CommandExecutor {
             // KICKEAR AL JUGADOR con mensaje personalizado
             String kickMessage = messages.getMessage("rate_limit.kick_message",
                     MessageManager.placeholder().add("remaining", remainingSeconds).build());
-            player.kickPlayer(kickMessage);
+            plugin.getFeedbackService().kickPlayer(player, kickMessage);
 
             // Log del evento
             plugin.getLogger().warning("[Rate Limit] " + player.getName() + " kicked during register - IP blocked for " + remainingSeconds + "s");
@@ -174,8 +174,7 @@ public class RegisterCommand implements CommandExecutor {
                     plugin.getAuthStateManager().setAuthState(player, AuthState.AUTHENTICATED);
 
                     // Remover restricciones
-                    player.removePotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS);
-                    player.removePotionEffect(org.bukkit.potion.PotionEffectType.SLOW);
+                    plugin.getFeedbackService().removeRestrictions(player);
 
                     // Enviar mensajes de xito
                     messages.send(player, "success.registered",
@@ -186,9 +185,8 @@ public class RegisterCommand implements CommandExecutor {
                     messages.send(player, "success.enjoy");
 
                     // Ttulos y Sonidos
-                    messages.sendTitle(player, "titles.register_success.title", "titles.register_success.subtitle");
-                    player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f,
-                            1.2f);
+                    plugin.getFeedbackService().sendTitle(player, "titles.register_success.title", "titles.register_success.subtitle");
+                    plugin.getFeedbackService().playSoundSuccess(player);
                 });
 
             } catch (SQLException e) {

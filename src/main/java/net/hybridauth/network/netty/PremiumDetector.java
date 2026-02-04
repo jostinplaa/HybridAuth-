@@ -31,7 +31,13 @@ public class PremiumDetector {
             Class.forName("io.netty.channel.Channel");
             nettyAvailable = true;
         } catch (ClassNotFoundException e) {
-            Bukkit.getLogger().warning("[PremiumDetector] Netty not found - using fallback detection");
+            // Safe logging for tests
+            try {
+                if (Bukkit.getServer() != null) {
+                    Bukkit.getLogger().warning("[PremiumDetector] Netty not found - using fallback detection");
+                }
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -229,7 +235,7 @@ public class PremiumDetector {
             connectionCache.remove(playerName.toLowerCase());
         }
 
-        // NO est en cache  Consultar Mojang de forma sncrona
+        // NO est en cache Consultar Mojang de forma sncrona
         boolean isPremium = checkMojangAPI(playerName);
 
         // Guardar en cache (sin UUID porque no tenemos player object aqu)
@@ -341,4 +347,3 @@ public class PremiumDetector {
         }
     }
 }
-
