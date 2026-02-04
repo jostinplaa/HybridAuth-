@@ -27,7 +27,7 @@ public class SecurityLogger {
                 stmt.setString(4, ip);
                 stmt.setString(5, details);
 
-                // Usar la MISMA conexión para detectar tipo de DB (no abrir otra)
+                // Usar la MISMA conexin para detectar tipo de DB (no abrir otra)
                 long now = System.currentTimeMillis();
                 boolean isSQLite = conn.getMetaData().getURL().contains("sqlite");
                 if (isSQLite) {
@@ -150,6 +150,7 @@ public class SecurityLogger {
     }
 
     public void logCritical(String message) {
-        plugin.getLogger().severe("[Security] ⚠ CRITICAL: " + message);
+        plugin.getLogger().severe("[Security]  CRITICAL: " + message);
     }
 }
+

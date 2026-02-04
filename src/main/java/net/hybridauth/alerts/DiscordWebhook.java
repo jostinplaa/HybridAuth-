@@ -51,7 +51,8 @@ public class DiscordWebhook {
             connection.disconnect();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            net.hybridauth.HybridAuthPlugin.getPlugin(net.hybridauth.HybridAuthPlugin.class).getLogger()
+                    .log(java.util.logging.Level.SEVERE, "Error in DiscordWebhook", e);
         }
     }
 

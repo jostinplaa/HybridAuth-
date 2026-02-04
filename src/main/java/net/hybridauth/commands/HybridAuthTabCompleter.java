@@ -44,9 +44,9 @@ public class HybridAuthTabCompleter implements TabCompleter {
         // 2. Comando /changepassword
         if (command.getName().equalsIgnoreCase("changepassword")) {
             if (args.length == 1) {
-                return Collections.singletonList("<contraseña_actual>");
+                return Collections.singletonList("<contrasea_actual>");
             } else if (args.length == 2) {
-                return Collections.singletonList("<contraseña_nueva>");
+                return Collections.singletonList("<contrasea_nueva>");
             } else if (args.length == 3) {
                 return Collections.singletonList("<confirmar_nueva>");
             }
@@ -71,3 +71,4 @@ public class HybridAuthTabCompleter implements TabCompleter {
         return Collections.emptyList();
     }
 }
+

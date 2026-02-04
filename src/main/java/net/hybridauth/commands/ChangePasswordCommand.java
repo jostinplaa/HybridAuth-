@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 /**
- * Comando para cambiar la contraseña del usuario.
+ * Comando para cambiar la contrasea del usuario.
  * 
  * @version 1.4.0
  */
@@ -36,7 +36,7 @@ public class ChangePasswordCommand implements CommandExecutor {
 
         Player player = (Player) sender;
 
-        // Check tipo de cuenta (Premium no tiene contraseña local)
+        // Check tipo de cuenta (Premium no tiene contrasea local)
         AccountTypeUtil.AccountType accountType = AccountTypeUtil.getAccountType(player);
         if (accountType == AccountTypeUtil.AccountType.PREMIUM) {
             messages.send(player, "error.premium_cannot_changepass");
@@ -91,10 +91,10 @@ public class ChangePasswordCommand implements CommandExecutor {
                     var validation = plugin.getPasswordService().validatePassword(newPass, player.getName());
                     if (!validation.valid) {
                         messages.send(player, "password.too_weak");
-                        // Opcional: mostrar error específico del validador -> DESHABILITADO (usa
+                        // Opcional: mostrar error especfico del validador -> DESHABILITADO (usa
                         // messages.yml)
                         // if (validation.errorMessage != null && !validation.errorMessage.isEmpty()) {
-                        // player.sendMessage("§c" + validation.errorMessage);
+                        // player.sendMessage("c" + validation.errorMessage);
                         // }
 
                         // Mostrar requisitos
@@ -120,15 +120,15 @@ public class ChangePasswordCommand implements CommandExecutor {
                         });
 
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in ChangePasswordCommand", e);
                         plugin.getServer().getScheduler().runTask(plugin,
                                 () -> messages.send(player, "error.database_error"));
                     }
                 } else {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
                         messages.send(player, "password.incorrect",
-                                MessageManager.placeholder().add("attempts", "-").build() // Cambio de contraseña no
-                                                                                          // tiene límite de intentos
+                                MessageManager.placeholder().add("attempts", "-").build() // Cambio de contrasea no
+                                                                                          // tiene lmite de intentos
                         );
                     });
                 }
@@ -140,3 +140,6 @@ public class ChangePasswordCommand implements CommandExecutor {
         return true;
     }
 }
+
+
+

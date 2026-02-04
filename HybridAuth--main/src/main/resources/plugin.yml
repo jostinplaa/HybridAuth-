@@ -1,0 +1,51 @@
+name: HybridAuth
+version: 1.4.0
+main: net.hybridauth.HybridAuthPlugin
+api-version: 1.20
+description: Sistema de autenticación híbrida (Premium/Cracked)
+authors: [TuNombre]
+softdepend: [Floodgate, PlaceholderAPI]
+
+# Auto-descarga de librerías (Paper 1.16.5+)
+libraries:
+  - com.zaxxer:HikariCP:5.1.0
+  - org.xerial:sqlite-jdbc:3.45.0.0
+  - org.mariadb.jdbc:mariadb-java-client:3.3.2
+
+commands:
+  login:
+    description: Iniciar sesión
+    usage: /login <contraseña>
+  register:
+    description: Registrarse
+    usage: /register <contraseña> <confirmar>
+  changepassword:
+    description: Cambiar tu contraseña
+    usage: /changepassword <antigua> <nueva>
+    aliases: [changepass, cp]
+  hybridauth:
+    description: Comandos de administración
+    usage: /hybridauth help
+    aliases: [ha, auth]
+    permission: hybridauth.admin
+  security:
+    description: Gestión de seguridad (blacklist, stats)
+    usage: /security help
+    aliases: [sec, blacklist]
+    permission: hybridauth.security
+  email:
+    description: Vincular o gestionar tu email
+    usage: /email <add|remove|verify> [email]
+    aliases: [correo]
+  recover:
+    description: Recuperar contraseña olvidada
+    usage: /recover <email>
+    aliases: [recuperar]
+
+permissions:
+  hybridauth.admin:
+    description: Permiso de administrador
+    default: op
+  hybridauth.security:
+    description: Permiso para gestionar seguridad
+    default: op

@@ -15,11 +15,11 @@ public class AuthStateManager implements Listener {
     private final HybridAuthPlugin plugin;
 
     public enum AuthState {
-        UNAUTHENTICATED, // Jugador entró pero no se ha logueado
+        UNAUTHENTICATED, // Jugador entr pero no se ha logueado
         AUTHENTICATED, // Jugador logueado correctamente
-        PREMIUM_PENDING, // Esperando validación premium
+        PREMIUM_PENDING, // Esperando validacin premium
         REGISTER_REQUIRED, // Necesita registrarse
-        AWAITING_2FA // Esperando código 2FA
+        AWAITING_2FA // Esperando cdigo 2FA
     }
 
     private final Map<UUID, AuthState> authStates = new ConcurrentHashMap<>();
@@ -92,3 +92,4 @@ public class AuthStateManager implements Listener {
         }
     }
 }
+

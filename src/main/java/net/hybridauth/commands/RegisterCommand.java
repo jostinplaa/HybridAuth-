@@ -15,7 +15,7 @@ import java.util.UUID;
 
 /**
  * Comando de registro para nuevos jugadores.
- * Permite crear una cuenta en el sistema de autenticación.
+ * Permite crear una cuenta en el sistema de autenticacin.
  * 
  * @author TuNombre
  * @version 1.4.0
@@ -42,7 +42,7 @@ public class RegisterCommand implements CommandExecutor {
      * @param command El comando ejecutado
      * @param label   El alias usado
      * @param args    Argumentos del comando
-     * @return true si el comando se ejecutó correctamente
+     * @return true si el comando se ejecut correctamente
      */
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -63,7 +63,7 @@ public class RegisterCommand implements CommandExecutor {
             return true;
         }
 
-        // 3. Verificar si ya está autenticado
+        // 3. Verificar si ya est autenticado
         if (plugin.getAuthStateManager().isAuthenticated(player)) {
             messages.send(player, "error.already_authenticated");
             return true;
@@ -78,7 +78,7 @@ public class RegisterCommand implements CommandExecutor {
         String password = args[0];
         String confirm = args[1];
 
-        // 4.5. Verificar rate limit (protección contra spam de registros)
+        // 4.5. Verificar rate limit (proteccin contra spam de registros)
         String ip = player.getAddress().getAddress().getHostAddress();
         if (!plugin.getRateLimitService().checkLimit(ip)) {
             long remainingSeconds = plugin.getRateLimitService().getSecondsRemaining(ip);
@@ -94,11 +94,11 @@ public class RegisterCommand implements CommandExecutor {
             return true;
         }
 
-        // 4. Verificar base de datos (Usuario existe?) -> Usamos comprobación rápida si
+        // 4. Verificar base de datos (Usuario existe?) -> Usamos comprobacin rpida si
         // es posible
-        // Nota: Para optimización, esto podría revisarse antes, pero asumimos que el
-        // usuario sabe si está registrado
-        // Para evitar llamadas a BD innecesarias, podríamos confiar en el
+        // Nota: Para optimizacin, esto podra revisarse antes, pero asumimos que el
+        // usuario sabe si est registrado
+        // Para evitar llamadas a BD innecesarias, podramos confiar en el
         // AuthStateManager si cubriese todos los casos,
         // pero mejor verificar DB para consistencia.
         if (plugin.getDatabaseManager().getUserDAO().getUserByUUID(uuid).isPresent()) {
@@ -106,21 +106,21 @@ public class RegisterCommand implements CommandExecutor {
             return true;
         }
 
-        // 5. Validar que las contraseñas coincidan
+        // 5. Validar que las contraseas coincidan
         if (!password.equals(confirm)) {
             messages.send(player, "password.must_match");
             return true;
         }
 
-        // 6. Validar fortaleza de la contraseña
+        // 6. Validar fortaleza de la contrasea
         var validation = plugin.getPasswordService().validatePassword(password, player.getName());
         if (!validation.valid) {
             messages.send(player, "password.too_weak");
 
-            // Mostrar errores específicos si existen -> DESHABILITADO para evitar
+            // Mostrar errores especficos si existen -> DESHABILITADO para evitar
             // duplicados con messages.yml
             // if (validation.errorMessage != null && !validation.errorMessage.isEmpty()) {
-            // player.sendMessage("§c" + validation.errorMessage);
+            // player.sendMessage("c" + validation.errorMessage);
             // }
 
             // Mostrar requisitos
@@ -131,13 +131,13 @@ public class RegisterCommand implements CommandExecutor {
             return true;
         }
 
-        // Mostrar fortaleza de contraseña
+        // Mostrar fortaleza de contrasea
         messages.send(player, "password.strength." + validation.getStrengthKey(),
                 MessageManager.placeholder()
                         .add("player", player.getName())
                         .build());
 
-        // 7. Hash de la contraseña
+        // 7. Hash de la contrasea
         String hash = plugin.getPasswordService().hashPassword(password);
 
         // 8. Crear objeto Usuario (siempre CRACKED porque los premium hacen auto-login)
@@ -149,7 +149,7 @@ public class RegisterCommand implements CommandExecutor {
         // 9. Feedback visual de procesamiento
         messages.sendActionBar(player, "success.processing");
 
-        // 10. Guardar en BD asíncronamente
+        // 10. Guardar en BD asncronamente
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 plugin.getDatabaseManager().getUserDAO().createUser(newUser);
@@ -165,7 +165,7 @@ public class RegisterCommand implements CommandExecutor {
                 // Resetear Rate Limit por si acaso
                 plugin.getRateLimitService().resetLimit(newUser.getLastIp());
 
-                // Crear sesión persistente inmediata
+                // Crear sesin persistente inmediata
                 plugin.getSessionManager().createSession(newUser.getUuid(), newUser.getLastIp());
 
                 //// Volver al thread principal para acciones de Bukkit API
@@ -177,7 +177,7 @@ public class RegisterCommand implements CommandExecutor {
                     player.removePotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS);
                     player.removePotionEffect(org.bukkit.potion.PotionEffectType.SLOW);
 
-                    // Enviar mensajes de éxito
+                    // Enviar mensajes de xito
                     messages.send(player, "success.registered",
                             MessageManager.placeholder()
                                     .add("player", player.getName())
@@ -185,14 +185,14 @@ public class RegisterCommand implements CommandExecutor {
 
                     messages.send(player, "success.enjoy");
 
-                    // Títulos y Sonidos
+                    // Ttulos y Sonidos
                     messages.sendTitle(player, "titles.register_success.title", "titles.register_success.subtitle");
                     player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f,
                             1.2f);
                 });
 
             } catch (SQLException e) {
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in RegisterCommand", e);
                 plugin.getServer().getScheduler().runTask(plugin,
                         () -> messages.send(player, "error.database_error"));
             }
@@ -203,3 +203,6 @@ public class RegisterCommand implements CommandExecutor {
 
 
 }
+
+
+

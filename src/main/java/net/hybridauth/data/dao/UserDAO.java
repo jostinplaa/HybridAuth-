@@ -17,7 +17,7 @@ public class UserDAO {
 
     public UserDAO(DatabaseManager dbManager) {
         this.dbManager = dbManager;
-        // Cache de 1 hora, máximo 1000 usuarios
+        // Cache de 1 hora, mximo 1000 usuarios
         this.userCache = Caffeine.newBuilder()
                 .expireAfterWrite(60, TimeUnit.MINUTES)
                 .maximumSize(1000)
@@ -74,7 +74,8 @@ public class UserDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            net.hybridauth.HybridAuthPlugin.getPlugin(net.hybridauth.HybridAuthPlugin.class).getLogger()
+                    .log(java.util.logging.Level.SEVERE, "Error in UserDAO", e);
         }
         return Optional.empty();
     }
@@ -100,7 +101,8 @@ public class UserDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            net.hybridauth.HybridAuthPlugin.getPlugin(net.hybridauth.HybridAuthPlugin.class).getLogger()
+                    .log(java.util.logging.Level.SEVERE, "Error in UserDAO", e);
         }
         return Optional.empty();
     }
@@ -199,7 +201,7 @@ public class UserDAO {
         if (obj == null)
             return null;
 
-        // Caso 1: Es un número (Long/Integer)
+        // Caso 1: Es un nmero (Long/Integer)
         if (obj instanceof Number) {
             return new Timestamp(((Number) obj).longValue());
         }
@@ -207,15 +209,15 @@ public class UserDAO {
         // Caso 2: Es un String
         String str = obj.toString();
 
-        // Intentar parsear como milisegundos (Long explícito)
+        // Intentar parsear como milisegundos (Long explcito)
         try {
             long millis = Long.parseLong(str);
             return new Timestamp(millis);
         } catch (NumberFormatException ignored) {
-            // No es un número puro
+            // No es un nmero puro
         }
 
-        // Caso 3: Formato estándar SQL (YYYY-MM-DD HH:MM:SS)
+        // Caso 3: Formato estndar SQL (YYYY-MM-DD HH:MM:SS)
         // Dejar que el driver lo intente parsear
         try {
             return rs.getTimestamp(column);
@@ -230,7 +232,7 @@ public class UserDAO {
     // ========== ASYNC METHODS FOR AUTO-LOGIN ==========
 
     /**
-     * Crea un usuario premium de forma asíncrona (para auto-register)
+     * Crea un usuario premium de forma asncrona (para auto-register)
      */
     public java.util.concurrent.CompletableFuture<Void> createPremiumUser(String username, UUID premiumUUID) {
         return java.util.concurrent.CompletableFuture.runAsync(() -> {
@@ -248,7 +250,7 @@ public class UserDAO {
     }
 
     /**
-     * Obtiene usuario por nombre de forma asíncrona
+     * Obtiene usuario por nombre de forma asncrona
      */
     public java.util.concurrent.CompletableFuture<User> getUserByName(String username) {
         return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
@@ -257,7 +259,7 @@ public class UserDAO {
     }
 
     /**
-     * Actualiza estadísticas de login de forma asíncrona
+     * Actualiza estadsticas de login de forma asncrona
      */
     public java.util.concurrent.CompletableFuture<Void> updateLoginStats(String username, String ip) {
         return java.util.concurrent.CompletableFuture.runAsync(() -> {

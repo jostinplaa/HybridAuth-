@@ -58,14 +58,14 @@ public class MySQLSyncBackend implements SyncBackend {
             });
 
             connected = true;
-            plugin.getLogger().info("[MultiServerSync] ✓ MySQL sync backend initialized");
+            plugin.getLogger().info("[MultiServerSync]  MySQL sync backend initialized");
             plugin.getLogger().warning("[MultiServerSync] Note: MySQL sync has higher latency than Redis (~50-100ms)");
 
             return true;
 
         } catch (Exception e) {
-            plugin.getLogger().severe("[MultiServerSync] ✗ Failed to initialize MySQL sync: " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().severe("[MultiServerSync]  Failed to initialize MySQL sync: " + e.getMessage());
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in MySQLSyncBackend", e);
             connected = false;
             return false;
         }
@@ -455,3 +455,6 @@ public class MySQLSyncBackend implements SyncBackend {
         }, executor);
     }
 }
+
+
+

@@ -44,7 +44,7 @@ public class MigrateSubCommand implements AdminSubCommand {
             return;
         }
 
-        // Procesar migración
+        // Procesar migracin
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 Optional<User> userOpt = plugin.getDatabaseManager().getUserDAO().getUserByUsername(player.getName());
@@ -64,7 +64,7 @@ public class MigrateSubCommand implements AdminSubCommand {
                     return;
                 }
 
-                // Verificar contraseña
+                // Verificar contrasea
                 if (!plugin.getPasswordService().verifyPassword(password, user.getPasswordHash())) {
                     plugin.getMessageManager().send(sender, "auth.migration.wrong_password");
                     plugin.getSecurityLogger().logWarning("Failed migration attempt for " + player.getName());
@@ -87,10 +87,13 @@ public class MigrateSubCommand implements AdminSubCommand {
                 });
 
             } catch (Exception e) {
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in MigrateSubCommand", e);
                 plugin.getServer().getScheduler().runTask(plugin,
                         () -> plugin.getMessageManager().send(sender, "auth.migration.failed"));
             }
         });
     }
 }
+
+
+

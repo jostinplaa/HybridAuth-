@@ -37,7 +37,7 @@ public class AlertManager {
                 service.sendAlert(type, message, details);
             } catch (Exception e) {
                 plugin.getLogger().warning("Failed to send alert via " + service.getClass().getSimpleName());
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in AlertManager", e);
             }
         }
     }

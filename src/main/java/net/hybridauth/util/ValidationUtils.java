@@ -3,8 +3,8 @@ package net.hybridauth.util;
 import java.util.regex.Pattern;
 
 /**
- * Utilidades para validación y sanitización de inputs.
- * Implementa las recomendaciones de seguridad de la auditoría.
+ * Utilidades para validacin y sanitizacin de inputs.
+ * Implementa las recomendaciones de seguridad de la auditora.
  */
 public class ValidationUtils {
 
@@ -18,21 +18,21 @@ public class ValidationUtils {
      * <p>
      * Requisitos:
      * - Entre 3 y 16 caracteres
-     * - Solo letras, números y guiones bajos
-     * - No puede ser solo números o guiones bajos
+     * - Solo letras, nmeros y guiones bajos
+     * - No puede ser solo nmeros o guiones bajos
      * 
      * @param username Nombre a validar
-     * @return true si es válido
+     * @return true si es vlido
      */
     public static boolean isValidUsername(String username) {
         return username != null && USERNAME_PATTERN.matcher(username).matches();
     }
 
     /**
-     * Valida si una contraseña es segura (longitud mínima).
+     * Valida si una contrasea es segura (longitud mnima).
      * 
-     * @param password Contraseña a validar
-     * @return true si cumple longitud mínima
+     * @param password Contrasea a validar
+     * @return true si cumple longitud mnima
      */
     public static boolean isValidPassword(String password) {
         if (password == null || password.trim().isEmpty()) {
@@ -53,7 +53,7 @@ public class ValidationUtils {
 
     /**
      * Sanitiza un input removiendo caracteres peligrosos.
-     * Útil para prevenir XSS básico en logs o mensajes de admin.
+     * til para prevenir XSS bsico en logs o mensajes de admin.
      * 
      * @param input Entrada del usuario
      * @return Entrada sanitizada y truncada a 100 caracteres
@@ -65,3 +65,4 @@ public class ValidationUtils {
         return sanitized.length() > 100 ? sanitized.substring(0, 100) + "..." : sanitized;
     }
 }
+

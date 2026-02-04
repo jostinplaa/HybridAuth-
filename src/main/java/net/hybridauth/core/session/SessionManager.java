@@ -110,12 +110,12 @@ public class SessionManager {
                         plugin.getSecurityLogger().logWarning(
                                 "Session IP changed for " + uuid + " from " + sessionIP + " to " + ip);
 
-                        // Invalidar sesión comprometida
+                        // Invalidar sesin comprometida
                         invalidateSession(uuid);
                         return false;
                     }
 
-                    // Sesión válida y NO expirada
+                    // Sesin vlida y NO expirada
                     plugin.getLogger().info("[Session] Valid session found for " + uuid);
 
                     // Actualizar last_activity (opcional)
@@ -129,13 +129,13 @@ public class SessionManager {
             }
         } catch (SQLException e) {
             plugin.getLogger().severe("Error validating session: " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in SessionManager", e);
         }
         return false;
     }
 
     /**
-     * Actualiza el timestamp de última actividad de una sesión
+     * Actualiza el timestamp de ltima actividad de una sesin
      */
     private void updateLastActivity(UUID uuid) {
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -174,7 +174,7 @@ public class SessionManager {
                 stmt.setString(1, uuid.toString());
                 stmt.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in SessionManager", e);
             }
         });
     }
@@ -191,3 +191,6 @@ public class SessionManager {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 }
+
+
+

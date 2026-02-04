@@ -51,10 +51,13 @@ public class StatsSubCommand implements AdminSubCommand {
                 });
 
             } catch (SQLException e) {
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in StatsSubCommand", e);
                 plugin.getServer().getScheduler().runTask(plugin,
                         () -> plugin.getMessageManager().send(sender, "error.database_error"));
             }
         });
     }
 }
+
+
+

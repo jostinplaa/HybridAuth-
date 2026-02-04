@@ -94,11 +94,11 @@ public class MultiServerSyncManager {
 
         if (success) {
             enabled = true;
-            plugin.getLogger().info("[MultiServerSync] ✓ Multi-server sync is ACTIVE");
+            plugin.getLogger().info("[MultiServerSync]  Multi-server sync is ACTIVE");
             plugin.getLogger().info("[MultiServerSync] This server can now share auth state with network!");
         } else {
             enabled = false;
-            plugin.getLogger().severe("[MultiServerSync] ✗ Failed to initialize any backend");
+            plugin.getLogger().severe("[MultiServerSync]  Failed to initialize any backend");
             plugin.getLogger().severe("[MultiServerSync] Multi-server sync will be DISABLED");
             plugin.getLogger().warning("[MultiServerSync] Plugin will function in LOCAL-ONLY mode");
         }
@@ -120,7 +120,7 @@ public class MultiServerSyncManager {
 
         } catch (Exception e) {
             plugin.getLogger().severe("[MultiServerSync] Redis initialization exception: " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in MultiServerSyncManager", e);
             return false;
         }
     }
@@ -132,7 +132,7 @@ public class MultiServerSyncManager {
 
         } catch (Exception e) {
             plugin.getLogger().severe("[MultiServerSync] MySQL initialization exception: " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in MultiServerSyncManager", e);
             return false;
         }
     }
@@ -407,3 +407,6 @@ public class MultiServerSyncManager {
         });
     }
 }
+
+
+

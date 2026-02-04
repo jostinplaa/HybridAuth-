@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Comando /hybrid email para gestión de emails
+ * Comando /hybrid email para gestin de emails
  * Subcomandos: set, verify, remove
  * 
  * @version 1.5.0
@@ -34,7 +34,7 @@ public class EmailCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cSolo jugadores pueden usar este comando");
+            sender.sendMessage("cSolo jugadores pueden usar este comando");
             return true;
         }
 
@@ -53,7 +53,7 @@ public class EmailCommand implements CommandExecutor {
         switch (args[0].toLowerCase()) {
             case "set":
                 if (args.length < 2) {
-                    player.sendMessage("§cUso: /hybrid email set <email>");
+                    player.sendMessage("cUso: /hybrid email set <email>");
                     return true;
                 }
                 handleSetEmail(player, args[1]);
@@ -61,7 +61,7 @@ public class EmailCommand implements CommandExecutor {
 
             case "verify":
                 if (args.length < 2) {
-                    player.sendMessage("§cUso: /hybrid email verify <codigo>");
+                    player.sendMessage("cUso: /hybrid email verify <codigo>");
                     return true;
                 }
                 handleVerifyEmail(player, args[1]);
@@ -80,16 +80,16 @@ public class EmailCommand implements CommandExecutor {
     }
 
     private void showHelp(Player player) {
-        player.sendMessage("§6=== HybridAuth Email ===");
-        player.sendMessage("§f/hybrid email set <email> §7- Vincular email");
-        player.sendMessage("§f/hybrid email verify <codigo> §7- Verificar email");
-        player.sendMessage("§f/hybrid email remove §7- Desvincular email");
+        player.sendMessage("6=== HybridAuth Email ===");
+        player.sendMessage("f/hybrid email set <email> 7- Vincular email");
+        player.sendMessage("f/hybrid email verify <codigo> 7- Verificar email");
+        player.sendMessage("f/hybrid email remove 7- Desvincular email");
     }
 
     private void handleSetEmail(Player player, String email) {
         // Validar formato de email
         if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            player.sendMessage("§c✗ Email inválido");
+            player.sendMessage("c Email invlido");
             return;
         }
 
@@ -98,7 +98,7 @@ public class EmailCommand implements CommandExecutor {
         if (cooldowns.containsKey(key)) {
             long timeLeft = (cooldowns.get(key) - System.currentTimeMillis()) / 1000;
             if (timeLeft > 0) {
-                player.sendMessage("§c✗ Espera " + timeLeft + " segundos");
+                player.sendMessage("c Espera " + timeLeft + " segundos");
                 return;
             }
         }
@@ -114,14 +114,14 @@ public class EmailCommand implements CommandExecutor {
                     if (rs.next()) {
                         String existingEmail = rs.getString("email");
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            player.sendMessage("§c✗ Ya tienes un email vinculado: " + existingEmail);
-                            player.sendMessage("§7Usa §f/hybrid email remove §7primero");
+                            player.sendMessage("c Ya tienes un email vinculado: " + existingEmail);
+                            player.sendMessage("7Usa f/hybrid email remove 7primero");
                         });
                         return;
                     }
                 }
 
-                // Generar código de verificación
+                // Generar cdigo de verificacin
                 String code = plugin.getEmailService().generateCode();
                 long expiresAt = System.currentTimeMillis() + (15 * 60 * 1000); // 15 minutos
 
@@ -141,19 +141,19 @@ public class EmailCommand implements CommandExecutor {
 
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     if (sent) {
-                        player.sendMessage("§a✓ Código de verificación enviado a " + email);
-                        player.sendMessage("§7Revisa tu email y usa: §f/hybrid email verify <codigo>");
+                        player.sendMessage("a Cdigo de verificacin enviado a " + email);
+                        player.sendMessage("7Revisa tu email y usa: f/hybrid email verify <codigo>");
                         cooldowns.put(key, System.currentTimeMillis() + 60000);
                     } else {
-                        player.sendMessage("§c✗ Error al enviar el email. Contacta un administrador.");
+                        player.sendMessage("c Error al enviar el email. Contacta un administrador.");
                     }
                 });
 
             } catch (SQLException e) {
                 plugin.getLogger().severe("Error setting email: " + e.getMessage());
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in EmailCommand", e);
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    player.sendMessage("§c✗ Error de base de datos");
+                    player.sendMessage("c Error de base de datos");
                 });
             }
         });
@@ -169,7 +169,7 @@ public class EmailCommand implements CommandExecutor {
 
                     if (!rs.next()) {
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            player.sendMessage("§c✗ No tienes email pendiente de verificación");
+                            player.sendMessage("c No tienes email pendiente de verificacin");
                         });
                         return;
                     }
@@ -177,18 +177,18 @@ public class EmailCommand implements CommandExecutor {
                     String storedCode = rs.getString("verification_code");
                     long expiresAt = rs.getLong("code_expires_at");
 
-                    // Verificar expiración
+                    // Verificar expiracin
                     if (System.currentTimeMillis() > expiresAt) {
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            player.sendMessage("§c✗ Código expirado. Solicita uno nuevo con /hybrid email set");
+                            player.sendMessage("c Cdigo expirado. Solicita uno nuevo con /hybrid email set");
                         });
                         return;
                     }
 
-                    // Verificar código
+                    // Verificar cdigo
                     if (!code.equals(storedCode)) {
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            player.sendMessage("§c✗ Código incorrecto");
+                            player.sendMessage("c Cdigo incorrecto");
                         });
                         return;
                     }
@@ -202,16 +202,16 @@ public class EmailCommand implements CommandExecutor {
 
                     String email = rs.getString("email");
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        player.sendMessage("§a✓ Email verificado correctamente: " + email);
-                        player.sendMessage("§7Ahora puedes recuperar tu cuenta con §f/hybrid recover");
+                        player.sendMessage("a Email verificado correctamente: " + email);
+                        player.sendMessage("7Ahora puedes recuperar tu cuenta con f/hybrid recover");
                     });
                 }
 
             } catch (SQLException e) {
                 plugin.getLogger().severe("Error verifying email: " + e.getMessage());
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in EmailCommand", e);
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    player.sendMessage("§c✗ Error de base de datos");
+                    player.sendMessage("c Error de base de datos");
                 });
             }
         });
@@ -227,20 +227,23 @@ public class EmailCommand implements CommandExecutor {
 
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
                         if (deleted > 0) {
-                            player.sendMessage("§a✓ Email desvinculado correctamente");
+                            player.sendMessage("a Email desvinculado correctamente");
                         } else {
-                            player.sendMessage("§c✗ No tienes email vinculado");
+                            player.sendMessage("c No tienes email vinculado");
                         }
                     });
                 }
 
             } catch (SQLException e) {
                 plugin.getLogger().severe("Error removing email: " + e.getMessage());
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in EmailCommand", e);
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    player.sendMessage("§c✗ Error de base de datos");
+                    player.sendMessage("c Error de base de datos");
                 });
             }
         });
     }
 }
+
+
+

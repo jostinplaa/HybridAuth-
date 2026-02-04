@@ -32,7 +32,7 @@ public class PasswordService {
         this.requireNumbers = config.getBoolean("security.password.require-numbers", true);
         this.requireSpecialChars = config.getBoolean("security.password.require-special-chars", false);
 
-        // Cargar lista de contraseñas comunes
+        // Cargar lista de contraseas comunes
         this.commonPasswords = loadCommonPasswords();
     }
 
@@ -58,41 +58,41 @@ public class PasswordService {
 
         // Longitud
         if (password.length() < minLength) {
-            errors.add("La contraseña debe tener al menos " + minLength + " caracteres.");
+            errors.add("La contrasea debe tener al menos " + minLength + " caracteres.");
         }
         if (password.length() > maxLength) {
-            errors.add("La contraseña no puede tener más de " + maxLength + " caracteres.");
+            errors.add("La contrasea no puede tener ms de " + maxLength + " caracteres.");
         }
 
-        // Mayúsculas
+        // Maysculas
         if (requireUppercase && !password.matches(".*[A-Z].*")) {
-            errors.add("La contraseña debe contener al menos una letra mayúscula.");
+            errors.add("La contrasea debe contener al menos una letra mayscula.");
         }
 
-        // Minúsculas
+        // Minsculas
         if (requireLowercase && !password.matches(".*[a-z].*")) {
-            errors.add("La contraseña debe contener al menos una letra minúscula.");
+            errors.add("La contrasea debe contener al menos una letra minscula.");
         }
 
-        // Números
+        // Nmeros
         if (requireNumbers && !password.matches(".*\\d.*")) {
-            errors.add("La contraseña debe contener al menos un número.");
+            errors.add("La contrasea debe contener al menos un nmero.");
         }
 
         // Caracteres especiales
         if (requireSpecialChars && !password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*")) {
-            errors.add("La contraseña debe contener al menos un carácter especial.");
+            errors.add("La contrasea debe contener al menos un carcter especial.");
         }
 
-        // Contraseñas comunes
+        // Contraseas comunes
         String lowerPass = password.toLowerCase();
         if (commonPasswords.contains(lowerPass)) {
-            errors.add("Esta contraseña es demasiado común. Elige una más segura.");
+            errors.add("Esta contrasea es demasiado comn. Elige una ms segura.");
         }
 
         // Similitud con username
         if (username != null && password.toLowerCase().contains(username.toLowerCase())) {
-            errors.add("La contraseña no puede contener tu nombre de usuario.");
+            errors.add("La contrasea no puede contener tu nombre de usuario.");
         }
 
         // Calcular fuerza
@@ -163,14 +163,15 @@ public class PasswordService {
 
         public String getStrengthLabel() {
             if (strength < 40)
-                return "§c§lMUY DÉBIL";
+                return "clMUY DBIL";
             if (strength < 60)
-                return "§6§lDÉBIL";
+                return "6lDBIL";
             if (strength < 80)
-                return "§e§lMEDIA";
+                return "elMEDIA";
             if (strength < 95)
-                return "§a§lFUERTE";
-            return "§a§l§nMUY FUERTE";
+                return "alFUERTE";
+            return "alnMUY FUERTE";
         }
     }
 }
+

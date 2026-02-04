@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 
 /**
  * Gestor centralizado de mensajes del plugin.
- * Carga mensajes desde messages.yml y proporciona métodos para
+ * Carga mensajes desde messages.yml y proporciona mtodos para
  * formatear, colorizar y enviar mensajes con placeholders.
  * 
  * @author TuNombre
@@ -56,7 +56,7 @@ public class MessageManager {
             plugin.saveResource("messages.yml", false);
         }
 
-        // Cargar configuración existente
+        // Cargar configuracin existente
         messages = YamlConfiguration.loadConfiguration(messagesFile);
 
         // Auto-update: Cargar recurso interno para comparar claves faltantes
@@ -92,7 +92,7 @@ public class MessageManager {
 
     /**
      * Recarga los mensajes del archivo.
-     * Útil para el comando /hybridauth reload.
+     * til para el comando /hybridauth reload.
      */
     public void reload() {
         loadMessages();
@@ -102,7 +102,7 @@ public class MessageManager {
     /**
      * Obtiene un mensaje del archivo messages.yml sin placeholders.
      * 
-     * @param path Ruta del mensaje usando notación de puntos (ej:
+     * @param path Ruta del mensaje usando notacin de puntos (ej:
      *             "error.wrong-password")
      * @return Mensaje formateado con colores y prefijo
      */
@@ -113,7 +113,7 @@ public class MessageManager {
     /**
      * Obtiene un mensaje con placeholders reemplazados.
      * 
-     * @param path         Ruta del mensaje usando notación de puntos
+     * @param path         Ruta del mensaje usando notacin de puntos
      * @param placeholders Mapa de placeholders a reemplazar (key sin llaves)
      * @return Mensaje formateado con colores, prefijo y placeholders aplicados
      */
@@ -141,12 +141,12 @@ public class MessageManager {
             message = message.replace("{no-prefix}", "");
         }
 
-        // Aplicar colorización
+        // Aplicar colorizacin
         return colorize(message);
     }
 
     /**
-     * Obtiene una lista de mensajes (útil para help menus).
+     * Obtiene una lista de mensajes (til para help menus).
      * 
      * @param path Ruta de la lista
      * @return Lista de mensajes formateados
@@ -158,7 +158,7 @@ public class MessageManager {
     }
 
     /**
-     * Envía un mensaje a un CommandSender.
+     * Enva un mensaje a un CommandSender.
      * 
      * @param sender El receptor del mensaje (jugador o consola)
      * @param path   Ruta del mensaje
@@ -168,7 +168,7 @@ public class MessageManager {
     }
 
     /**
-     * Envía un mensaje con placeholders a un CommandSender.
+     * Enva un mensaje con placeholders a un CommandSender.
      * 
      * @param sender       El receptor del mensaje
      * @param path         Ruta del mensaje
@@ -180,7 +180,7 @@ public class MessageManager {
     }
 
     /**
-     * Envía múltiples mensajes (útil para listas).
+     * Enva mltiples mensajes (til para listas).
      * 
      * @param sender   El receptor
      * @param messages Lista de mensajes a enviar
@@ -190,25 +190,25 @@ public class MessageManager {
     }
 
     /**
-     * Envía un título y subtítulo a un jugador.
+     * Enva un ttulo y subttulo a un jugador.
      * 
      * @param player       El jugador
-     * @param titlePath    Ruta del título
-     * @param subtitlePath Ruta del subtítulo
+     * @param titlePath    Ruta del ttulo
+     * @param subtitlePath Ruta del subttulo
      */
     public void sendTitle(Player player, String titlePath, String subtitlePath) {
         sendTitle(player, titlePath, subtitlePath, 10, 70, 20);
     }
 
     /**
-     * Envía un título y subtítulo con timing personalizado.
+     * Enva un ttulo y subttulo con timing personalizado.
      * 
      * @param player       El jugador
-     * @param titlePath    Ruta del título
-     * @param subtitlePath Ruta del subtítulo
-     * @param fadeIn       Tiempo de aparición (ticks)
+     * @param titlePath    Ruta del ttulo
+     * @param subtitlePath Ruta del subttulo
+     * @param fadeIn       Tiempo de aparicin (ticks)
      * @param stay         Tiempo de permanencia (ticks)
-     * @param fadeOut      Tiempo de desaparición (ticks)
+     * @param fadeOut      Tiempo de desaparicin (ticks)
      */
     public void sendTitle(Player player, String titlePath, String subtitlePath, int fadeIn, int stay, int fadeOut) {
         String title = getMessage(titlePath);
@@ -217,7 +217,7 @@ public class MessageManager {
     }
 
     /**
-     * Envía un mensaje en la action bar del jugador.
+     * Enva un mensaje en la action bar del jugador.
      * 
      * @param player El jugador
      * @param path   Ruta del mensaje
@@ -227,7 +227,7 @@ public class MessageManager {
     }
 
     /**
-     * Envía un mensaje en la action bar con placeholders.
+     * Enva un mensaje en la action bar con placeholders.
      * 
      * @param player       El jugador
      * @param path         Ruta del mensaje
@@ -241,7 +241,7 @@ public class MessageManager {
     }
 
     /**
-     * Convierte códigos de color (&) y HEX (#RRGGBB o &#RRGGBB) a formato
+     * Convierte cdigos de color (&) y HEX (#RRGGBB o &#RRGGBB) a formato
      * Minecraft.
      * 
      * @param message Mensaje a colorizar
@@ -277,16 +277,16 @@ public class MessageManager {
             hexMatcher = HEX_PATTERN.matcher(message);
         }
 
-        // Procesar códigos de color tradicionales (&a, &c, etc.)
+        // Procesar cdigos de color tradicionales (&a, &c, etc.)
         message = ChatColor.translateAlternateColorCodes('&', message);
 
         return message;
     }
 
     /**
-     * Cuenta el número total de mensajes cargados (para debug).
+     * Cuenta el nmero total de mensajes cargados (para debug).
      * 
-     * @return Número de claves en messages.yml
+     * @return Nmero de claves en messages.yml
      */
     private int countMessages() {
         return countKeys(messages.getValues(true));
@@ -295,8 +295,8 @@ public class MessageManager {
     /**
      * Cuenta recursivamente las claves en un mapa.
      * 
-     * @param map Mapa de configuración
-     * @return Número de claves finales (no secciones)
+     * @param map Mapa de configuracin
+     * @return Nmero de claves finales (no secciones)
      */
     private int countKeys(Map<String, Object> map) {
         int count = 0;
@@ -318,7 +318,7 @@ public class MessageManager {
     }
 
     /**
-     * Crea un builder de placeholders para facilitar su construcción.
+     * Crea un builder de placeholders para facilitar su construccin.
      * 
      * Uso:
      * 
@@ -342,7 +342,7 @@ public class MessageManager {
         private final Map<String, String> placeholders = new HashMap<>();
 
         /**
-         * Añade un placeholder string.
+         * Aade un placeholder string.
          * 
          * @param key   Nombre del placeholder (sin llaves)
          * @param value Valor del placeholder
@@ -354,8 +354,8 @@ public class MessageManager {
         }
 
         /**
-         * Añade un placeholder de cualquier tipo.
-         * Se convertirá automáticamente a String.
+         * Aade un placeholder de cualquier tipo.
+         * Se convertir automticamente a String.
          * 
          * @param key   Nombre del placeholder (sin llaves)
          * @param value Valor del placeholder
@@ -376,3 +376,4 @@ public class MessageManager {
         }
     }
 }
+

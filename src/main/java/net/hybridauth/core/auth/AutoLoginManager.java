@@ -16,7 +16,7 @@ import java.util.UUID;
 
 /**
  * AUTO-LOGIN para jugadores PREMIUM
- * ¡SIN necesidad de /login!
+ * SIN necesidad de /login!
  * 
  * Este sistema:
  * 1. Detecta si el jugador es premium en el handshake
@@ -35,7 +35,7 @@ public class AutoLoginManager implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPreLogin(AsyncPlayerPreLoginEvent event) {
         // Este evento se ejecuta durante el handshake
-        // Aquí podríamos hacer validaciones adicionales si es necesario
+        // Aqu podramos hacer validaciones adicionales si es necesario
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -43,8 +43,8 @@ public class AutoLoginManager implements Listener {
         Player player = event.getPlayer();
         String username = player.getName();
 
-        // GUARD: Si ya está autenticado, retornar (evita doble procesamiento)
-        // FIX BUG #1: Race condition cuando evento se dispara múltiples veces
+        // GUARD: Si ya est autenticado, retornar (evita doble procesamiento)
+        // FIX BUG #1: Race condition cuando evento se dispara mltiples veces
         if (plugin.getAuthStateManager().isAuthenticated(player)) {
             return;
         }
@@ -56,7 +56,7 @@ public class AutoLoginManager implements Listener {
             // Es cracked - necesita /register o /login
             plugin.getAuthStateManager().setAuthenticated(player, false);
 
-            // Verificar si está registrado
+            // Verificar si est registrado
             plugin.getDatabaseManager().getUserDAO().getUserByName(username).thenAccept(user -> {
                 if (user == null) {
                     // No registrado
@@ -77,7 +77,7 @@ public class AutoLoginManager implements Listener {
             return;
         }
 
-        // 3. Verificar con base de datos si ya está registrado
+        // 3. Verificar con base de datos si ya est registrado
         plugin.getDatabaseManager().getUserDAO().getUserByName(username).thenAccept(user -> {
 
             if (user == null) {
@@ -93,7 +93,7 @@ public class AutoLoginManager implements Listener {
                 handleCrackedToPremiumAttempt(player, username);
             }
         }).exceptionally(throwable -> {
-            player.kickPlayer("§c§lDatabase Error\n§7Please try again later.");
+            player.kickPlayer("clDatabase Error\n7Please try again later.");
             plugin.getLogger().severe("Database error for " + username + ": " + throwable.getMessage());
             return null;
         });
@@ -123,9 +123,9 @@ public class AutoLoginManager implements Listener {
     private void autoLoginPremium(Player player, User user, UUID detectedUUID) {
         UUID registeredUUID = user.getPremiumUuid();
 
-        // CRÍTICO: Verificar que el UUID coincida (anti-impostor)
+        // CRTICO: Verificar que el UUID coincida (anti-impostor)
         if (!registeredUUID.equals(detectedUUID)) {
-            // ¡IMPOSTOR DETECTADO!
+            // IMPOSTOR DETECTADO!
             handleImpostor(player, user.getUsername(), registeredUUID, detectedUUID);
             return;
         }
@@ -144,7 +144,7 @@ public class AutoLoginManager implements Listener {
 
         plugin.getMessageManager().send(player, "auth.premium-login-success");
 
-        // Mostrar stats si está configurado
+        // Mostrar stats si est configurado
         if (plugin.getConfig().getBoolean("features.show-login-stats", true)) {
             plugin.getMessageManager().send(player, "auth.stats-last-login",
                     net.hybridauth.core.messages.MessageManager.placeholder()
@@ -167,11 +167,11 @@ public class AutoLoginManager implements Listener {
 
         plugin.getMessageManager().send(player, "premium.cracked_to_premium_prompt");
 
-        plugin.getSecurityLogger().logInfo("Cracked→Premium attempt: " + username);
+        plugin.getSecurityLogger().logInfo("CrackedPremium attempt: " + username);
     }
 
     /**
-     * Maneja detección de impostores (UUID mismatch)
+     * Maneja deteccin de impostores (UUID mismatch)
      */
     private void handleImpostor(Player player, String username, UUID expectedUUID, UUID actualUUID) {
         String kickMsg = plugin.getMessageManager().getMessage("security.impostor_kick",
@@ -196,7 +196,7 @@ public class AutoLoginManager implements Listener {
                                     .build());
                 });
 
-        // Log crítico DB + Alerta (Discord/Email) via AlertManager
+        // Log crtico DB + Alerta (Discord/Email) via AlertManager
         plugin.getSecurityLogger().log(
                 net.hybridauth.security.SecurityLogger.EventType.IMPOSTOR_DETECTED,
                 username,
@@ -204,7 +204,7 @@ public class AutoLoginManager implements Listener {
                 ip,
                 "Impostor Attempt (UUID mismatch). Expected: " + expectedUUID + " Actual: " + actualUUID);
 
-        // Blacklist IP automáticamente por 1 hora
+        // Blacklist IP automticamente por 1 hora
         plugin.getBlacklistManager().blockIP(
                 ip,
                 3600, // 1 hora
@@ -221,3 +221,4 @@ public class AutoLoginManager implements Listener {
         plugin.getAuthStateManager().setAuthenticated(event.getPlayer(), false);
     }
 }
+

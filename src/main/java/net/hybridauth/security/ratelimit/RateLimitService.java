@@ -30,7 +30,7 @@ public class RateLimitService {
                 .expireAfterWrite(expireSeconds, TimeUnit.SECONDS)
                 .build();
 
-        // Bloqueos persisten más tiempo
+        // Bloqueos persisten ms tiempo
         this.blockCache = Caffeine.newBuilder()
                 .expireAfterWrite(24, TimeUnit.HOURS)
                 .build();
@@ -136,3 +136,4 @@ public class RateLimitService {
         return (attempts == null) ? 0 : attempts;
     }
 }
+

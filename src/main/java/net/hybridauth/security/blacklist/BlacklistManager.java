@@ -14,12 +14,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Gestiona la blacklist de IPs con persistencia y auto-expiración
+ * Gestiona la blacklist de IPs con persistencia y auto-expiracin
  * 
  * Features:
  * - Blacklist temporal y permanente
  * - Persistencia entre reinicios (blacklist.yml)
- * - Auto-expiración de bloqueos temporales
+ * - Auto-expiracin de bloqueos temporales
  * - Comandos admin para gestionar blacklist
  * - Logs detallados de todas las acciones
  * 
@@ -47,7 +47,7 @@ public class BlacklistManager {
         loadBlacklist();
         startCleanupTask();
 
-        plugin.getLogger().info("✓ BlacklistManager initialized with " +
+        plugin.getLogger().info(" BlacklistManager initialized with " +
                 blacklistedIPs.size() + " entries");
     }
 
@@ -125,7 +125,7 @@ public class BlacklistManager {
     }
 
     /**
-     * Inicia tarea de limpieza automática (cada 5 minutos)
+     * Inicia tarea de limpieza automtica (cada 5 minutos)
      */
     private void startCleanupTask() {
         cleanupTaskId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(
@@ -218,7 +218,7 @@ public class BlacklistManager {
                 String.format("IP BLOCKED (PERMANENT): %s by %s - Reason: %s",
                         ip, blockedBy, reason));
 
-        // Log crítico
+        // Log crtico
         plugin.getSecurityLogger().logCritical(
                 String.format("IP_BLOCKED_PERMANENT: ip=%s, reason=%s, by=%s",
                         ip, reason, blockedBy));
@@ -266,7 +266,7 @@ public class BlacklistManager {
     }
 
     /**
-     * Verifica si una IP está bloqueada
+     * Verifica si una IP est bloqueada
      */
     public boolean isBlocked(String ip) {
         BlacklistEntry entry = blacklistedIPs.get(ip);
@@ -285,17 +285,17 @@ public class BlacklistManager {
             return false;
         }
 
-        // Si es permanente, está bloqueada
+        // Si es permanente, est bloqueada
         if (entry.permanent) {
             return true;
         }
 
-        // Si es temporal, verificar expiración
+        // Si es temporal, verificar expiracin
         if (entry.expiresAt > System.currentTimeMillis()) {
             return true;
         }
 
-        // Expiró, remover
+        // Expir, remover
         blacklistedIPs.remove(ip);
         saveBlacklist();
         return false;
@@ -334,7 +334,7 @@ public class BlacklistManager {
     }
 
     /**
-     * Obtiene estadísticas
+     * Obtiene estadsticas
      */
     public BlacklistStats getStats() {
         int total = blacklistedIPs.size();
@@ -440,7 +440,7 @@ public class BlacklistManager {
     }
 
     /**
-     * Estadísticas de blacklist
+     * Estadsticas de blacklist
      */
     public static class BlacklistStats {
         public final int total;
@@ -454,3 +454,4 @@ public class BlacklistManager {
         }
     }
 }
+

@@ -46,10 +46,10 @@ public class UnregisterSubCommand implements AdminSubCommand {
         Player admin = (Player) sender;
         Runnable action = () -> executeUnregister(sender, targetName);
 
-        // Crear confirmación
+        // Crear confirmacin
         pendingConfirmations.put(admin.getUniqueId(), action);
 
-        // Enviar mensaje de confirmación
+        // Enviar mensaje de confirmacin
         plugin.getMessageManager().send(sender, "admin.unregister.confirm",
                 MessageManager.placeholder().add("player", targetName).build());
         plugin.getMessageManager().send(sender, "admin.unregister.confirm_instruction");
@@ -77,7 +77,7 @@ public class UnregisterSubCommand implements AdminSubCommand {
             return;
         }
 
-        // Ejecutar acción
+        // Ejecutar accin
         Runnable action = pendingConfirmations.remove(admin.getUniqueId());
         action.run();
     }
@@ -118,10 +118,13 @@ public class UnregisterSubCommand implements AdminSubCommand {
                 });
 
             } catch (SQLException e) {
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in UnregisterSubCommand", e);
                 plugin.getServer().getScheduler().runTask(plugin,
                         () -> plugin.getMessageManager().send(sender, "error.database_error"));
             }
         });
     }
 }
+
+
+

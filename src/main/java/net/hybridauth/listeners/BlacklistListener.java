@@ -27,18 +27,18 @@ public class BlacklistListener implements Listener {
     public void onPreLogin(AsyncPlayerPreLoginEvent event) {
         String ip = event.getAddress().getHostAddress();
 
-        // Verificar si está en blacklist
+        // Verificar si est en blacklist
         if (blacklistManager.isBlocked(ip)) {
             BlacklistManager.BlacklistEntry entry = blacklistManager.getEntry(ip);
 
             if (entry == null) {
-                return; // Expiró entre medio
+                return; // Expir entre medio
             }
 
             // Construir mensaje de kick
             String kickMessage = buildKickMessage(entry);
 
-            // Denegar conexión
+            // Denegar conexin
             event.disallow(
                     AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
                     kickMessage);
@@ -81,3 +81,4 @@ public class BlacklistListener implements Listener {
                         .build());
     }
 }
+

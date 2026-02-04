@@ -42,7 +42,7 @@ public class GeoListener implements Listener {
 
             if ("KICK".equalsIgnoreCase(geoService.getAction())) {
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
-                        "§cYour country (" + countryName + ") is blocked from this server.");
+                        "cYour country (" + countryName + ") is blocked from this server.");
             } else {
                 // ALERT only
                 plugin.getLogger()
@@ -51,3 +51,4 @@ public class GeoListener implements Listener {
         }
     }
 }
+

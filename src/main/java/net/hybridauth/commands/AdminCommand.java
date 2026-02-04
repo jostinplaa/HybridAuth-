@@ -99,3 +99,4 @@ public class AdminCommand implements CommandExecutor {
         plugin.getMessageManager().send(sender, "admin.help.footer");
     }
 }
+

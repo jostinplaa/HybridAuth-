@@ -33,13 +33,13 @@ public class RecoverCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
-            sender.sendMessage("§cUso: /recover <username> [codigo] [nueva_password]");
+            sender.sendMessage("cUso: /recover <username> [codigo] [nueva_password]");
             return true;
         }
 
         String username = args[0];
 
-        // Step 1: Solo username - enviar código
+        // Step 1: Solo username - enviar cdigo
         if (args.length == 1) {
             handleRequestCode(sender, username);
             return true;
@@ -53,7 +53,7 @@ public class RecoverCommand implements CommandExecutor {
             return true;
         }
 
-        sender.sendMessage("§cUso: /recover <username> [codigo] [nueva_password]");
+        sender.sendMessage("cUso: /recover <username> [codigo] [nueva_password]");
         return true;
     }
 
@@ -63,7 +63,7 @@ public class RecoverCommand implements CommandExecutor {
         if (cooldowns.containsKey(key)) {
             long timeLeft = (cooldowns.get(key) - System.currentTimeMillis()) / 1000 / 60;
             if (timeLeft > 0) {
-                sender.sendMessage("§c✗ Espera " + timeLeft + " minutos antes de solicitar otro código");
+                sender.sendMessage("c Espera " + timeLeft + " minutos antes de solicitar otro cdigo");
                 return;
             }
         }
@@ -80,7 +80,7 @@ public class RecoverCommand implements CommandExecutor {
 
                     if (!rs.next()) {
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            sender.sendMessage("§c✗ Esta cuenta no tiene email vinculado o verificado");
+                            sender.sendMessage("c Esta cuenta no tiene email vinculado o verificado");
                         });
                         return;
                     }
@@ -88,11 +88,11 @@ public class RecoverCommand implements CommandExecutor {
                     email = rs.getString("email");
                 }
 
-                // Generar código de recuperación
+                // Generar cdigo de recuperacin
                 String code = plugin.getEmailService().generateCode();
                 long expiresAt = System.currentTimeMillis() + (10 * 60 * 1000); // 10 minutos
 
-                // Guardar código en BD (reemplaza si existe)
+                // Guardar cdigo en BD (reemplaza si existe)
                 String insertSql = "INSERT OR REPLACE INTO hybrid_recovery_codes (username, recovery_code, expires_at, attempts, created_at) VALUES (?, ?, ?, 0, ?)";
                 try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
                     stmt.setString(1, username);
@@ -108,20 +108,20 @@ public class RecoverCommand implements CommandExecutor {
 
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     if (sent) {
-                        sender.sendMessage("§a✓ Código de recuperación enviado a " + maskEmail(finalEmail));
-                        sender.sendMessage("§7Revisa tu email y usa:");
-                        sender.sendMessage("§f/recover " + username + " <codigo> <nueva_password>");
+                        sender.sendMessage("a Cdigo de recuperacin enviado a " + maskEmail(finalEmail));
+                        sender.sendMessage("7Revisa tu email y usa:");
+                        sender.sendMessage("f/recover " + username + " <codigo> <nueva_password>");
                         cooldowns.put(key, System.currentTimeMillis() + (5 * 60 * 1000));
                     } else {
-                        sender.sendMessage("§c✗ Error al enviar el email. Contacta un administrador.");
+                        sender.sendMessage("c Error al enviar el email. Contacta un administrador.");
                     }
                 });
 
             } catch (SQLException e) {
                 plugin.getLogger().severe("Error requesting recovery code: " + e.getMessage());
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in RecoverCommand", e);
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    sender.sendMessage("§c✗ Error de base de datos");
+                    sender.sendMessage("c Error de base de datos");
                 });
             }
         });
@@ -131,13 +131,13 @@ public class RecoverCommand implements CommandExecutor {
         // Validar password
         int minLength = plugin.getConfig().getInt("security.password.min-length", 6);
         if (newPassword.length() < minLength) {
-            sender.sendMessage("§c✗ La contraseña debe tener al menos " + minLength + " caracteres");
+            sender.sendMessage("c La contrasea debe tener al menos " + minLength + " caracteres");
             return;
         }
 
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try (Connection conn = plugin.getDatabaseManager().getConnection()) {
-                // Verificar código
+                // Verificar cdigo
                 String checkSql = "SELECT recovery_code, expires_at, attempts FROM hybrid_recovery_codes WHERE username = ?";
 
                 try (PreparedStatement stmt = conn.prepareStatement(checkSql)) {
@@ -146,8 +146,8 @@ public class RecoverCommand implements CommandExecutor {
 
                     if (!rs.next()) {
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            sender.sendMessage("§c✗ No hay código de recuperación activo para esta cuenta");
-                            sender.sendMessage("§7Solicita uno con: §f/recover " + username);
+                            sender.sendMessage("c No hay cdigo de recuperacin activo para esta cuenta");
+                            sender.sendMessage("7Solicita uno con: f/recover " + username);
                         });
                         return;
                     }
@@ -156,12 +156,12 @@ public class RecoverCommand implements CommandExecutor {
                     long expiresAt = rs.getLong("expires_at");
                     int attempts = rs.getInt("attempts");
 
-                    // Verificar expiración
+                    // Verificar expiracin
                     if (System.currentTimeMillis() > expiresAt) {
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            sender.sendMessage("§c✗ Código expirado. Solicita uno nuevo");
+                            sender.sendMessage("c Cdigo expirado. Solicita uno nuevo");
                         });
-                        // Limpiar código expirado
+                        // Limpiar cdigo expirado
                         String deleteSql = "DELETE FROM hybrid_recovery_codes WHERE username = ?";
                         try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql)) {
                             deleteStmt.setString(1, username);
@@ -170,15 +170,15 @@ public class RecoverCommand implements CommandExecutor {
                         return;
                     }
 
-                    // Verificar máximo de intentos
+                    // Verificar mximo de intentos
                     if (attempts >= 3) {
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            sender.sendMessage("§c✗ Demasiados intentos. Solicita un nuevo código");
+                            sender.sendMessage("c Demasiados intentos. Solicita un nuevo cdigo");
                         });
                         return;
                     }
 
-                    // Verificar código
+                    // Verificar cdigo
                     if (!code.equals(storedCode)) {
                         // Incrementar intentos
                         String updateSql = "UPDATE hybrid_recovery_codes SET attempts = attempts + 1 WHERE username = ?";
@@ -189,12 +189,12 @@ public class RecoverCommand implements CommandExecutor {
 
                         int attemptsLeft = 3 - (attempts + 1);
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            sender.sendMessage("§c✗ Código incorrecto. Intentos restantes: " + attemptsLeft);
+                            sender.sendMessage("c Cdigo incorrecto. Intentos restantes: " + attemptsLeft);
                         });
                         return;
                     }
 
-                    // Código correcto - cambiar contraseña
+                    // Cdigo correcto - cambiar contrasea
                     String hashedPassword = plugin.getPasswordService().hashPassword(newPassword);
                     String updatePasswordSql = "UPDATE hybrid_users SET password = ? WHERE username = ?";
 
@@ -205,13 +205,13 @@ public class RecoverCommand implements CommandExecutor {
 
                         if (updated == 0) {
                             plugin.getServer().getScheduler().runTask(plugin, () -> {
-                                sender.sendMessage("§c✗ Cuenta no encontrada");
+                                sender.sendMessage("c Cuenta no encontrada");
                             });
                             return;
                         }
                     }
 
-                    // Eliminar código usado
+                    // Eliminar cdigo usado
                     String deleteSql = "DELETE FROM hybrid_recovery_codes WHERE username = ?";
                     try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql)) {
                         deleteStmt.setString(1, username);
@@ -229,17 +229,17 @@ public class RecoverCommand implements CommandExecutor {
                             "Password changed via email recovery");
 
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        sender.sendMessage("§a✓ Contraseña cambiada exitosamente");
-                        sender.sendMessage("§7Ahora puedes entrar con: §f/login " + username + " <nueva_password>");
+                        sender.sendMessage("a Contrasea cambiada exitosamente");
+                        sender.sendMessage("7Ahora puedes entrar con: f/login " + username + " <nueva_password>");
                         cooldowns.remove(username.toLowerCase());
                     });
                 }
 
             } catch (SQLException e) {
                 plugin.getLogger().severe("Error resetting password: " + e.getMessage());
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in RecoverCommand", e);
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    sender.sendMessage("§c✗ Error de base de datos");
+                    sender.sendMessage("c Error de base de datos");
                 });
             }
         });
@@ -256,3 +256,6 @@ public class RecoverCommand implements CommandExecutor {
         return email.charAt(0) + "***" + email.substring(atIndex);
     }
 }
+
+
+

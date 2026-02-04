@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * Sistema mejorado de logging con rotación automática
+ * Sistema mejorado de logging con rotacin automtica
  * v1.5.0 - Feature #3
  */
 public class LogManager {
@@ -102,7 +102,7 @@ public class LogManager {
     }
 
     /**
-     * Inicia rotación diaria automática
+     * Inicia rotacin diaria automtica
      */
     public void startDailyRotation() {
         if (!enabled)
@@ -120,13 +120,13 @@ public class LogManager {
             public void run() {
                 LocalDate now = LocalDate.now();
                 if (!now.equals(lastRotation)) {
-                    // Nuevo día - rotar logs
+                    // Nuevo da - rotar logs
                     plugin.getLogger().info("[LogManager] Daily rotation triggered");
                     rotateLogs();
                     lastRotation = now;
                 }
 
-                // Comprimir logs antiguos si está habilitado
+                // Comprimir logs antiguos si est habilitado
                 if (compressOld) {
                     compressOldLogs();
                 }
@@ -157,7 +157,7 @@ public class LogManager {
     }
 
     /**
-     * Log de error/excepción
+     * Log de error/excepcin
      */
     public void logError(Exception exception, String context) {
         if (!enabled || !errorsEnabled || errorLog == null)
@@ -167,7 +167,7 @@ public class LogManager {
         errorLog.println(String.format("[%s] [ERROR] Context: %s", timestamp, context));
         errorLog.println("Exception: " + exception.getClass().getSimpleName() + ": " + exception.getMessage());
 
-        // Stack trace resumido (primeras 5 líneas)
+        // Stack trace resumido (primeras 5 lneas)
         StackTraceElement[] stack = exception.getStackTrace();
         for (int i = 0; i < Math.min(stack.length, 5); i++) {
             errorLog.println("  at " + stack[i]);
@@ -176,7 +176,7 @@ public class LogManager {
     }
 
     /**
-     * Log de debug (solo si está habilitado)
+     * Log de debug (solo si est habilitado)
      */
     public void logDebug(String message) {
         if (!enabled || !debugEnabled || debugLog == null)
@@ -238,7 +238,7 @@ public class LogManager {
     }
 
     /**
-     * Comprime logs de más de 7 días
+     * Comprime logs de ms de 7 das
      */
     private void compressOldLogs() {
         if (!compressOld)
@@ -263,7 +263,7 @@ public class LogManager {
                                 }
                             }
                         } catch (Exception e) {
-                            // Skip archivos con fecha inválida
+                            // Skip archivos con fecha invlida
                         }
                     });
         } catch (IOException e) {
@@ -296,7 +296,7 @@ public class LogManager {
     }
 
     /**
-     * Elimina logs de más de keepDays días
+     * Elimina logs de ms de keepDays das
      */
     private void cleanOldLogs() {
         LocalDate cutoff = LocalDate.now().minusDays(keepDays);
@@ -321,7 +321,7 @@ public class LogManager {
                                 }
                             }
                         } catch (Exception e) {
-                            // Skip archivos con formato inválido
+                            // Skip archivos con formato invlido
                         }
                     });
         } catch (IOException e) {
@@ -349,3 +349,4 @@ public class LogManager {
         return enabled;
     }
 }
+

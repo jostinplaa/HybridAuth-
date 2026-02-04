@@ -15,7 +15,7 @@ import java.security.SecureRandom;
 import java.util.Properties;
 
 /**
- * Servicio de envío de emails para HybridAuth
+ * Servicio de envo de emails para HybridAuth
  * Soporta SendGrid API (recomendado) y SMTP tradicional
  * 
  * @version 1.5.0
@@ -67,7 +67,7 @@ public class EmailService {
     }
 
     /**
-     * Envía un código de verificación de email
+     * Enva un cdigo de verificacin de email
      */
     public boolean sendVerificationCode(String toEmail, String username, String code) {
         if (!enabled) {
@@ -82,7 +82,7 @@ public class EmailService {
     }
 
     /**
-     * Envía un código de recuperación de cuenta
+     * Enva un cdigo de recuperacin de cuenta
      */
     public boolean sendRecoveryCode(String toEmail, String username, String code) {
         if (!enabled) {
@@ -97,7 +97,7 @@ public class EmailService {
     }
 
     /**
-     * Envía un email genérico
+     * Enva un email genrico
      */
     private boolean sendEmail(String toEmail, String subject, String htmlBody) {
         try {
@@ -108,13 +108,13 @@ public class EmailService {
             }
         } catch (Exception e) {
             plugin.getLogger().severe("[EmailService] Error sending email: " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in EmailService", e);
             return false;
         }
     }
 
     /**
-     * Envía via SendGrid API (recomendado)
+     * Enva via SendGrid API (recomendado)
      */
     private boolean sendViaSendGrid(String toEmail, String subject, String htmlBody) throws IOException {
         if (sendGridAPIKey.isEmpty() || sendGridAPIKey.equals("YOUR_SENDGRID_API_KEY")) {
@@ -152,7 +152,7 @@ public class EmailService {
     }
 
     /**
-     * Envía via SMTP tradicional (fallback)
+     * Enva via SMTP tradicional (fallback)
      */
     private boolean sendViaSMTP(String toEmail, String subject, String htmlBody) throws MessagingException {
         Properties props = new Properties();
@@ -189,14 +189,14 @@ public class EmailService {
     }
 
     /**
-     * Genera un código aleatorio de 6 dígitos
+     * Genera un cdigo aleatorio de 6 dgitos
      */
     public String generateCode() {
         return String.format("%06d", random.nextInt(1000000));
     }
 
     /**
-     * Template HTML para email de verificación
+     * Template HTML para email de verificacin
      */
     private String buildVerificationEmail(String username, String code) {
         return "<!DOCTYPE html>" +
@@ -205,17 +205,17 @@ public class EmailService {
                 "<body style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>" +
                 "<div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;'>"
                 +
-                "<h1 style='color: white; margin: 0;'>🔐 HybridAuth</h1>" +
+                "<h1 style='color: white; margin: 0;'> HybridAuth</h1>" +
                 "</div>" +
                 "<div style='background: #f7f7f7; padding: 30px; border-radius: 0 0 10px 10px;'>" +
                 "<h2 style='color: #333;'>Hola, " + username + "!</h2>" +
-                "<p style='color: #666; font-size: 16px;'>Has solicitado verificar tu dirección de email.</p>" +
+                "<p style='color: #666; font-size: 16px;'>Has solicitado verificar tu direccin de email.</p>" +
                 "<div style='background: white; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: center;'>"
                 +
-                "<p style='color: #999; font-size: 14px; margin: 0 0 10px 0;'>Tu código de verificación es:</p>" +
+                "<p style='color: #999; font-size: 14px; margin: 0 0 10px 0;'>Tu cdigo de verificacin es:</p>" +
                 "<h1 style='color: #667eea; font-size: 36px; letter-spacing: 5px; margin: 0;'>" + code + "</h1>" +
                 "</div>" +
-                "<p style='color: #666; font-size: 14px;'>Este código expirará en 15 minutos.</p>" +
+                "<p style='color: #666; font-size: 14px;'>Este cdigo expirar en 15 minutos.</p>" +
                 "<p style='color: #666; font-size: 14px;'>Si no solicitaste esto, ignora este email.</p>" +
                 "<hr style='border: none; border-top: 1px solid #ddd; margin: 20px 0;'>" +
                 "<p style='color: #999; font-size: 12px; text-align: center;'>Servidor: "
@@ -226,7 +226,7 @@ public class EmailService {
     }
 
     /**
-     * Template HTML para email de recuperación
+     * Template HTML para email de recuperacin
      */
     private String buildRecoveryEmail(String username, String code) {
         return "<!DOCTYPE html>" +
@@ -235,22 +235,22 @@ public class EmailService {
                 "<body style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>" +
                 "<div style='background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;'>"
                 +
-                "<h1 style='color: white; margin: 0;'>🔑 Recuperación de Cuenta</h1>" +
+                "<h1 style='color: white; margin: 0;'> Recuperacin de Cuenta</h1>" +
                 "</div>" +
                 "<div style='background: #f7f7f7; padding: 30px; border-radius: 0 0 10px 10px;'>" +
                 "<h2 style='color: #333;'>Hola, " + username + "!</h2>" +
                 "<p style='color: #666; font-size: 16px;'>Has solicitado recuperar tu cuenta.</p>" +
                 "<div style='background: white; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: center;'>"
                 +
-                "<p style='color: #999; font-size: 14px; margin: 0 0 10px 0;'>Tu código de recuperación es:</p>" +
+                "<p style='color: #999; font-size: 14px; margin: 0 0 10px 0;'>Tu cdigo de recuperacin es:</p>" +
                 "<h1 style='color: #f5576c; font-size: 36px; letter-spacing: 5px; margin: 0;'>" + code + "</h1>" +
                 "</div>" +
-                "<p style='color: #666; font-size: 14px;'>Usa este código con:</p>" +
+                "<p style='color: #666; font-size: 14px;'>Usa este cdigo con:</p>" +
                 "<p style='background: #fff; padding: 15px; border-left: 3px solid #f5576c; margin: 10px 0; font-family: monospace;'>"
                 +
-                "/hybrid recover " + username + " " + code + " &lt;nueva_contraseña&gt;</p>" +
-                "<p style='color: #666; font-size: 14px;'>Este código expirará en 10 minutos.</p>" +
-                "<p style='color: #f5576c; font-size: 14px; font-weight: bold;'>⚠️ Si no solicitaste esto, alguien está intentando acceder a tu cuenta!</p>"
+                "/hybrid recover " + username + " " + code + " &lt;nueva_contrasea&gt;</p>" +
+                "<p style='color: #666; font-size: 14px;'>Este cdigo expirar en 10 minutos.</p>" +
+                "<p style='color: #f5576c; font-size: 14px; font-weight: bold;'> Si no solicitaste esto, alguien est intentando acceder a tu cuenta!</p>"
                 +
                 "<hr style='border: none; border-top: 1px solid #ddd; margin: 20px 0;'>" +
                 "<p style='color: #999; font-size: 12px; text-align: center;'>Servidor: "
@@ -270,9 +270,12 @@ public class EmailService {
     private String getServerName() {
         String motd = plugin.getServer().getMotd();
         if (motd != null && !motd.isEmpty()) {
-            // Limpiar códigos de color
-            return motd.replaceAll("§[0-9a-fk-or]", "").trim();
+            // Limpiar cdigos de color
+            return motd.replaceAll("[0-9a-fk-or]", "").trim();
         }
         return "Minecraft Server";
     }
 }
+
+
+

@@ -1,0 +1,507 @@
+# ===================================================
+# HybridAuth - Messages Configuration
+# Versión: 1.4.0
+# ===================================================
+# Placeholders disponibles:
+# {player} {time} {remaining} {ip} {attempts}
+# {min} {max} {admin} {action} {version}
+# {total} {premium} {cracked} {sessions}
+#
+# Marcador especial:
+# {no-prefix} — no añade prefix automático
+#
+# Colores: & codes | #RRGGBB hex | &#RRGGBB gradientes
+# ===================================================
+
+# ─── Prefix global ─────────────────────────────────
+# Se añade automáticamente a TODOS los mensajes
+# Diseño: fondo oscuro, acento cian, clean
+prefix: "&8[ &b&lHA&8 ] &r"
+
+# ===================================================
+# ERRORES GENERALES
+# ===================================================
+error:
+  only_players: "&cEste comando solo puede ser ejecutado por jugadores."
+  no_permission: "&cNo tienes permiso para usar este comando."
+
+  not_authenticated: "&cDebes autenticarte. Usa &e/login <contraseña>"
+  already_authenticated: "&cYa estás autenticado."
+  already_registered: "&cYa estás registrado. Usa &e/login <contraseña>"
+  not_registered: "&cNo estás registrado. Usa &e/register <contraseña> <confirmar>"
+
+  database_error: "&c&lError de BD &8— &7Hubo un problema interno. Contacta a un administrador."
+  unknown_error: "&cOcurrió un error desconocido. Intenta de nuevo."
+  unknown_command: "&cComando desconocido. Usa &e/security help &cpara ver las opciones."
+
+  player_not_found: "&cEl jugador &e{player} &cno se encontró en el servidor."
+  user_not_registered: "&cEl usuario &e{player} &cno está registrado."
+
+  # Errores de cuenta premium
+  premium_cannot_register: "&c&l⚠ &cLas cuentas premium no necesitan registrarse."
+  premium_cannot_register_info: "&8→ &7Tu cuenta se autentica automáticamente con Mojang."
+  premium_cannot_login: "&c&l⚠ &cLas cuentas premium no necesitan hacer login."
+  premium_cannot_login_info: "&8→ &7Tu cuenta se autentica automáticamente con Mojang."
+  premium_cannot_changepass: "&c&l⚠ &cLas cuentas premium no tienen contraseña local."
+  premium_cannot_changepass_info: "&8→ &7Tu contraseña es la de tu cuenta de Mojang."
+  premium_cannot_unregister: "&c&l⚠ &cNo se puede desregistrar una cuenta premium."
+  premium_cannot_unregister_info: "&8→ &7Las cuentas premium están protegidas automáticamente."
+  premium_has_no_password: "&c&l⚠ &cEsta cuenta premium no tiene contraseña local."
+  premium_has_no_password_info: "&8→ &7Su contraseña es la de su cuenta de Mojang."
+
+# ===================================================
+# CONTRASEÑAS
+# ===================================================
+password:
+  incorrect: "&c&l✗ &cContraseña incorrecta &8— &7Intentos restantes: &e{attempts}"
+  too_short: "&cLa contraseña debe tener al menos &e{min} &ccaracteres."
+  too_long: "&cLa contraseña no puede tener más de &e{max} &ccaracteres."
+  too_weak: "&c&l✗ &cLa contraseña no cumple los requisitos:"
+  must_match: "&c&l✗ &cLas contraseñas no coinciden."
+  common_password: "&cEsta contraseña es demasiado común. Elige otra."
+  contains_username: "&cLa contraseña no puede contener tu nombre de usuario."
+
+  changed_successfully: "&a&l✓ &aContraseña cambiada correctamente."
+  reset_success: "&a&l✓ &aContraseña restablecida para &e{player}&a."
+
+  requirements:
+    length:    "&8  &8└&7 Al menos &e8 caracteres"
+    uppercase: "&8  &8└&7 Al menos &euna letra mayúscula &8(A-Z)"
+    lowercase: "&8  &8└&7 Al menos &euna letra minúscula &8(a-z)"
+    number:    "&8  &8└&7 Al menos &eun número &8(0-9)"
+    special:   "&8  &8└&7 Al menos &eun carácter especial &8(!@#$%^&*)"
+
+  strength:
+    weak:       "&c&lDÉBIL"
+    medium:     "&e&lMEDIA"
+    strong:     "&a&lFUERTE"
+    very_strong: "&a&l&nMUY FUERTE"
+
+# ===================================================
+# RATE LIMIT
+# ===================================================
+rate_limit:
+  exceeded: "&c&l⚠ &cHas excedido el límite de intentos."
+  wait: "&cEspera &e{time} segundos &cbefore intentar de nuevo."
+  blocked: "&c&l⚠ BLOQUEADO &8— &7Tu IP fue bloqueada temporalmente."
+
+  kick_message: |-
+    {no-prefix}
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &8  &b&lHA&8  &8&m  &c&lSEGURIDAD
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &7
+    &7  Tu IP está &c&ltemporalmente bloqueada&7.
+    &7
+    &8  Razón:    &fDemasiados intentos fallidos
+    &8  Expira:   &e{remaining} segundos
+    &7
+    &7  Si crees que es un error, contacta
+    &7  a un administrador del servidor.
+    &7
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# ===================================================
+# USO DE COMANDOS
+# ===================================================
+usage:
+  login:          "&8→ &7Uso: &e/login <contraseña>"
+  register:       "&8→ &7Uso: &e/register <contraseña> <confirmar>"
+  changepassword: "&8→ &7Uso: &e/changepassword <antigua> <nueva> <confirmar>"
+  logout:         "&8→ &7Uso: &e/logout"
+  unregister:     "&8→ &7Uso: &e/hybridauth unregister <jugador>"
+  resetpassword:  "&8→ &7Uso: &e/hybridauth resetpassword <jugador> <nueva>"
+
+# ===================================================
+# ÉXITO
+# ===================================================
+success:
+  registered:   "&a&l✓ &a¡Registrado correctamente! Bienvenido, &e{player}&a."
+  logged_in:    "&a&l✓ &a¡Sesión iniciada correctamente!"
+  welcome_back: "&7Bienvenido de nuevo, &e{player}&7."
+  logged_out:   "&a&l✓ &aSesión cerrada correctamente."
+  processing:   "&7⏳ Procesando..."
+  enjoy:        "&8→ &7¡Disfruta tu estancia en el servidor!"
+
+# ===================================================
+# ADMINISTRACIÓN
+# ===================================================
+admin:
+  reload:
+    success: "&a&l✓ &aConfiguración y mensajes recargados."
+    error:   "&c&l✗ &cError al recargar. Revisa la consola."
+
+  unregister:
+    confirm:              "&e&l⚠ &eEstás a punto de desregistrar a &c{player}&e."
+    confirm_instruction:  "&8→ &7Escribe &a/hybridauth confirm &7para confirmar."
+    success:              "&a&l✓ &aEl usuario &e{player} &afue desregistrado."
+    cancelled:            "&7Operación cancelada."
+    timeout:              "&cEl tiempo de confirmación expiró. Operación cancelada."
+    console_no_confirmation: "&7La consola no requiere confirmación."
+    no_pending_confirmation: "&cNo tienes acción pendiente de confirmación."
+
+  stats:
+    header:          "&8&m━━━━━━━━━━━ &r&b&lHA &r&7Stats &8&m━━━━━━━━━━━"
+    version:         "&8  Versión:  &f{version}"
+    total_users:     "&8  Usuarios: &f{total}"
+    premium_users:   "&8  Premium:  &a{premium}"
+    cracked_users:   "&8  Cracked:  &7{cracked}"
+    active_sessions: "&8  Sesiones: &b{sessions}"
+    footer:          "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  help:
+    header:        "&8&m━━━━━━━━━━━ &r&b&lHA &r&7Admin &8&m━━━━━━━━━━━"
+    reload:        "&8  &e/hybridauth reload &8— &fRecargar configuración"
+    unregister:    "&8  &e/hybridauth unregister <jugador> &8— &fDesregistrar"
+    resetpassword: "&8  &e/hybridauth resetpassword <jugador> <pass> &8— &fReset pass"
+    stats:         "&8  &e/hybridauth stats &8— &fEstadísticas"
+    migrate:       "&8  &e/hybridauth migrate <contraseña> &8— &fMigrar a premium"
+    footer:        "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# ===================================================
+# AUTENTICACIÓN — PROCESOS
+# ===================================================
+authentication:
+  timeout:           "&c&l⏰ Tiempo agotado &8— &7Has sido desconectado por no autenticarte."
+  session_created:   "&a&l✓ &7Sesión segura creada."
+  session_expired:   "&e&l⚠ &eTu sesión ha expirado. Inicia sesión de nuevo."
+  session_resumed:   "&a&l✓ &aSesión anterior restaurada. ¡Bienvenido!"
+  premium_detected:  "&b&l★ &bCuenta Premium detectada &8— &aLogin automático activado."
+  bedrock_player:    "&b&l⛏ &bJugador Bedrock detectado &8— &7Sistema compatible activado."
+
+# ===================================================
+# AUTO-LOGIN PREMIUM
+# ===================================================
+auth:
+  register-required: "&e&l⚠ &eDebe registrarte: &f/register <contraseña> <contraseña>"
+  login-required:    "&e&l⚠ &eDebe iniciar sesión: &f/login <contraseña>"
+
+  premium-verification-failed: |-
+    {no-prefix}
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &8  &b&lHA&8  &8&m  &c&lVERIFICACIÓN FALLIDA
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &7
+    &7  No se pudo verificar tu estado premium.
+    &7  Por favor, vuelve a conectar.
+    &7
+    &7  Si el problema persiste, contacta
+    &7  a un administrador.
+    &7
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  welcome-title:            "&a&l✓ BIENVENIDO"
+  premium-auto-registered:  "&7Cuenta premium registrada automáticamente"
+  welcome-back-title:       "&a&lBIENVENIDO DE VUELTA"
+  premium-auto-login:       "&7Login automático como premium"
+
+  migration:
+    success: |-
+      {no-prefix}
+      &a&l✓ &a¡Cuenta actualizada a PREMIUM!
+      &7
+      &7  Desde ahora:
+      &a    ✓ Login automático (sin contraseña)
+      &a    ✓ Protegido por Mojang
+      &a    ✓ Funciona en todos los servidores Java
+      &7
+      &e  Reconecta para activar los cambios.
+    failed:         "&c&l✗ &cError al actualizar cuenta. Contacta a un admin."
+    not_premium:    "&c&l✗ &c¡No eres jugador premium!"
+    wrong_password: "&c&l✗ &c¡Contraseña incorrecta!"
+    usage:          "&8→ &7Uso: &e/hybridauth migrate <tu_contraseña>"
+    already_premium: "&e&l⚠ &eTu cuenta ya es premium."
+    2fa_required:    "&e&l⚠ &eAutenticación de Dos Factores requerida."
+
+# ===================================================
+# TÍTULOS Y SUBTÍTULOS
+# ===================================================
+titles:
+  login_required:
+    title:    "&c&lAUTENTICACIÓN"
+    subtitle: "&7Usa &e/login <contraseña>"
+
+  register_required:
+    title:    "&b&lREGISTRO REQUERIDO"
+    subtitle: "&7Usa &e/register <contraseña> <confirmar>"
+
+  login_success:
+    title:    "&a&l✓ BIENVENIDO"
+    subtitle: "&7Sesión iniciada correctamente"
+
+  register_success:
+    title:    "&a&l✓ REGISTRADO"
+    subtitle: "&7¡Disfruta del servidor!"
+
+# ===================================================
+# SEGURIDAD — LOGS Y ALERTAS
+# ===================================================
+security:
+  suspicious_ip:        "&c&l[ALERTA] &7IP sospechosa detectada para &e{player}"
+  multiple_sessions:    "&e&l[AVISO] &7Sesiones múltiples detectadas para &e{player}"
+  brute_force_detected: "&c&l[CRÍTICO] &7Posible fuerza bruta desde IP &e{ip}"
+  admin_action:         "&b&l[ADMIN] &7{admin} &fejecutó: &e{action}"
+
+  no_permission: "&c&l✗ &cNo tienes permiso para usar este comando."
+
+  # ─── Blacklist ────────────────────────────────────
+  blacklist:
+    add:
+      usage: |-
+        &8→ &7Uso: &e/security blacklist add <ip> [duración] [razón]
+        &8  Duración: &fpermanent &7o segundos (ej: &f3600&7)
+      invalid_ip: |-
+        &c&l✗ &cFormato de IP inválido: &f{ip}
+        &8→ &7Ejemplo: &f123.45.67.89
+      already_blocked: |-
+        &e&l⚠ &eEsta IP ya está bloqueada
+        &8→ &7Usa &f/security blacklist info {ip} &7para ver detalles.
+      invalid_duration: |-
+        &c&l✗ &cDuración inválida: &f{duration}
+        &8→ &7Usa &fpermanent &7o un número en segundos.
+      duration_zero: "&c&l✗ &cLa duración debe ser mayor a 0."
+
+      success_permanent: |-
+        {no-prefix}
+        &8  &4&l✓ IP BLOQUEADA PERMANENTEMENTE
+        &8  &8────────────────────────────
+        &8  IP:         &f{ip}
+        &8  Razón:      &f{reason}
+        &8  Bloqueada:  &f{blocked_by}
+      success_temporary: |-
+        {no-prefix}
+        &8  &6&l✓ IP BLOQUEADA TEMPORALMENTE
+        &8  &8────────────────────────────
+        &8  IP:         &f{ip}
+        &8  Duración:   &f{duration}
+        &8  Razón:      &f{reason}
+        &8  Bloqueada:  &f{blocked_by}
+      players_kicked: "&8  &7Jugadores kickeados: &f{count}"
+
+    remove:
+      usage:     "&8→ &7Uso: &e/security blacklist remove <ip>"
+      success: |-
+        {no-prefix}
+        &8  &a&l✓ IP DESBLOQUEADA
+        &8  IP:           &f{ip}
+        &8  Desbloqueada: &f{unblocked_by}
+      not_found: "&c&l✗ &cEsta IP no está en la blacklist."
+
+    list:
+      empty:        "&a&l✓ &aNo hay IPs en la blacklist."
+      invalid_page: "&c&l✗ &cPágina inválida. Total: &f{total_pages}"
+      header: |-
+        {no-prefix}
+        &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        &8  &4&l IP BLACKLIST &8 &8(Página {page}/{total_pages})
+        &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      entry_permanent: |-
+        &8  {index}. &4[PERM] &f{ip}
+        &8      Razón: &f{reason} &8| Por: &f{blocked_by}
+      entry_temporary: |-
+        &8  {index}. &6[TEMP] &f{ip}
+        &8      Razón: &f{reason} &8| Por: &f{blocked_by} &8| Expira: &e{time_remaining}
+      footer: |-
+        &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        &8  Total bloqueadas: &f{total}
+      next_page: "&8  → &7Siguiente: &e/security blacklist list {next_page}"
+
+    info:
+      usage:     "&8→ &7Uso: &e/security blacklist info <ip>"
+      not_found: "&c&l✗ &cEsta IP no está en la blacklist."
+      display: |-
+        {no-prefix}
+        &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        &8  &4&l INFORMACIÓN DE BLACKLIST
+        &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        &8  IP:          &f{ip}
+        &8  Tipo:        {type}
+        &8  Razón:       &f{reason}
+        &8  Bloqueada:   &f{blocked_by}
+        &8  Fecha:       &f{blocked_at}
+        {expiry_info}
+        &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      type_permanent: "&4&lPERMANENTE"
+      type_temporary: "&6&lTEMPORAL"
+      expiry_lines: |-
+        &8  Expira:      &f{expires_at}
+        &8  Restante:   &e{time_remaining}
+
+    cleanup:
+      processing: "&e&l⏳ &eLimpiando entradas expiradas..."
+      success: |-
+        &a&l✓ &aLimpieza completada
+        &8→ &7Removidas: &f{removed} &8| Restantes: &f{remaining}
+
+  # ─── Stats de seguridad ──────────────────────────
+  stats:
+    header: |-
+      {no-prefix}
+      &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      &8  &4&l ESTADÍSTICAS DE SEGURIDAD
+      &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    total_blocked:    "&8  Total bloqueadas: &f{total}"
+    permanent_count:  "&8  &4● &7Permanentes: &f{permanent}"
+    temporary_count:  "&8  &6● &7Temporales:  &f{temporary}"
+    footer:           "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  # ─── Help de seguridad ───────────────────────────
+  help:
+    header: |-
+      {no-prefix}
+      &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      &8  &b&lHA &8&m  &4&l COMANDOS DE SEGURIDAD
+      &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    add:     "&8  &e/security blacklist add <ip> [dur] [razón]\n&8      &8→ &fBloquear una IP"
+    remove:  "&8  &e/security blacklist remove <ip>\n&8      &8→ &fDesbloquear una IP"
+    list:    "&8  &e/security blacklist list [página]\n&8      &8→ &fListar IPs bloqueadas"
+    info:    "&8  &e/security blacklist info <ip>\n&8      &8→ &fVer información"
+    cleanup: "&8  &e/security blacklist cleanup\n&8      &8→ &fLimpiar expiradas"
+    stats:   "&8  &e/security stats\n&8      &8→ &fEstadísticas de seguridad"
+    footer:  "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  # ─── Kick messages ──────────────────────────────
+  blacklist_kick: |-
+    {no-prefix}
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &8  &b&lHA&8  &8&m  &4&l IP BLOQUEADA
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &7
+    &7  Tu IP ha sido bloqueada en este
+    &7  servidor.
+    &7
+    &8  IP:          &f{ip}
+    &8  Razón:       &c{reason}
+    &8  Bloqueada:   &f{blocked_by}
+    &8  Fecha:       &f{blocked_at}
+    &7
+    {duration_info}
+    &7
+    &7  Si crees que es un error, contacta
+    &7  a un administrador del servidor.
+    &7
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  blacklist_duration_permanent: "&8  Duración:    &4PERMANENTE"
+  blacklist_duration_temporary: |-
+    &8  Expira:      &f{expires_at}
+    &8  Restante:   &e{time_remaining}
+
+  impostor_kick: |-
+    {no-prefix}
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &8  &b&lHA&8  &8&m  &4&l IMPOSTOR DETECTADO
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &7
+    &7  Esta cuenta pertenece a otro
+    &7  jugador de Mojang.
+    &7
+    &8  Cuenta:      &f{username}
+    &8  UUID real:   &a{expected_uuid}
+    &8  Tu UUID:     &c{actual_uuid}
+    &7
+    &4  Usar cuentas ajenas resultará
+    &4  en un BAN PERMANENTE.
+    &7
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# ===================================================
+# PLACEHOLDERS ESPECIALES
+# ===================================================
+placeholders:
+  loading:    "&7⏳ Cargando..."
+  processing: "&7⏳ Procesando..."
+  done:       "&a✓ Completado"
+  error:      "&c✗ Error"
+  arrow:      "&8→ &7"
+  separator:  "&8&m━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# ===================================================
+# ACTION BAR
+# ===================================================
+actionbar:
+  authenticating: "&7⏳ &eAutenticando..."
+  success:        "&a&l✓ &aAutenticación exitosa"
+  error:          "&c&l✗ &cError de autenticación"
+  waiting:        "&7⏱ Esperando autenticación... &e{time}s"
+
+# ===================================================
+# CAPTCHA
+# ===================================================
+captcha:
+  prompt: |-
+    {no-prefix}
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &8  &b&lHA&8  &8&m  &e&l VERIFICACIÓN
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &7
+    &7  Resuelve este problema matemático
+    &7  para demostrar que no eres un bot:
+    &7
+    &e&l      {question}
+    &7
+    &7  Escribe tu respuesta en el chat.
+    &7  Tienes &c30 segundos.
+    &8  Intentos restantes: &a{attempts}
+    &7
+    &8  Razón: &f{reason}
+    &7
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  invalid_number: "&c&l✗ &cIngresa un número válido."
+
+  success: |-
+    {no-prefix}
+    &a&l✓ &aVERIFICACIÓN EXITOSA
+    &8→ &7¡Gracias por verificarte!
+
+  failed: |-
+    {no-prefix}
+    &c&l✗ &cRESPUESTA INCORRECTA
+    &8→ &7Intentos restantes: &e{attempts}
+    &8→ &7Pregunta: &e&l{question}
+
+  timeout_kick: |-
+    {no-prefix}
+    &c&l⏰ &cTIEMPO DE VERIFICACIÓN AGOTADO
+    &7
+    &7  No completaste la verificación
+    &7  a tiempo. Intenta de nuevo.
+
+  failed_kick: |-
+    {no-prefix}
+    &c&l✗ &cVERIFICACIÓN FALLIDA
+    &7
+    &7  Agotaste todos los intentos.
+    &7  Intenta de nuevo más tarde.
+
+  pending:     "&e&l⚠ &eResuelve el captcha primero antes de hacer login."
+  solve_first: "&c&l✗ &cDebes completar la verificación primero."
+
+# ===================================================
+# AUTO-LOGIN PREMIUM — Prompts
+# ===================================================
+premium:
+  cracked_to_premium_prompt: |-
+    {no-prefix}
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &8  &b&lHA&8  &8&m  &e&l CUENTA DETECTADA
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &7
+    &e  Estás registrado como CRACKED pero
+    &e  conectaste con cuenta PREMIUM.
+    &7
+    &7  Para actualizar tu cuenta, usa:
+    &a    /hybridauth migrate <tu_contraseña>
+    &7
+    &8→ &7Esto convierte tu cuenta a auto-login.
+    &7
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  impostor_alert_admin: |-
+    {no-prefix}
+    &c&l⚠ &cINTENTO DE IMPOSTOR DETECTADO:
+    &8  Jugador:    &f{username}
+    &8  IP:         &f{ip}
+    &8  UUID real:  &a{expected_uuid}
+    &8  UUID actual: &c{actual_uuid}

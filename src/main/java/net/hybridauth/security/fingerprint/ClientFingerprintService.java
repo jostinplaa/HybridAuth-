@@ -25,7 +25,8 @@ public class ClientFingerprintService {
 
             return Base64.getEncoder().encodeToString(hash);
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            net.hybridauth.HybridAuthPlugin.getPlugin(net.hybridauth.HybridAuthPlugin.class).getLogger()
+                    .log(java.util.logging.Level.SEVERE, "Error in ClientFingerprintService", e);
             return "UNKNOWN";
         }
     }
@@ -39,7 +40,7 @@ public class ClientFingerprintService {
 
     /**
      * FIX BUG #10: Detecta cambios en el fingerprint del jugador
-     * Señal de cuenta comprometida o uso de proxy/VPN
+     * Seal de cuenta comprometida o uso de proxy/VPN
      */
     public boolean hasFingerprintChanged(Player player, String storedFingerprint) {
         if (storedFingerprint == null) {

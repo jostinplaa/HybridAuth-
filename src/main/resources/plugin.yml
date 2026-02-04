@@ -41,6 +41,10 @@ commands:
     description: Recuperar contraseña olvidada
     usage: /recover <email>
     aliases: [recuperar]
+  2fa:
+    description: Configurar o gestionar autenticación de dos pasos
+    usage: /2fa <setup|confirm|disable>
+    aliases: [totp, gauth]
 
 permissions:
   hybridauth.admin:

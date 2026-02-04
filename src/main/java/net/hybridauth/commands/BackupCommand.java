@@ -46,7 +46,7 @@ public class BackupCommand {
                 break;
             case "restore":
                 if (args.length < 3) {
-                    sender.sendMessage("§cUso: /hy backup restore <archivo>");
+                    sender.sendMessage("cUso: /hy backup restore <archivo>");
                     return;
                 }
                 handleBackupRestore(sender, args);
@@ -58,27 +58,27 @@ public class BackupCommand {
     }
 
     private void showHelp(CommandSender sender) {
-        sender.sendMessage("§6=== HybridAuth Backup ===");
-        sender.sendMessage("§f/hy backup now §7- Crear backup manual");
-        sender.sendMessage("§f/hy backup list §7- Listar backups");
-        sender.sendMessage("§f/hy backup restore <archivo> §7- Restaurar (PELIGROSO)");
+        sender.sendMessage("6=== HybridAuth Backup ===");
+        sender.sendMessage("f/hy backup now 7- Crear backup manual");
+        sender.sendMessage("f/hy backup list 7- Listar backups");
+        sender.sendMessage("f/hy backup restore <archivo> 7- Restaurar (PELIGROSO)");
     }
 
     private void handleBackupNow(CommandSender sender) {
-        sender.sendMessage("§eCreando backup...");
+        sender.sendMessage("eCreando backup...");
 
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             BackupService.BackupResult result = plugin.getBackupService().createBackup();
 
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 if (result.success) {
-                    sender.sendMessage("§a✓ Backup creado: §f" + result.filename);
+                    sender.sendMessage("a Backup creado: f" + result.filename);
                     int cleaned = plugin.getBackupService().cleanOldBackups();
                     if (cleaned > 0) {
-                        sender.sendMessage("§7Limpiados " + cleaned + " backups antiguos");
+                        sender.sendMessage("7Limpiados " + cleaned + " backups antiguos");
                     }
                 } else {
-                    sender.sendMessage("§c✗ Error: " + result.error);
+                    sender.sendMessage("c Error: " + result.error);
                 }
             });
         });
@@ -88,14 +88,14 @@ public class BackupCommand {
         List<BackupService.BackupInfo> backups = plugin.getBackupService().getBackupList();
 
         if (backups.isEmpty()) {
-            sender.sendMessage("§c✗ No hay backups disponibles");
+            sender.sendMessage("c No hay backups disponibles");
             return;
         }
 
-        sender.sendMessage("§6=== Backups Disponibles ===");
+        sender.sendMessage("6=== Backups Disponibles ===");
         int index = 1;
         for (BackupService.BackupInfo backup : backups) {
-            sender.sendMessage(String.format("§f%d. §7%s §8(%s, %s)",
+            sender.sendMessage(String.format("f%d. 7%s 8(%s, %s)",
                     index++, backup.filename, backup.getFormattedSize(), backup.getFormattedDate()));
         }
     }
@@ -103,18 +103,18 @@ public class BackupCommand {
     private void handleBackupRestore(CommandSender sender, String[] args) {
         String filename = args[2];
 
-        // Confirmación doble
+        // Confirmacin doble
         if (args.length < 4 || !args[3].equalsIgnoreCase("confirm")) {
             if (!restoreConfirmations.containsKey(sender.getName())) {
-                sender.sendMessage("§c⚠ §l§nADVERTENCIA: OPERACIÓN PELIGROSA");
+                sender.sendMessage("c lnADVERTENCIA: OPERACIN PELIGROSA");
                 sender.sendMessage("");
-                sender.sendMessage("§eRestaurar §f" + filename + "§e sobrescribirá la BD actual:");
+                sender.sendMessage("eRestaurar f" + filename + "e sobrescribir la BD actual:");
                 sender.sendMessage("");
-                sender.sendMessage("§c  • Se PERDERÁN todos los datos desde el backup");
-                sender.sendMessage("§c  • Los jugadores serán DESCONECTADOS");
+                sender.sendMessage("c   Se PERDERN todos los datos desde el backup");
+                sender.sendMessage("c   Los jugadores sern DESCONECTADOS");
                 sender.sendMessage("");
-                sender.sendMessage("§6Si estás SEGURO, escribe:");
-                sender.sendMessage("§f/hy backup restore " + filename + " confirm");
+                sender.sendMessage("6Si ests SEGURO, escribe:");
+                sender.sendMessage("f/hy backup restore " + filename + " confirm");
 
                 restoreConfirmations.put(sender.getName(), filename);
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -127,30 +127,31 @@ public class BackupCommand {
 
         String confirmed = restoreConfirmations.get(sender.getName());
         if (confirmed == null || !confirmed.equals(filename)) {
-            sender.sendMessage("§c✗ Confirmación expirada o archivo no coincide");
+            sender.sendMessage("c Confirmacin expirada o archivo no coincide");
             restoreConfirmations.remove(sender.getName());
             return;
         }
 
         restoreConfirmations.remove(sender.getName());
-        sender.sendMessage("§e⚠ Restaurando backup...");
+        sender.sendMessage("e Restaurando backup...");
 
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             BackupService.BackupResult result = plugin.getBackupService().restoreBackup(filename);
 
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 if (result.success) {
-                    sender.sendMessage("§a✓ Backup restaurado: §f" + filename);
-                    sender.sendMessage("§6§l⚠ REINICIA EL SERVIDOR AHORA");
+                    sender.sendMessage("a Backup restaurado: f" + filename);
+                    sender.sendMessage("6l REINICIA EL SERVIDOR AHORA");
 
                     // Kickear todos
                     plugin.getServer().getOnlinePlayers().forEach(p -> {
-                        p.kickPlayer("§c§lBase de datos restaurada\n\n§fReconecta en unos segundos.");
+                        p.kickPlayer("clBase de datos restaurada\n\nfReconecta en unos segundos.");
                     });
                 } else {
-                    sender.sendMessage("§c✗ Error: " + result.error);
+                    sender.sendMessage("c Error: " + result.error);
                 }
             });
         });
     }
 }
+

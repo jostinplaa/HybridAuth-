@@ -1,0 +1,222 @@
+# HybridAuth Configuration - Premium Edition
+
+database:
+  type: SQLITE
+  mysql:
+    host: localhost
+    port: 3306
+    database: hybridauth
+    username: root
+    password: ''
+    pool:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+security:
+  password:
+    min-length: 8
+    max-length: 32
+    require-uppercase: true
+    require-lowercase: true
+    require-numbers: true
+    require-special-chars: false
+    bcrypt-cost: 12
+    block-common-passwords: true
+    
+  # Geolocalización
+  geoip:
+    enabled: false
+    database-file: "GeoLite2-Country.mmdb"
+    # Acción al detectar IP de país bloqueado: KICK, ALERT
+    action: "KICK"
+    # Países bloqueados (códigos ISO 3166-1 alpha-2)
+    # Ejemplo: CN (China), RU (Rusia), NK (Corea del Norte)
+    blocked-countries:
+      - "CN"
+      - "RU"
+      - "KP"
+    # Si true, alerta a admins cuando un usuario entra desde un país diferente al último login
+    alert-on-change: true
+  rate-limit:
+    enabled: true
+    max-attempts-per-ip: 5
+    max-attempts-per-username: 3
+    base-delay: 5  # segundos
+    progressive-backoff: true
+    whitelisted-ips:
+      - 127.0.0.1
+      - 192.168.1.1
+    
+  sessions:
+    enabled: true
+    duration: 86400  # 24 horas
+    validate-fingerprint: true
+    auto-logout-on-disconnect: false
+    max-sessions-per-user: 3
+    
+  two-factor:
+    enabled: false
+    issuer: "HybridAuth"
+    mandatory-for-admins: false
+    backup-codes: 10
+    
+  anti-bot:
+    enabled: true
+    max-connections-per-minute: 10
+    block-suspicious-usernames: true
+    check-vpn: false  # Requiere API key
+    
+  # v1.3.0 - Sistema de Captcha
+  captcha:
+    enabled: true
+    timeout-seconds: 30
+    max-attempts: 3
+    
+
+authentication:
+  timeout-seconds: 60
+  premium-auto-login: true
+  bedrock-support: true
+  spawn-teleport: false
+  spawn-location:
+    world: world
+    x: 0
+    y: 100
+    z: 0
+  
+restrictions:
+  blindness-effect: true
+  slow-effect: true
+  block-movement: true
+  block-commands: true
+  block-chat: true
+  block-interact: true
+  
+integrations:
+  discord:
+    enabled: false
+    webhook-url: ""
+    notify:
+      impostor-detected: true
+      ip-blacklisted: true
+      brute-force: true
+      suspicious-login: true
+      premium-register: false
+      
+  email:
+    enabled: false
+    smtp-host: smtp.gmail.com
+    smtp-port: 587
+    username: ""
+    password: ""
+    from: "noreply@tuservidor.com"
+    
+logging:
+  file-logging: true
+  log-directory: logs/
+  rotate-daily: true
+  keep-days: 30
+  events:
+    login-success: true
+    login-fail: true
+    register: true
+    premium-detect: true
+    suspicious: true
+
+# v1.5.0 - Sistema de Backup Automático
+backup:
+  enabled: true
+  interval-hours: 6
+  timeout: 30  # Timeout en segundos
+  max-backups: 7
+  notify-admins: true
+
+# v1.6.0 - Multi-Server Sync (Network)
+# Activar para sincronizar auth entre servidores BungeeCord/Velocity
+multi-server:
+  enabled: false
+  server-id: "survival"  # Nombre único para este servidor
+  
+  # Backend: 'redis' (recomendado) o 'mysql' (fallback)
+  backend: redis
+  
+  # Configuración Redis
+  redis:
+    host: "localhost"
+    port: 6379
+    password: ""
+    database: 0
+    pool-size: 8
+    
+  # Features a sincronizar
+  sync-auth: true        # Sincronizar login (no loguear de nuevo al cambiar server)
+  sync-blacklist: true   # Sincronizar bans de IP
+  sync-ratelimit: true   # Rate limit global (intentos compartidos)
+
+# v1.5.0 - Email Recovery System
+email:
+  enabled: false  # Cambiar a true cuando configures el servicio
+  
+  # Provider: "sendgrid" (recomendado, más fácil) o "smtp" (tradicional)
+  provider: sendgrid
+  
+  # SendGrid (RECOMENDADO - solo necesitas API key)
+  # 1. Crea cuenta gratis en https://sendgrid.com
+  # 2. Ve a Settings -> API Keys -> Create API Key
+  # 3. Copia la API key aquí
+  sendgrid:
+    api-key: "YOUR_SENDGRID_API_KEY"
+    
+  # SMTP Tradicional (alternativa si tienes servidor de email)
+  # Para Gmail: activa 2FA y genera App Password en tu cuenta Google
+  smtp:
+    host: "smtp.gmail.com"
+    port: 587
+    username: "your-email@gmail.com"
+    password: "your-app-password"
+    use-tls: true
+    
+  # Configuración de remitente (aparece en los emails)
+  from:
+    email: "noreply@yourserver.com"  # Cambia esto
+    name: "HybridAuth"
+    
+  # Verificación de email
+  verification:
+    code-expiry-minutes: 15  # Código expira en 15 minutos
+    max-attempts: 3  # Máximo 3 intentos de verificación
+    
+  # Recuperación de cuentas
+  recovery:
+    code-expiry-minutes: 10  # Código de recuperación expira en 10 minutos
+    cooldown-minutes: 5
+    max-attempts: 3
+
+# v1.5.0 - Enhanced Logging System
+logging:
+  # Logging a archivos (además de consola y BD)
+  file-logging:
+    enabled: true
+    directory: "logs/"
+    
+  # Rotación automática de logs
+  rotation:
+    daily: true  # Rotar cada día a medianoche
+    keep-days: 30  # Mantener logs de últimos 30 días
+    compress-old: true  # Comprimir logs de más de 7 días a .gz
+    
+  # Tipos de logs (cada uno en su archivo)
+  levels:
+    security: true  # security.log - Eventos de autenticación
+    errors: true  # errors.log - Errores y excepciones
+    debug: false  # debug.log - Solo para desarrollo
+    performance: false  # performance.log - Métricas de rendimiento
+    
+  # Formato de timestamps en logs
+  format:
+    timestamp: "yyyy-MM-dd HH:mm:ss"
+    include-thread: false
+    include-class: true
+
+messages:
+  prefix: "&8[&bHybridAuth&8]&r"

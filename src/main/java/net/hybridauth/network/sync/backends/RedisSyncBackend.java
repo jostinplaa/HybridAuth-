@@ -110,15 +110,15 @@ public class RedisSyncBackend implements SyncBackend {
             });
 
             connected = true;
-            plugin.getLogger().info("[MultiServerSync] ✓ Connected to Redis successfully!");
+            plugin.getLogger().info("[MultiServerSync]  Connected to Redis successfully!");
             plugin.getLogger().info("[MultiServerSync] Ready for cross-server sync");
 
             return true;
 
         } catch (Exception e) {
-            plugin.getLogger().severe("[MultiServerSync] ✗ Failed to connect to Redis: " + e.getMessage());
+            plugin.getLogger().severe("[MultiServerSync]  Failed to connect to Redis: " + e.getMessage());
             plugin.getLogger().severe("[MultiServerSync] Multi-server sync will be DISABLED");
-            e.printStackTrace();
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in RedisSyncBackend", e);
             connected = false;
             return false;
         }
@@ -391,3 +391,6 @@ public class RedisSyncBackend implements SyncBackend {
         }, executor);
     }
 }
+
+
+

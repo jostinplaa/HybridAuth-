@@ -60,7 +60,7 @@ public class LoginListener implements Listener {
 
         // ====== PASO 2: Usuario CRACKED ======
 
-        // Verificar si ya está registrado en DB
+        // Verificar si ya est registrado en DB
         Optional<User> userOpt = plugin.getDatabaseManager().getUserDAO()
                 .getUserByUsername(username);
 
@@ -68,10 +68,10 @@ public class LoginListener implements Listener {
             User user = userOpt.get();
 
             // Usuario cracked YA REGISTRADO
-            // Verificar si tiene sesión válida
+            // Verificar si tiene sesin vlida
             if (plugin.getSessionManager().validateSession(uuid, ip)) {
                 plugin.getLogger().info("[PreLogin] " + username + " - Valid session, allowing");
-                return; // Dejar pasar (auto-login por sesión)
+                return; // Dejar pasar (auto-login por sesin)
             }
 
             // Si ya vio el mensaje antes, dejar pasar (para que haga /login)
@@ -80,14 +80,14 @@ public class LoginListener implements Listener {
                 return;
             }
 
-            // PRIMERA CONEXIÓN DEL DÍA (sin sesión válida)
+            // PRIMERA CONEXIN DEL DA (sin sesin vlida)
             // Mostrar mensaje de LOGIN (desde messages.yml)
             String warningMessage = plugin.getMessageManager().getMessage("login.warning_kick",
                     net.hybridauth.core.messages.MessageManager.placeholder()
                             .add("player", username)
                             .build());
 
-            // Marcar que ya vio el mensaje (sin delay — el mensaje se muestran en el kick)
+            // Marcar que ya vio el mensaje (sin delay  el mensaje se muestran en el kick)
             hasSeenWarning.add(uuid);
 
             // Programar limpieza (5 minutos)
@@ -117,7 +117,7 @@ public class LoginListener implements Listener {
                         .add("player", username)
                         .build());
 
-        // Marcar que ya vio el mensaje (sin delay — el mensaje se muestran en el kick)
+        // Marcar que ya vio el mensaje (sin delay  el mensaje se muestran en el kick)
         hasSeenWarning.add(uuid);
 
         // Programar limpieza (5 minutos)
@@ -139,7 +139,7 @@ public class LoginListener implements Listener {
 
         plugin.getLogger().info("[Login] Player " + player.getName() + " joining...");
 
-        // Pequeño delay para asegurar que el PremiumDetector terminó
+        // Pequeo delay para asegurar que el PremiumDetector termin
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             // 1. Check if Premium (Validated by PremiumDetector)
             boolean isPremium = net.hybridauth.network.netty.PremiumDetector.isPremium(player.getName());
@@ -191,7 +191,7 @@ public class LoginListener implements Listener {
                     user.setLastLoginDate(new java.sql.Timestamp(System.currentTimeMillis()));
                     user.setTotalLogins(1);
                     plugin.getDatabaseManager().getUserDAO().createUser(user);
-                    plugin.getLogger().info("✓ Auto-registered Premium user: " + player.getName());
+                    plugin.getLogger().info(" Auto-registered Premium user: " + player.getName());
                 }
 
                 // Sync back to main thread to authorize
@@ -200,16 +200,16 @@ public class LoginListener implements Listener {
                     removeAuthRestrictions(player);
                     plugin.getMessageManager().send(player, "authentication.premium_detected");
 
-                    // Crear sesión
+                    // Crear sesin
                     plugin.getSessionManager().createSession(player.getUniqueId(),
                             player.getAddress().getAddress().getHostAddress());
 
-                    plugin.getLogger().info("✓ Premium login completed: " + player.getName());
+                    plugin.getLogger().info(" Premium login completed: " + player.getName());
                 });
 
             } catch (Exception e) {
                 plugin.getLogger().severe("ERROR in premium login for " + player.getName());
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in LoginListener", e);
 
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     plugin.getMessageManager().send(player, "auth.premium-verification-failed");
@@ -287,7 +287,7 @@ public class LoginListener implements Listener {
         // Limpiar estado premium
         net.hybridauth.network.netty.PremiumDetector.clearCache(player.getName());
 
-        // Limpiar estado de autenticación
+        // Limpiar estado de autenticacin
         authStateManager.removePlayer(player);
 
         plugin.getLogger().info("[Logout] " + player.getName() + " - State cleared");
@@ -335,3 +335,6 @@ public class LoginListener implements Listener {
         }
     }
 }
+
+
+

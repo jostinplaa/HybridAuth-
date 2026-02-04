@@ -53,11 +53,12 @@ public class MojangAPI {
                     return Optional.of(uuid);
                 }
             }
-            // 204 o cualquier otro código = no premium
+            // 204 o cualquier otro cdigo = no premium
             return Optional.empty();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            net.hybridauth.HybridAuthPlugin.getPlugin(net.hybridauth.HybridAuthPlugin.class).getLogger()
+                    .log(java.util.logging.Level.SEVERE, "Error in MojangAPI", e);
             return Optional.empty();
         } finally {
             if (connection != null) {
@@ -91,7 +92,8 @@ public class MojangAPI {
                 return Optional.of(JsonParser.parseString(response.toString()).getAsJsonObject());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            net.hybridauth.HybridAuthPlugin.getPlugin(net.hybridauth.HybridAuthPlugin.class).getLogger()
+                    .log(java.util.logging.Level.SEVERE, "Error in MojangAPI", e);
         }
         return Optional.empty();
     }

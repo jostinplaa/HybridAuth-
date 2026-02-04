@@ -15,8 +15,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Sistema de backup automático para HybridAuth
- * Crea backups periódicos de la base de datos y permite restauración
+ * Sistema de backup automtico para HybridAuth
+ * Crea backups peridicos de la base de datos y permite restauracin
  * 
  * @version 1.5.0
  */
@@ -50,7 +50,7 @@ public class BackupService {
     }
 
     /**
-     * Programa el backup automático usando BukkitScheduler
+     * Programa el backup automtico usando BukkitScheduler
      */
     public void scheduleAutoBackup() {
         if (!enabled) {
@@ -66,7 +66,7 @@ public class BackupService {
             BackupResult result = createBackup();
 
             if (result.success) {
-                plugin.getLogger().info("[BackupService] ✓ Scheduled backup created: " + result.filename);
+                plugin.getLogger().info("[BackupService]  Scheduled backup created: " + result.filename);
 
                 if (notifyAdmins) {
                     notifyAdminsAboutBackup(result.filename);
@@ -75,7 +75,7 @@ public class BackupService {
                 // Limpiar backups antiguos
                 cleanOldBackups();
             } else {
-                plugin.getLogger().severe("[BackupService] ✗ Scheduled backup failed: " + result.error);
+                plugin.getLogger().severe("[BackupService]  Scheduled backup failed: " + result.error);
             }
         }, intervalTicks, intervalTicks); // Delay inicial = intervalo, luego cada intervalo
 
@@ -83,7 +83,7 @@ public class BackupService {
     }
 
     /**
-     * Crea un backup manual o automático
+     * Crea un backup manual o automtico
      */
     public BackupResult createBackup() {
         try {
@@ -105,12 +105,12 @@ public class BackupService {
                 Files.copy(sourceDb.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
             } else {
-                // MySQL: Usar mysqldump (requiere instalación en server)
+                // MySQL: Usar mysqldump (requiere instalacin en server)
                 filename = "backup_" + timestamp + ".sql";
                 backupFile = new File(backupFolder, filename);
 
                 // TODO: Implementar mysqldump si se usa MySQL
-                // Por ahora retornar que no está soportado
+                // Por ahora retornar que no est soportado
                 return new BackupResult(false, null, "MySQL backup not yet implemented (use mysqldump manually)");
             }
 
@@ -121,13 +121,13 @@ public class BackupService {
 
         } catch (IOException | SQLException e) {
             plugin.getLogger().severe("[BackupService] Error creating backup: " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in BackupService", e);
             return new BackupResult(false, null, e.getMessage());
         }
     }
 
     /**
-     * Limpia backups antiguos, manteniendo solo los últimos N
+     * Limpia backups antiguos, manteniendo solo los ltimos N
      */
     public int cleanOldBackups() {
         File[] backups = backupFolder.listFiles(
@@ -137,10 +137,10 @@ public class BackupService {
             return 0;
         }
 
-        // Ordenar por fecha de modificación (más reciente primero)
+        // Ordenar por fecha de modificacin (ms reciente primero)
         Arrays.sort(backups, Comparator.comparingLong(File::lastModified).reversed());
 
-        // Eliminar los backups viejos (después de maxBackups)
+        // Eliminar los backups viejos (despus de maxBackups)
         int deleted = 0;
         for (int i = maxBackups; i < backups.length; i++) {
             if (backups[i].delete()) {
@@ -202,7 +202,7 @@ public class BackupService {
                 // Sobrescribir con el backup
                 Files.copy(backupFile.toPath(), currentDb.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-                plugin.getLogger().warning("[BackupService] ⚠ DATABASE RESTORED from " + filename);
+                plugin.getLogger().warning("[BackupService]  DATABASE RESTORED from " + filename);
 
                 return new BackupResult(true, filename, null);
 
@@ -212,7 +212,7 @@ public class BackupService {
 
         } catch (IOException | SQLException e) {
             plugin.getLogger().severe("[BackupService] Error restoring backup: " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in BackupService", e);
             return new BackupResult(false, null, e.getMessage());
         }
     }
@@ -299,3 +299,6 @@ public class BackupService {
         }
     }
 }
+
+
+

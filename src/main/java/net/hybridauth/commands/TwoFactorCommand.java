@@ -151,7 +151,7 @@ public class TwoFactorCommand implements CommandExecutor {
                         player.sendMessage(ChatColor.GREEN + "You will need the code next time you login.");
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in TwoFactorCommand", e);
                     player.sendMessage(ChatColor.RED + "Database error enabling 2FA.");
                 }
             });
@@ -183,9 +183,12 @@ public class TwoFactorCommand implements CommandExecutor {
                 plugin.getSecurityLogger().logWarning("2FA DISABLED for user " + player.getName());
                 player.sendMessage(ChatColor.GREEN + "2FA has been disabled.");
             } catch (Exception e) {
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in TwoFactorCommand", e);
                 player.sendMessage(ChatColor.RED + "Database error disabling 2FA.");
             }
         });
     }
 }
+
+
+

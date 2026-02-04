@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 import java.util.List;
 
 /**
- * Comando /security - VERSIÓN CORREGIDA SIN MENSAJES HARDCODEADOS
+ * Comando /security - VERSIN CORREGIDA SIN MENSAJES HARDCODEADOS
  */
 public class SecurityCommand implements CommandExecutor {
 
@@ -351,3 +351,4 @@ public class SecurityCommand implements CommandExecutor {
         return kicked;
     }
 }
+

@@ -21,3 +21,4 @@ public interface AlertService {
         ADMIN_LOGIN
     }
 }
+

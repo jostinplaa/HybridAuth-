@@ -60,3 +60,4 @@ public class TwoFactorService {
                 new GoogleAuthenticatorKey.Builder(secret).build());
     }
 }
+

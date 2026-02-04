@@ -16,11 +16,11 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Sistema de Captcha para prevenir bots y ataques automatizados
  * 
- * Características:
- * - Captcha matemático simple (suma, resta)
+ * Caractersticas:
+ * - Captcha matemtico simple (suma, resta)
  * - Se activa en situaciones sospechosas
  * - Timeout de 30 segundos
- * - 3 intentos máximos
+ * - 3 intentos mximos
  * 
  * @version 1.2.0
  */
@@ -42,7 +42,7 @@ public class CaptchaService implements Listener {
 
         if (enabled) {
             plugin.getServer().getPluginManager().registerEvents(this, plugin);
-            plugin.getLogger().info("✓ Captcha system enabled");
+            plugin.getLogger().info(" Captcha system enabled");
         }
     }
 
@@ -91,7 +91,7 @@ public class CaptchaService implements Listener {
 
     /**
      * FIX BUG #9: Regenera el captcha para un jugador
-     * Útil cuando falla y quiere intentar con otro desafío
+     * til cuando falla y quiere intentar con otro desafo
      */
     public void regenerateCaptcha(Player player, CaptchaReason reason) {
         activeChallenges.remove(player.getUniqueId());
@@ -127,11 +127,11 @@ public class CaptchaService implements Listener {
                 break;
 
             case MULTIPLICATION:
-                // Números más pequeños para multiplicación
+                // Nmeros ms pequeos para multiplicacin
                 a = random.nextInt(10) + 1;
                 b = random.nextInt(10) + 1;
                 answer = a * b;
-                question = a + " × " + b + " = ?";
+                question = a + "  " + b + " = ?";
                 break;
 
             default:
@@ -188,10 +188,10 @@ public class CaptchaService implements Listener {
 
         // Verificar respuesta
         if (answer == challenge.correctAnswer) {
-            // ¡CORRECTO!
+            // CORRECTO!
             activeChallenges.remove(uuid);
 
-            // FIX CRÍTICO: Resetear rate limit
+            // FIX CRTICO: Resetear rate limit
             try {
                 java.net.InetSocketAddress addr = player.getAddress();
                 if (addr != null && addr.getAddress() != null) {
@@ -234,7 +234,7 @@ public class CaptchaService implements Listener {
                 }
 
             } else {
-                // Aún tiene intentos
+                // An tiene intentos
                 plugin.getMessageManager().send(player, "captcha.failed",
                         MessageManager.placeholder()
                                 .add("attempts", String.valueOf(challenge.attemptsRemaining))
@@ -281,7 +281,7 @@ public class CaptchaService implements Listener {
     }
 
     /**
-     * Razón por la que se requiere captcha
+     * Razn por la que se requiere captcha
      */
     public enum CaptchaReason {
         MULTIPLE_FAILED_LOGINS("Multiple failed login attempts"),
@@ -302,3 +302,4 @@ public class CaptchaService implements Listener {
         }
     }
 }
+

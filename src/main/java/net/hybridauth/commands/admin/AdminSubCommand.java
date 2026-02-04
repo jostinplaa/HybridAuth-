@@ -22,3 +22,4 @@ public interface AdminSubCommand {
         return "hybridauth.admin";
     }
 }
+

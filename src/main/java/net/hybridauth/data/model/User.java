@@ -153,3 +153,4 @@ public class User {
         isTotpEnabled = totpEnabled;
     }
 }
+

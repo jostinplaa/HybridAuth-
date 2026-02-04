@@ -20,3 +20,4 @@ public class Session {
     private Timestamp lastActivity;
     private boolean active;
 }
+

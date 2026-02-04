@@ -53,7 +53,7 @@ public class DatabaseManager {
             return true;
         } catch (Exception e) { // Catch Hikari/SQL exceptions
             plugin.getLogger().severe("Failed to initialize database: " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in DatabaseManager", e);
             return false;
         }
     }
@@ -85,6 +85,8 @@ public class DatabaseManager {
                         registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         last_login_date TIMESTAMP NULL,
                         last_ip VARCHAR(45),
+                        totp_secret VARCHAR(32),
+                        totp_enabled BOOLEAN DEFAULT FALSE,
                         total_logins INT DEFAULT 0,
                         status VARCHAR(20) DEFAULT 'ACTIVE',
                         INDEX idx_username (username),
@@ -144,6 +146,8 @@ public class DatabaseManager {
                         registered_at TEXT DEFAULT (datetime('now')),
                         last_login_date TEXT,
                         last_ip TEXT,
+                        totp_secret TEXT,
+                        totp_enabled INTEGER DEFAULT 0,
                         total_logins INTEGER DEFAULT 0,
                         status TEXT DEFAULT 'ACTIVE'
                     )

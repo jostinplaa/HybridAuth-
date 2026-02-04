@@ -22,9 +22,10 @@ public class ReloadSubCommand implements AdminSubCommand {
         // v1.7.0 Reload AlertManager
         plugin.getAlertManager().reload();
 
-        // 3. CRÍTICO: Reinicializar servicios
+        // 3. CRTICO: Reinicializar servicios
         plugin.reinitializeServices();
 
         plugin.getMessageManager().send(sender, "admin.reload.success");
     }
 }
+

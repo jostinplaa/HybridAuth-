@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Handler simplificado de autenticación premium.
+ * Handler simplificado de autenticacin premium.
  * Version 2.2.0 (Impostor Warning Mode)
  */
 public class EncryptionHandler {
@@ -54,7 +54,7 @@ public class EncryptionHandler {
     public EncryptionHandler(HybridAuthPlugin plugin) {
         this.plugin = plugin;
         this.mojangAPI = new MojangAPI();
-        plugin.getLogger().info("✓ Premium Authentication System (UUID-based v2.2) loaded.");
+        plugin.getLogger().info(" Premium Authentication System (UUID-based v2.2) loaded.");
         registerPacketListeners();
     }
 
@@ -117,7 +117,7 @@ public class EncryptionHandler {
             Optional<UUID> mojangUUID = mojangAPI.getPremiumUUID(playerName);
 
             if (mojangUUID.isEmpty()) {
-                plugin.getLogger().info("[Premium Check] ✖ " + playerName + " NO es cuenta premium. Modo Cracked.");
+                plugin.getLogger().info("[Premium Check]  " + playerName + " NO es cuenta premium. Modo Cracked.");
                 PremiumStatus status = new PremiumStatus(false, null);
                 verificationCache.put(playerName.toLowerCase(), status);
                 processVerification(event, playerName, clientUUID, status);
@@ -128,9 +128,9 @@ public class EncryptionHandler {
             boolean uuidMatch = clientUUID.equals(realMojangUUID);
 
             if (uuidMatch) {
-                plugin.getLogger().info("[Premium Check] ✓ UUIDs coinciden - PREMIUM VERIFICADO");
+                plugin.getLogger().info("[Premium Check]  UUIDs coinciden - PREMIUM VERIFICADO");
             } else {
-                plugin.getLogger().warning("[Premium Check] ✖ UUIDs NO coinciden - IMPOSTOR DETECTADO");
+                plugin.getLogger().warning("[Premium Check]  UUIDs NO coinciden - IMPOSTOR DETECTADO");
             }
 
             PremiumStatus status = new PremiumStatus(uuidMatch, realMojangUUID, false);
@@ -139,14 +139,14 @@ public class EncryptionHandler {
 
         } catch (Exception e) {
             plugin.getLogger().severe("[Premium Check] Error verificando " + playerName + ":");
-            e.printStackTrace();
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in EncryptionHandler", e);
             allowAsCracked(event.getPlayer(), playerName);
         }
     }
 
     private void processVerification(PacketEvent event, String playerName, UUID clientUUID, PremiumStatus status) {
         if (status.isPremium) {
-            plugin.getLogger().info("[Premium Check] ✓✓✓ " + playerName + " verificado como PREMIUM REAL");
+            plugin.getLogger().info("[Premium Check]  " + playerName + " verificado como PREMIUM REAL");
             verifiedPremiumPlayers.add(playerName.toLowerCase());
             allowAsVerifiedPremium(event.getPlayer(), playerName);
         } else {
@@ -177,7 +177,7 @@ public class EncryptionHandler {
             try {
                 ProtocolLibrary.getProtocolManager().receiveClientPacket(player, packet);
             } catch (Exception e) {
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in EncryptionHandler", e);
             }
         });
     }
@@ -190,7 +190,7 @@ public class EncryptionHandler {
             try {
                 ProtocolLibrary.getProtocolManager().receiveClientPacket(player, packet);
             } catch (Exception e) {
-                e.printStackTrace();
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in EncryptionHandler", e);
             }
         });
     }
@@ -198,17 +198,17 @@ public class EncryptionHandler {
     private void kickImpostor(org.bukkit.entity.Player player, String username) {
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             player.kickPlayer(
-                    "§c§l⚠ ALERTA DE SEGURIDAD ⚠\n\n" +
-                            "§eEl nombre §f" + username + " §epertenece a un usuario Premium.\n" +
-                            "§7--------------------------------------------------\n" +
-                            "§f§l¿QUIERES ENTRAR IGUAL?\n" +
-                            "§7Te dejaremos pasar, pero deberás §nregistrarte§7.\n\n" +
-                            "§4§l¡RIESGO TOTAL DE PÉRDIDA!\n" +
-                            "§cSi el dueño original entra al servidor,\n" +
-                            "§cRECUPERARÁ LA CUENTA Y PERDERÁS TODO.\n" +
-                            "§7(Inventario, Dinero, Rangos, Casas...)\n" +
-                            "§7--------------------------------------------------\n\n" +
-                            "§a§l¡VUELVE A CONECTARTE SI ACEPTAS EL RIESGO!");
+                    "cl ALERTA DE SEGURIDAD \n\n" +
+                            "eEl nombre f" + username + " epertenece a un usuario Premium.\n" +
+                            "7--------------------------------------------------\n" +
+                            "flQUIERES ENTRAR IGUAL?\n" +
+                            "7Te dejaremos pasar, pero debers nregistrarte7.\n\n" +
+                            "4lRIESGO TOTAL DE PRDIDA!\n" +
+                            "cSi el dueo original entra al servidor,\n" +
+                            "cRECUPERAR LA CUENTA Y PERDERS TODO.\n" +
+                            "7(Inventario, Dinero, Rangos, Casas...)\n" +
+                            "7--------------------------------------------------\n\n" +
+                            "alVUELVE A CONECTARTE SI ACEPTAS EL RIESGO!");
         });
     }
 
@@ -255,3 +255,6 @@ public class EncryptionHandler {
         verificationCache.put(playerName.toLowerCase(), new PremiumStatus(true, uuid));
     }
 }
+
+
+

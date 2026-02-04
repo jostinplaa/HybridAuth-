@@ -9,13 +9,13 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * DETECCIÓN PREMIUM EN HANDSHAKE - SIN PROTOCOLLIB
+ * DETECCIN PREMIUM EN HANDSHAKE - SIN PROTOCOLLIB
  * 
- * VERSIÓN 2.0 - Compatible con todas las versiones de Minecraft
+ * VERSIN 2.0 - Compatible con todas las versiones de Minecraft
  * 
  * Este sistema usa reflection pura para evitar dependencias de NMS en
  * compile-time.
- * La inyección de Netty se hace en RUNTIME, haciendo el código portable entre
+ * La inyeccin de Netty se hace en RUNTIME, haciendo el cdigo portable entre
  * versiones.
  * 
  * Inspirado en FastLogin y nLogin
@@ -26,7 +26,7 @@ public class PremiumDetector {
     private static boolean nettyAvailable = false;
 
     static {
-        // Verificar si Netty está disponible en runtime
+        // Verificar si Netty est disponible en runtime
         try {
             Class.forName("io.netty.channel.Channel");
             nettyAvailable = true;
@@ -56,14 +56,14 @@ public class PremiumDetector {
             Method getPipelineMethod = channel.getClass().getMethod("pipeline");
             Object pipeline = getPipelineMethod.invoke(channel);
 
-            // Verificar si ya está inyectado
+            // Verificar si ya est inyectado
             Method getMethod = pipeline.getClass().getMethod("get", String.class);
             if (getMethod.invoke(pipeline, "premium_detector") != null) {
-                return; // Ya está inyectado
+                return; // Ya est inyectado
             }
 
-            // Por ahora usamos detección directa por UUID
-            // La inyección completa requeriría más reflection compleja
+            // Por ahora usamos deteccin directa por UUID
+            // La inyeccin completa requerira ms reflection compleja
             detectPremiumByUUID(player);
 
         } catch (Exception e) {
@@ -74,10 +74,10 @@ public class PremiumDetector {
     }
 
     /**
-     * Detección premium consultando la API de Mojang
+     * Deteccin premium consultando la API de Mojang
      * 
      * En servidores offline-mode, TODOS tienen UUID v3
-     * La ÚNICA forma de verificar premium es consultar Mojang API
+     * La NICA forma de verificar premium es consultar Mojang API
      */
     private static void detectPremiumByUUID(Player player) {
         String playerName = player.getName();
@@ -92,7 +92,7 @@ public class PremiumDetector {
                     connectionCache.put(playerName.toLowerCase(),
                             new PlayerConnectionData(playerUUID, isPremium, System.currentTimeMillis()));
 
-                    Bukkit.getLogger().info("[PremiumDetect] " + playerName + " → "
+                    Bukkit.getLogger().info("[PremiumDetect] " + playerName + "  "
                             + (isPremium ? "PREMIUM" : "CRACKED")
                             + " (UUID: " + playerUUID + ")");
                 });
@@ -162,7 +162,7 @@ public class PremiumDetector {
             Method getHandleMethod = player.getClass().getMethod("getHandle");
             Object nmsPlayer = getHandleMethod.invoke(player);
 
-            // playerConnection / connection (field name cambia según versión)
+            // playerConnection / connection (field name cambia segn versin)
             Field connectionField = findField(nmsPlayer.getClass(), "playerConnection", "connection", "c", "b");
             if (connectionField == null)
                 return null;
@@ -211,17 +211,17 @@ public class PremiumDetector {
 
     /**
      * Consulta si un jugador es premium
-     * Si no está en caché, consulta Mojang API de forma síncrona
+     * Si no est en cach, consulta Mojang API de forma sncrona
      * 
-     * IMPORTANTE: Este método puede bloquear el thread,
-     * así que solo llamar desde contextos async (AsyncPlayerPreLoginEvent está OK)
+     * IMPORTANTE: Este mtodo puede bloquear el thread,
+     * as que solo llamar desde contextos async (AsyncPlayerPreLoginEvent est OK)
      */
     public static boolean isPremium(String playerName) {
         PlayerConnectionData data = connectionCache.get(playerName.toLowerCase());
 
-        // Si está en cache y no expiró, retornar
+        // Si est en cache y no expir, retornar
         if (data != null) {
-            // Expirar cache después de 5 minutos
+            // Expirar cache despus de 5 minutos
             if (System.currentTimeMillis() - data.timestamp < 300000) {
                 return data.isPremium;
             }
@@ -229,14 +229,14 @@ public class PremiumDetector {
             connectionCache.remove(playerName.toLowerCase());
         }
 
-        // NO está en cache → Consultar Mojang de forma síncrona
+        // NO est en cache  Consultar Mojang de forma sncrona
         boolean isPremium = checkMojangAPI(playerName);
 
-        // Guardar en cache (sin UUID porque no tenemos player object aquí)
+        // Guardar en cache (sin UUID porque no tenemos player object aqu)
         connectionCache.put(playerName.toLowerCase(),
                 new PlayerConnectionData(null, isPremium, System.currentTimeMillis()));
 
-        Bukkit.getLogger().info("[PremiumDetect] " + playerName + " → "
+        Bukkit.getLogger().info("[PremiumDetect] " + playerName + "  "
                 + (isPremium ? "PREMIUM" : "CRACKED") + " (via API)");
 
         return isPremium;
@@ -265,7 +265,7 @@ public class PremiumDetector {
     }
 
     /**
-     * Actualiza el UUID de un jugador en el cache (útil cuando se detecta en
+     * Actualiza el UUID de un jugador en el cache (til cuando se detecta en
      * PreLogin)
      */
     public static void updateUUID(String playerName, UUID uuid) {
@@ -285,21 +285,21 @@ public class PremiumDetector {
     }
 
     /**
-     * Obtiene el tamaño del cache
+     * Obtiene el tamao del cache
      */
     public static int getCacheSize() {
         return connectionCache.size();
     }
 
     /**
-     * Verifica si Netty está disponible
+     * Verifica si Netty est disponible
      */
     public static boolean isNettyAvailable() {
         return nettyAvailable;
     }
 
     /**
-     * FIX BUG #2: Wrapper async-safe explícito para isPremium()
+     * FIX BUG #2: Wrapper async-safe explcito para isPremium()
      * Previene que desarrolladores llamen isPremium() desde main thread
      * accidentalmente
      * 
@@ -327,7 +327,7 @@ public class PremiumDetector {
     }
 
     /**
-     * Datos de conexión del jugador
+     * Datos de conexin del jugador
      */
     private static class PlayerConnectionData {
         final UUID uuid;
@@ -341,3 +341,4 @@ public class PremiumDetector {
         }
     }
 }
+

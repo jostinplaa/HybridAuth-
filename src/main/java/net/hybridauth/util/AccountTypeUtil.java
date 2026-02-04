@@ -33,7 +33,7 @@ public class AccountTypeUtil {
             return AccountType.BEDROCK;
         }
 
-        // 2. Detectar Premium (UUID v4 o verificación de BD)
+        // 2. Detectar Premium (UUID v4 o verificacin de BD)
         if (isPremium(player)) {
             return AccountType.PREMIUM;
         }
@@ -46,12 +46,12 @@ public class AccountTypeUtil {
      * Verifica si un jugador es de Bedrock
      */
     private static boolean isBedrock(String name, UUID uuid) {
-        // Método 1: Nombre empieza con . (Geyser/Flood gate)
+        // Mtodo 1: Nombre empieza con . (Geyser/Flood gate)
         if (name.startsWith(".")) {
             return true;
         }
 
-        // Método 2: UUID de Floodgate (empieza con 00000000-0000-0000)
+        // Mtodo 2: UUID de Floodgate (empieza con 00000000-0000-0000)
         String uuidString = uuid.toString();
         return uuidString.startsWith("00000000-0000-0000");
     }
@@ -70,7 +70,7 @@ public class AccountTypeUtil {
             return true; // Premium
         }
 
-        // Verificar en BD si está marcado como premium
+        // Verificar en BD si est marcado como premium
         try {
             HybridAuthPlugin plugin = HybridAuthPlugin.getInstance();
             if (plugin != null) {
@@ -93,13 +93,14 @@ public class AccountTypeUtil {
     public static String getAccountTypeName(AccountType type) {
         switch (type) {
             case PREMIUM:
-                return "§aPremium §7(Mojang Original)";
+                return "aPremium 7(Mojang Original)";
             case BEDROCK:
-                return "§bBedrock §7(Geyser/Mobile)";
+                return "bBedrock 7(Geyser/Mobile)";
             case CRACKED:
-                return "§eCracked §7(No Premium)";
+                return "eCracked 7(No Premium)";
             default:
-                return "§7Desconocido";
+                return "7Desconocido";
         }
     }
 }
+

@@ -41,7 +41,7 @@ public class LoginCommand implements CommandExecutor {
             return true;
         }
 
-        // 3. Verificar si ya está autenticado
+        // 3. Verificar si ya est autenticado
         if (plugin.getAuthStateManager().isAuthenticated(player)) {
             messages.send(player, "error.already_authenticated");
             return true;
@@ -67,13 +67,13 @@ public class LoginCommand implements CommandExecutor {
                                         player.getAddress().getAddress().getHostAddress());
                             } else {
                                 plugin.getServer().getScheduler().runTask(plugin,
-                                        () -> player.sendMessage("§cInvalid 2FA code."));
+                                        () -> player.sendMessage("cInvalid 2FA code."));
                             }
                         }
                     });
                     return true;
                 } catch (NumberFormatException e) {
-                    player.sendMessage("§eEnter your 2FA code: §f/2fa code <123456> §e(or §f/login <code>§e)");
+                    player.sendMessage("eEnter your 2FA code: f/2fa code <123456> e(or f/login <code>e)");
                     return true;
                 }
             }
@@ -120,7 +120,7 @@ public class LoginCommand implements CommandExecutor {
         // 6. Mostrar feedback de procesamiento
         messages.sendActionBar(player, "actionbar.authenticating");
 
-        // 7. Verificar credenciales asíncronamente
+        // 7. Verificar credenciales asncronamente
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             handleLoginAsync(player, password, ip);
         });
@@ -135,20 +135,20 @@ public class LoginCommand implements CommandExecutor {
         String timeFormatted = formatTime(seconds);
 
         return """
-                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                8m
 
-                §c§lHybridAuth Security
-                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                clHybridAuth Security
+                8m
 
-                §7Tu dirección IP está §ctemporalmente bloqueada§7.
+                7Tu direccin IP est ctemporalmente bloqueada7.
 
-                §eRazón: §fDemasiados intentos fallidos de autenticación
-                §eExpira en: §f%s
+                eRazn: fDemasiados intentos fallidos de autenticacin
+                eExpira en: f%s
 
-                §7Si crees que esto es un error, contacta
-                §7a un administrador del servidor.
+                7Si crees que esto es un error, contacta
+                7a un administrador del servidor.
 
-                §8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                8m
                 """.formatted(timeFormatted);
     }
 
@@ -187,7 +187,7 @@ public class LoginCommand implements CommandExecutor {
 
         User user = userOpt.get();
 
-        // 2. Verificar contraseña
+        // 2. Verificar contrasea
         boolean isValidPassword = plugin.getPasswordService().verifyPassword(password, user.getPasswordHash());
 
         if (isValidPassword) {
@@ -197,7 +197,7 @@ public class LoginCommand implements CommandExecutor {
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     plugin.getAuthStateManager().setAuthState(player, AuthState.AWAITING_2FA);
                     messages.send(player, "auth.2fa_required"); // Need to add this message
-                    player.sendMessage("§ePlease enter your 2FA code: §f/2fa code <123456>");
+                    player.sendMessage("ePlease enter your 2FA code: f/2fa code <123456>");
                 });
                 return;
             }
@@ -212,7 +212,7 @@ public class LoginCommand implements CommandExecutor {
         // 1. Resetear rate limit
         plugin.getRateLimitService().resetLimit(ip);
 
-        // 2. Crear sesión persistente
+        // 2. Crear sesin persistente
         plugin.getSessionManager().createSession(user.getUuid(), ip);
 
         // 3. Loggear evento de seguridad
@@ -233,7 +233,7 @@ public class LoginCommand implements CommandExecutor {
                     "Admin Access Granted");
         }
 
-        // 4. Actualizar información del usuario
+        // 4. Actualizar informacin del usuario
         user.setLastIp(ip);
         user.setLastLoginDate(new java.sql.Timestamp(System.currentTimeMillis()));
 
@@ -241,32 +241,32 @@ public class LoginCommand implements CommandExecutor {
             plugin.getDatabaseManager().getUserDAO().updateUser(user);
         } catch (SQLException e) {
             plugin.getLogger().warning("Failed to update user last login data for " + user.getUsername());
-            e.printStackTrace();
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error in LoginCommand", e);
         }
 
         // 5. Actualizar estado y UI en el thread principal
         plugin.getServer().getScheduler().runTask(plugin, () -> {
-            // Cambiar estado de autenticación
+            // Cambiar estado de autenticacin
             plugin.getAuthStateManager().setAuthState(player, AuthState.AUTHENTICATED);
 
-            // Remover efectos de restricción
+            // Remover efectos de restriccin
             player.removePotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS);
             player.removePotionEffect(org.bukkit.potion.PotionEffectType.SLOW);
 
-            // Enviar mensajes de éxito
+            // Enviar mensajes de xito
             messages.send(player, "success.logged_in");
             messages.send(player, "success.welcome_back",
                     MessageManager.placeholder()
                             .add("player", player.getName())
                             .build());
 
-            // Enviar título de bienvenida
+            // Enviar ttulo de bienvenida
             messages.sendTitle(player, "titles.login_success.title", "titles.login_success.subtitle");
 
-            // Action bar de éxito
+            // Action bar de xito
             messages.sendActionBar(player, "actionbar.success");
 
-            // Reproducir sonido de éxito
+            // Reproducir sonido de xito
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
 
             // Log en consola
@@ -301,7 +301,7 @@ public class LoginCommand implements CommandExecutor {
             return;
         }
 
-        // 4. Si llegó al límite, KICKEAR
+        // 4. Si lleg al lmite, KICKEAR
         if (remainingAttempts == 0) {
             long lockoutSeconds = plugin.getRateLimitService().getSecondsRemaining(ip);
 
@@ -334,3 +334,6 @@ public class LoginCommand implements CommandExecutor {
                 " (" + remainingAttempts + " attempts remaining)");
     }
 }
+
+
+
