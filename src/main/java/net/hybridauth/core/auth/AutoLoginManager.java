@@ -43,6 +43,12 @@ public class AutoLoginManager implements Listener {
         Player player = event.getPlayer();
         String username = player.getName();
 
+        // GUARD: Si ya está autenticado, retornar (evita doble procesamiento)
+        // FIX BUG #1: Race condition cuando evento se dispara múltiples veces
+        if (plugin.getAuthStateManager().isAuthenticated(player)) {
+            return;
+        }
+
         // 1. Verificar si es premium (desde el handshake)
         boolean isPremiumDetected = PremiumDetector.isPremium(username);
 
@@ -190,12 +196,13 @@ public class AutoLoginManager implements Listener {
                                     .build());
                 });
 
-        // Log crítico (moved IP declaration up)
-        plugin.getSecurityLogger().logCritical(
-                "IMPOSTOR_DETECTED: player=" + username +
-                        ", ip=" + ip +
-                        ", expected_uuid=" + expectedUUID +
-                        ", actual_uuid=" + actualUUID);
+        // Log crítico DB + Alerta (Discord/Email) via AlertManager
+        plugin.getSecurityLogger().log(
+                net.hybridauth.security.SecurityLogger.EventType.IMPOSTOR_DETECTED,
+                username,
+                expectedUUID,
+                ip,
+                "Impostor Attempt (UUID mismatch). Expected: " + expectedUUID + " Actual: " + actualUUID);
 
         // Blacklist IP automáticamente por 1 hora
         plugin.getBlacklistManager().blockIP(
@@ -205,13 +212,6 @@ public class AutoLoginManager implements Listener {
                 "SYSTEM");
 
         plugin.getLogger().severe("IP BLACKLISTED: " + ip + " (impostor attempt)");
-
-        // Alerta Discord
-        plugin.getDiscordWebhook().notifyImpostor(
-                username,
-                ip,
-                expectedUUID.toString(),
-                actualUUID.toString());
     }
 
     @EventHandler

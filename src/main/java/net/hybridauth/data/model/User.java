@@ -15,6 +15,8 @@ public class User {
     private String lastIp;
     private int totalLogins;
     private String status;
+    private String totpSecret;
+    private boolean isTotpEnabled;
 
     public enum AuthType {
         PREMIUM, CRACKED, BEDROCK
@@ -133,5 +135,21 @@ public class User {
 
     public boolean hasPassword() {
         return passwordHash != null && !passwordHash.isEmpty();
+    }
+
+    public String getTotpSecret() {
+        return totpSecret;
+    }
+
+    public void setTotpSecret(String totpSecret) {
+        this.totpSecret = totpSecret;
+    }
+
+    public boolean isTotpEnabled() {
+        return isTotpEnabled;
+    }
+
+    public void setTotpEnabled(boolean totpEnabled) {
+        isTotpEnabled = totpEnabled;
     }
 }

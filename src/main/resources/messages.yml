@@ -211,6 +211,7 @@ auth:
     wrong_password: "&c&l✗ &c¡Contraseña incorrecta!"
     usage:          "&8→ &7Uso: &e/hybridauth migrate <tu_contraseña>"
     already_premium: "&e&l⚠ &eTu cuenta ya es premium."
+    2fa_required:    "&e&l⚠ &eAutenticación de Dos Factores requerida."
 
 # ===================================================
 # TÍTULOS Y SUBTÍTULOS

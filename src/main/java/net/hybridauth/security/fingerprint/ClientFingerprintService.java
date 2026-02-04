@@ -36,4 +36,17 @@ public class ClientFingerprintService {
         String current = generateFingerprint(player);
         return current.equals(storedFingerprint);
     }
+
+    /**
+     * FIX BUG #10: Detecta cambios en el fingerprint del jugador
+     * Señal de cuenta comprometida o uso de proxy/VPN
+     */
+    public boolean hasFingerprintChanged(Player player, String storedFingerprint) {
+        if (storedFingerprint == null) {
+            return false; // Primera vez, no hay cambio
+        }
+
+        String currentFingerprint = generateFingerprint(player);
+        return !currentFingerprint.equals(storedFingerprint);
+    }
 }

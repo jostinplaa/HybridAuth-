@@ -20,7 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class HybridAuthPlugin extends JavaPlugin {
 
-    private static volatile HybridAuthPlugin instance;  // THREAD-SAFE
+    private static volatile HybridAuthPlugin instance; // THREAD-SAFE
     private DatabaseManager databaseManager;
     private AuthStateManager authStateManager;
     private PasswordService passwordService;
@@ -37,6 +37,23 @@ public class HybridAuthPlugin extends JavaPlugin {
     private BlacklistManager blacklistManager;
     private DiscordWebhook discordWebhook;
     private CaptchaService captchaService;
+
+    // v1.5.0 Features
+    private net.hybridauth.backup.BackupService backupService;
+    private net.hybridauth.email.EmailService emailService;
+    private net.hybridauth.logging.LogManager logManager;
+
+    // v1.6.0 Multi-Server Sync
+    private net.hybridauth.network.sync.MultiServerSyncManager syncManager;
+
+    // v1.6.0 2FA Service
+    private net.hybridauth.security.totp.TwoFactorService twoFactorService;
+
+    // v1.7.0 Alerts
+    private net.hybridauth.alerts.AlertManager alertManager;
+
+    // v1.7.0 GeoIP
+    private net.hybridauth.security.geoip.GeoLocationService geoLocationService;
 
     @Override
     public void onLoad() {
@@ -62,6 +79,13 @@ public class HybridAuthPlugin extends JavaPlugin {
         this.messageManager = new net.hybridauth.core.messages.MessageManager(this);
         getLogger().info("✓ Message system loaded");
 
+        // 0. Inicializar Configuración
+        saveDefaultConfig();
+        this.messageManager = new net.hybridauth.core.messages.MessageManager(this);
+
+        // v1.7.0 Initialize Alert Manager
+        this.alertManager = new net.hybridauth.alerts.AlertManager(this);
+
         // 4. Inicializar base de datos
         this.databaseManager = new DatabaseManager(this);
         if (!this.databaseManager.initialize()) {
@@ -70,12 +94,17 @@ public class HybridAuthPlugin extends JavaPlugin {
             return;
         }
 
+        // 4.5. Inicializar Multi-Server Sync (v1.6.0)
+        this.syncManager = new net.hybridauth.network.sync.MultiServerSyncManager(this);
+        this.syncManager.initialize();
+
         // 5. Inicializar servicios de seguridad
         this.rateLimitService = new RateLimitService(this);
         this.fingerprintService = new ClientFingerprintService();
 
         // 6. Inicializar servicios core
-        this.authStateManager = new AuthStateManager();
+        this.authStateManager = new AuthStateManager(this);
+        getServer().getPluginManager().registerEvents(authStateManager, this); // FIX BUG #3: Register listener
         this.passwordService = new PasswordService(this);
         // this.encryptionHandler = new EncryptionHandler(this); // Ya no se usa
         // (requiere ProtocolLib)
@@ -88,21 +117,62 @@ public class HybridAuthPlugin extends JavaPlugin {
         this.captchaService = new CaptchaService(this);
         getLogger().info("✓ v1.3.0 Security features loaded (Blacklist, Discord, Captcha)");
 
+        // 6.6. Inicializar v1.5.0 Features - Backup System
+        this.backupService = new net.hybridauth.backup.BackupService(this);
+        this.backupService.scheduleAutoBackup();
+        getLogger().info("✓ v1.5.0 Backup system initialized");
+
+        // 6.7. Inicializar v1.5.0 Features - Email Recovery
+        this.emailService = new net.hybridauth.email.EmailService(this);
+        if (emailService.isEnabled()) {
+            getLogger().info("✓ v1.5.0 Email recovery system enabled");
+        } else {
+            getLogger().info("⊗ v1.5.0 Email recovery system disabled (configure in config.yml)");
+        }
+
+        // 6.8. Inicializar v1.5.0 Features - Enhanced Logging
+        this.logManager = new net.hybridauth.logging.LogManager(this);
+        if (logManager.isEnabled()) {
+            logManager.startDailyRotation();
+            getLogger().info("✓ v1.5.0 Enhanced logging system enabled");
+        } else {
+            getLogger().info("⊗ v1.5.0 Enhanced logging disabled");
+        }
+
+        // 6.9. Inicializar v1.7.0 Features - Geolocalización
+        this.geoLocationService = new net.hybridauth.security.geoip.GeoLocationService(this);
+        if (geoLocationService.isEnabled()) {
+            getLogger().info("✓ v1.7.0 GeoIP system enabled");
+        } else {
+            getLogger().info("⊗ v1.7.0 GeoIP system disabled (configure in config.yml)");
+        }
+
         // 7. Registrar listeners
         getServer().getPluginManager().registerEvents(new LoginListener(this, authStateManager), this);
         getServer().getPluginManager().registerEvents(new net.hybridauth.listeners.SecurityListener(this), this);
         getServer().getPluginManager().registerEvents(new BlacklistListener(this), this);
+        getServer().getPluginManager().registerEvents(new net.hybridauth.listeners.GeoListener(this), this);
 
         // 7.5. Registrar AUTO-LOGIN para premium (¡LA NUEVA FEATURE!)
         getServer().getPluginManager().registerEvents(new net.hybridauth.core.auth.AutoLoginManager(this), this);
         getLogger().info("✓ Premium auto-login enabled");
 
         // 8. Registrar Comandos
-        getCommand("login").setExecutor(new LoginCommand(this));
-        getCommand("register").setExecutor(new RegisterCommand(this));
+        getCommand("login").setExecutor(new net.hybridauth.commands.LoginCommand(this));
+        getCommand("register").setExecutor(new net.hybridauth.commands.RegisterCommand(this));
         getCommand("changepassword").setExecutor(new net.hybridauth.commands.ChangePasswordCommand(this));
-        getCommand("hybridauth").setExecutor(new AdminCommand(this));
-        getCommand("security").setExecutor(new SecurityCommand(this));
+        getCommand("admin").setExecutor(new net.hybridauth.commands.AdminCommand(this));
+        getCommand("security").setExecutor(new net.hybridauth.commands.SecurityCommand(this));
+
+        // 2FA Command
+        net.hybridauth.commands.TwoFactorCommand twoFactorCmd = new net.hybridauth.commands.TwoFactorCommand(this);
+        getCommand("2fa").setExecutor(twoFactorCmd);
+        // Expose service for LoginCommand
+        this.twoFactorService = twoFactorCmd.getService();
+
+        // v1.5.0 - Email Recovery Commands
+        getCommand("email").setExecutor(new net.hybridauth.commands.EmailCommand(this));
+        getCommand("recover").setExecutor(new net.hybridauth.commands.RecoverCommand(this));
 
         // 9. Registrar Tab Completer
         net.hybridauth.commands.HybridAuthTabCompleter tabCompleter = new net.hybridauth.commands.HybridAuthTabCompleter();
@@ -110,7 +180,7 @@ public class HybridAuthPlugin extends JavaPlugin {
         getCommand("register").setTabCompleter(tabCompleter);
         getCommand("changepassword").setTabCompleter(tabCompleter);
         getCommand("hybridauth").setTabCompleter(tabCompleter);
-        getCommand("security").setTabCompleter(tabCompleter);  // FIX
+        getCommand("security").setTabCompleter(tabCompleter); // FIX
 
         // 10. Finalizar carga
         long loadTime = System.currentTimeMillis() - startTime;
@@ -120,15 +190,23 @@ public class HybridAuthPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        getLogger().info("HybridAuth is shutting down...");
+
+        // Disable sync manager (v1.6.0)
+        if (syncManager != null) {
+            syncManager.shutdown();
+        }
+
         // Cerrar BlacklistManager (v1.3.0)
         if (blacklistManager != null) {
             blacklistManager.shutdown();
         }
 
-        // Cerrar base de datos
+        // Cerrar pool de conexiones
         if (databaseManager != null) {
             databaseManager.close();
         }
+
         getLogger().info("HybridAuth disabled successfully");
     }
 
@@ -166,6 +244,14 @@ public class HybridAuthPlugin extends JavaPlugin {
         this.passwordService = new PasswordService(this);
         getLogger().info("✓ PasswordService reinitialized");
 
+        // 4. Reiniciar SyncManager
+        if (this.syncManager != null) {
+            this.syncManager.shutdown();
+        }
+        this.syncManager = new net.hybridauth.network.sync.MultiServerSyncManager(this);
+        this.syncManager.initialize();
+        getLogger().info("✓ SyncManager reinitialized");
+
         getLogger().info("All services reinitialized successfully!");
     }
 
@@ -179,6 +265,18 @@ public class HybridAuthPlugin extends JavaPlugin {
 
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
+    }
+
+    public net.hybridauth.network.sync.MultiServerSyncManager getSyncManager() {
+        return syncManager;
+    }
+
+    public net.hybridauth.security.totp.TwoFactorService getTwoFactorService() {
+        return twoFactorService;
+    }
+
+    public net.hybridauth.alerts.AlertManager getAlertManager() {
+        return alertManager;
     }
 
     public AuthStateManager getAuthStateManager() {
@@ -224,5 +322,23 @@ public class HybridAuthPlugin extends JavaPlugin {
 
     public CaptchaService getCaptchaService() {
         return captchaService;
+    }
+
+    // v1.5.0 Features Getters
+    public net.hybridauth.backup.BackupService getBackupService() {
+        return backupService;
+    }
+
+    public net.hybridauth.email.EmailService getEmailService() {
+        return emailService;
+    }
+
+    public net.hybridauth.logging.LogManager getLogManager() {
+        return logManager;
+    }
+
+    // v1.7.0 Features Getters - GeoIP
+    public net.hybridauth.security.geoip.GeoLocationService getGeoLocationService() {
+        return geoLocationService;
     }
 }

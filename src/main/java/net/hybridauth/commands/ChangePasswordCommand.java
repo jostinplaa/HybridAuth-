@@ -50,6 +50,18 @@ public class ChangePasswordCommand implements CommandExecutor {
             return true;
         }
 
+        // FIX BUG #5: Add rate limiting to prevent brute force attacks
+        String ip = player.getAddress().getAddress().getHostAddress();
+        if (!plugin.getRateLimitService().checkLimit(ip)) {
+            String kickMsg = messages.getMessage("rate_limit.kick_message",
+                    MessageManager.placeholder()
+                            .add("reason", "Too many password change attempts")
+                            .build());
+            player.kickPlayer(kickMsg);
+            return true;
+        }
+        plugin.getRateLimitService().incrementAttempt(ip);
+
         // Check args
         if (args.length < 3) {
             messages.send(player, "usage.changepassword");
@@ -115,7 +127,8 @@ public class ChangePasswordCommand implements CommandExecutor {
                 } else {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
                         messages.send(player, "password.incorrect",
-                                MessageManager.placeholder().add("attempts", "-").build() // Cambio de contraseña no tiene límite de intentos
+                                MessageManager.placeholder().add("attempts", "-").build() // Cambio de contraseña no
+                                                                                          // tiene límite de intentos
                         );
                     });
                 }

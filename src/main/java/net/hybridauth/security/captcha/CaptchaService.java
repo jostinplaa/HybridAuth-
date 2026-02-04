@@ -90,6 +90,15 @@ public class CaptchaService implements Listener {
     }
 
     /**
+     * FIX BUG #9: Regenera el captcha para un jugador
+     * Útil cuando falla y quiere intentar con otro desafío
+     */
+    public void regenerateCaptcha(Player player, CaptchaReason reason) {
+        activeChallenges.remove(player.getUniqueId());
+        requireCaptcha(player, reason);
+    }
+
+    /**
      * Genera un challenge aleatorio
      */
     private CaptchaChallenge generateChallenge(CaptchaReason reason) {
@@ -188,7 +197,8 @@ public class CaptchaService implements Listener {
                 if (addr != null && addr.getAddress() != null) {
                     plugin.getRateLimitService().resetLimit(addr.getAddress().getHostAddress());
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             plugin.getMessageManager().send(player, "captcha.success");
 
@@ -220,7 +230,8 @@ public class CaptchaService implements Listener {
                                 addr.getAddress().getHostAddress(),
                                 300, "Failed captcha", "SYSTEM");
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
 
             } else {
                 // Aún tiene intentos

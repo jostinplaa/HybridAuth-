@@ -1,41 +1,61 @@
 package net.hybridauth.commands;
 
 import net.hybridauth.HybridAuthPlugin;
-import net.hybridauth.core.messages.MessageManager;
-import net.hybridauth.data.model.User;
+import net.hybridauth.commands.admin.AdminSubCommand;
+import net.hybridauth.commands.admin.MigrateSubCommand;
+import net.hybridauth.commands.admin.ReloadSubCommand;
+import net.hybridauth.commands.admin.StatsSubCommand;
+import net.hybridauth.commands.admin.UnregisterSubCommand;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
- * Comando administrativo para gestionar HybridAuth.
+ * Comando administrativo refactorizado.
+ * Utiliza Command Pattern para delegar a subcomandos.
  * 
- * @version 1.1.0
+ * @version 1.2.0
  */
 public class AdminCommand implements CommandExecutor {
 
     private final HybridAuthPlugin plugin;
-    private final MessageManager messages;
+    private final Map<String, AdminSubCommand> subCommands = new HashMap<>();
 
-    // Almacena confirmaciones pendientes: UUID del admin -> Contexto
-    private final Map<UUID, ConfirmationContext> pendingConfirmations = new HashMap<>();
+    // Maintain direct reference to Unregister command for confirmation handling if
+    // needed,
+    // although execution flow handles it via "confirm" string or separate command.
+    // In our case, /hybridauth confirm actually routes to UnregisterSubCommand's
+    // logic?
+    // Wait, original AdminCommand treated "confirm" as a top-level arg.
+    // We need to route "confirm" to UnregisterSubCommand to check pending actions.
+    private final UnregisterSubCommand unregisterCmd;
 
     public AdminCommand(HybridAuthPlugin plugin) {
         this.plugin = plugin;
-        this.messages = plugin.getMessageManager();
+
+        // Inicializar subcomandos
+        this.unregisterCmd = new UnregisterSubCommand(plugin);
+
+        registerSubCommand("reload", new ReloadSubCommand(plugin));
+        registerSubCommand("stats", new StatsSubCommand(plugin));
+        registerSubCommand("migrate", new MigrateSubCommand(plugin));
+        registerSubCommand("unregister", unregisterCmd);
+        // "confirm" is special, it needs to be handled by whatever command has pending
+        // actions.
+        // Currently only Unregister has pending actions.
+    }
+
+    private void registerSubCommand(String name, AdminSubCommand cmd) {
+        subCommands.put(name, cmd);
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("hybridauth.admin")) {
-            messages.send(sender, "error.no_permission");
+            plugin.getMessageManager().send(sender, "error.no_permission");
             return true;
         }
 
@@ -44,274 +64,38 @@ public class AdminCommand implements CommandExecutor {
             return true;
         }
 
-        switch (args[0].toLowerCase()) {
-            case "reload":
-                // 1. Recargar config.yml del disco
-                plugin.reloadConfig();
+        String subCommandName = args[0].toLowerCase();
 
-                // 2. Recargar messages.yml
-                plugin.getMessageManager().reload();
+        // Special handling for "confirm" to route to Unregister (since it holds the
+        // map)
+        if (subCommandName.equals("confirm")) {
+            // Treat as unregister confirm
+            unregisterCmd.execute(sender, new String[] { "confirm" });
+            return true;
+        }
 
-                // 3. CRÍTICO: Reinicializar servicios
-                plugin.reinitializeServices();
+        // Backup command (legacy check, though we could make it a subcommand too)
+        if (subCommandName.equals("backup")) {
+            new net.hybridauth.commands.BackupCommand(plugin).execute(sender, args);
+            return true;
+        }
 
-                messages.send(sender, "admin.reload.success");
-                break;
-
-            case "unregister":
-                handleUnregister(sender, args);
-                break;
-
-            case "confirm":
-                handleConfirm(sender);
-                break;
-
-            case "stats":
-                handleStats(sender);
-                break;
-
-            case "migrate":
-                handleMigrate(sender, args);
-                break;
-
-            default:
-                sendHelp(sender);
-                break;
+        AdminSubCommand cmd = subCommands.get(subCommandName);
+        if (cmd != null) {
+            cmd.execute(sender, args);
+        } else {
+            sendHelp(sender);
         }
 
         return true;
     }
 
     private void sendHelp(CommandSender sender) {
-        messages.send(sender, "admin.help.header");
-        messages.send(sender, "admin.help.reload");
-        messages.send(sender, "admin.help.unregister");
-        messages.send(sender, "admin.help.resetpassword");
-        messages.send(sender, "admin.help.stats");
-        messages.send(sender, "admin.help.footer");
+        plugin.getMessageManager().send(sender, "admin.help.header");
+        plugin.getMessageManager().send(sender, "admin.help.reload");
+        plugin.getMessageManager().send(sender, "admin.help.unregister");
+        plugin.getMessageManager().send(sender, "admin.help.resetpassword");
+        plugin.getMessageManager().send(sender, "admin.help.stats");
+        plugin.getMessageManager().send(sender, "admin.help.footer");
     }
-
-    private void handleUnregister(CommandSender sender, String[] args) {
-        if (args.length < 2) {
-            messages.send(sender, "usage.unregister");
-            return;
-        }
-
-        String targetName = args[1];
-
-        // Si es consola, ejecutar directamente (asumimos que sabe lo que hace)
-        if (!(sender instanceof Player)) {
-            executeUnregister(sender, targetName);
-            return;
-        }
-
-        Player admin = (Player) sender;
-
-        // Crear contexto de confirmación
-        ConfirmationContext context = new ConfirmationContext(targetName, () -> executeUnregister(sender, targetName));
-        pendingConfirmations.put(admin.getUniqueId(), context);
-
-        // Enviar mensaje de confirmación
-        messages.send(sender, "admin.unregister.confirm",
-                MessageManager.placeholder().add("player", targetName).build());
-        messages.send(sender, "admin.unregister.confirm_instruction");
-
-        // Programar limpieza (timeout 30s)
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (pendingConfirmations.containsKey(admin.getUniqueId()) &&
-                    pendingConfirmations.get(admin.getUniqueId()) == context) {
-                pendingConfirmations.remove(admin.getUniqueId());
-                messages.send(sender, "admin.unregister.timeout");
-            }
-        }, 30 * 20L);
-    }
-
-    private void handleConfirm(CommandSender sender) {
-        if (!(sender instanceof Player)) {
-            messages.send(sender, "admin.unregister.console_no_confirmation");
-            return;
-        }
-
-        Player admin = (Player) sender;
-
-        if (!pendingConfirmations.containsKey(admin.getUniqueId())) {
-            messages.send(sender, "admin.unregister.no_pending_confirmation");
-            return;
-        }
-
-        // Ejecutar acción
-        ConfirmationContext context = pendingConfirmations.remove(admin.getUniqueId());
-        context.action.run();
-    }
-
-    private void executeUnregister(CommandSender sender, String targetName) {
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                // CORREGIDO: Usar getUserByUsername en lugar de getUserByName
-                Optional<User> userOpt = plugin.getDatabaseManager().getUserDAO().getUserByUsername(targetName);
-                if (userOpt.isEmpty()) {
-                    plugin.getServer().getScheduler().runTask(plugin, () -> sender.sendMessage(
-                            messages.getMessage("error.user_not_registered").replace("{player}", targetName)));
-                    return;
-                }
-
-                User user = userOpt.get();
-
-                // NUEVO: Verificar si es premium (NO se puede desregistrar)
-                if (user.isPremium()) {
-                    plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        messages.send(sender, "error.premium_cannot_unregister");
-                        messages.send(sender, "error.premium_cannot_unregister_info");
-                    });
-                    return;
-                }
-
-                plugin.getDatabaseManager().getUserDAO().deleteUser(user.getUuid());
-
-                // Invalidate session if exists
-                plugin.getSessionManager().invalidateSession(user.getUuid());
-
-                plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    messages.send(sender, "admin.unregister.success",
-                            MessageManager.placeholder()
-                                    .add("player", targetName)
-                                    .build());
-                });
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-                plugin.getServer().getScheduler().runTask(plugin, () -> messages.send(sender, "error.database_error"));
-            }
-        });
-    }
-
-    private void handleStats(CommandSender sender) {
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                Map<String, Long> stats = plugin.getDatabaseManager().getUserDAO().getStatistics();
-
-                long total = stats.getOrDefault("total_users", 0L);
-                long premium = stats.getOrDefault("premium_users", 0L);
-                long cracked = stats.getOrDefault("cracked_users", 0L);
-                long sessions = stats.getOrDefault("active_sessions", 0L);
-
-                plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    messages.send(sender, "admin.stats.header");
-
-                    messages.send(sender, "admin.stats.version",
-                            MessageManager.placeholder()
-                                    .add("version", plugin.getDescription().getVersion())
-                                    .build());
-
-                    messages.send(sender, "admin.stats.total_users",
-                            MessageManager.placeholder().add("total", total).build());
-
-                    messages.send(sender, "admin.stats.premium_users",
-                            MessageManager.placeholder().add("premium", premium).build());
-
-                    messages.send(sender, "admin.stats.cracked_users",
-                            MessageManager.placeholder().add("cracked", cracked).build());
-
-                    messages.send(sender, "admin.stats.active_sessions",
-                            MessageManager.placeholder().add("sessions", sessions).build());
-
-                    messages.send(sender, "admin.stats.footer");
-                });
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-                plugin.getServer().getScheduler().runTask(plugin, () -> messages.send(sender, "error.database_error"));
-            }
-        });
-    }
-
-    /**
-     * Migra una cuenta cracked a premium
-     */
-    private void handleMigrate(CommandSender sender, String[] args) {
-        // Solo jugadores pueden migrar su propia cuenta
-        if (!(sender instanceof Player)) {
-            messages.send(sender, "error.only_players");
-            return;
-        }
-
-        if (args.length < 2) {
-            messages.send(sender, "auth.migration.usage");
-            return;
-        }
-
-        Player player = (Player) sender;
-        String password = args[1];
-
-        // Verificar que sea premium
-        if (!net.hybridauth.network.netty.PremiumDetector.isPremium(player.getName())) {
-            messages.send(sender, "auth.migration.not_premium");
-            return;
-        }
-
-        UUID premiumUUID = net.hybridauth.network.netty.PremiumDetector.getRealUUID(player.getName());
-        if (premiumUUID == null) {
-            messages.send(sender, "auth.migration.premium_uuid_error");
-            return;
-        }
-
-        // Procesar migración
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                Optional<User> userOpt = plugin.getDatabaseManager().getUserDAO().getUserByUsername(player.getName());
-
-                if (userOpt.isEmpty()) {
-                    plugin.getServer().getScheduler().runTask(plugin,
-                            () -> messages.send(sender, "error.not_registered"));
-                    return;
-                }
-
-                User user = userOpt.get();
-
-                // Ya es premium
-                if (user.isPremium()) {
-                    plugin.getServer().getScheduler().runTask(plugin,
-                            () -> messages.send(sender, "auth.migration.already_premium"));
-                    return;
-                }
-
-                // Verificar contraseña
-                if (!plugin.getPasswordService().verifyPassword(password, user.getPasswordHash())) {
-                    messages.send(sender, "auth.migration.wrong_password");
-                    plugin.getSecurityLogger().logWarning("Failed migration attempt for " + player.getName());
-                    return;
-                }
-
-                // Migrar
-                plugin.getDatabaseManager().getUserDAO().upgradeToPremium(player.getName(), premiumUUID).thenRun(() -> {
-                    plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        messages.send(sender, "auth.migration.success");
-                        plugin.getSecurityLogger().logInfo("Account migrated to premium: " + player.getName());
-                    });
-                });
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                plugin.getServer().getScheduler().runTask(plugin,
-                        () -> messages.send(sender, "auth.migration.failed"));
-            }
-        });
-    }
-
-    /**
-     * Clase auxiliar para almacenar el contexto de una confirmación.
-     */
-    private static class ConfirmationContext {
-        final String targetName; // Solo para referencia si se necesitara
-        final Runnable action;
-
-        ConfirmationContext(String targetName, Runnable action) {
-            this.targetName = targetName;
-            this.action = action;
-        }
-    }
-
-    /**
-     * Comando administrativo para gestionar HybridAuth.
-     */
 }

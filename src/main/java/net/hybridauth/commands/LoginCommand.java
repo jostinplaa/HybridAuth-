@@ -47,6 +47,39 @@ public class LoginCommand implements CommandExecutor {
             return true;
         }
 
+        // 3.5. 2FA Code Check
+        if (plugin.getAuthStateManager().getAuthState(player) == AuthState.AWAITING_2FA) {
+            // If args are provided, try to treat as code?
+            // Actually, user is instructed to use /2fa code.
+            // But if they type /login <code> we could handle it too.
+            // Let's stick to checking if they typed /login again, warn them.
+            if (args.length > 0) {
+                // Try to see if arg is a code
+                try {
+                    int code = Integer.parseInt(args[0]);
+                    // Check code
+                    plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+                        Optional<User> uOpt = plugin.getDatabaseManager().getUserDAO()
+                                .getUserByUUID(player.getUniqueId());
+                        if (uOpt.isPresent() && uOpt.get().isTotpEnabled()) {
+                            if (plugin.getTwoFactorService().authorize(uOpt.get().getTotpSecret(), code)) {
+                                handleLoginSuccess(player, uOpt.get(),
+                                        player.getAddress().getAddress().getHostAddress());
+                            } else {
+                                plugin.getServer().getScheduler().runTask(plugin,
+                                        () -> player.sendMessage("§cInvalid 2FA code."));
+                            }
+                        }
+                    });
+                    return true;
+                } catch (NumberFormatException e) {
+                    player.sendMessage("§eEnter your 2FA code: §f/2fa code <123456> §e(or §f/login <code>§e)");
+                    return true;
+                }
+            }
+            return true;
+        }
+
         // 3.5. NUEVO: Verificar si tiene captcha pendiente
         if (plugin.getCaptchaService().hasPendingCaptcha(player)) {
             messages.send(player, "captcha.pending");
@@ -61,7 +94,7 @@ public class LoginCommand implements CommandExecutor {
 
         // 4. Obtener datos con NULL SAFETY
         String password = args[0];
-        
+
         java.net.InetSocketAddress address = player.getAddress();
         if (address == null || address.getAddress() == null) {
             messages.send(player, "error.connection_lost");
@@ -158,6 +191,17 @@ public class LoginCommand implements CommandExecutor {
         boolean isValidPassword = plugin.getPasswordService().verifyPassword(password, user.getPasswordHash());
 
         if (isValidPassword) {
+
+            // 2FA Check
+            if (user.isTotpEnabled()) {
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    plugin.getAuthStateManager().setAuthState(player, AuthState.AWAITING_2FA);
+                    messages.send(player, "auth.2fa_required"); // Need to add this message
+                    player.sendMessage("§ePlease enter your 2FA code: §f/2fa code <123456>");
+                });
+                return;
+            }
+
             handleLoginSuccess(player, user, ip);
         } else {
             handleLoginFailure(player, user, ip);
@@ -178,6 +222,16 @@ public class LoginCommand implements CommandExecutor {
                 user.getUuid(),
                 ip,
                 "AuthType: " + user.getAuthType());
+
+        // 3.5. Log Admin Login (Alerts)
+        if (player.hasPermission("hybridauth.admin") || player.isOp()) {
+            plugin.getSecurityLogger().log(
+                    net.hybridauth.security.SecurityLogger.EventType.ADMIN_LOGIN,
+                    user.getUsername(),
+                    user.getUuid(),
+                    ip,
+                    "Admin Access Granted");
+        }
 
         // 4. Actualizar información del usuario
         user.setLastIp(ip);

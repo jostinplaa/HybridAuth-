@@ -33,6 +33,14 @@ commands:
     usage: /security help
     aliases: [sec, blacklist]
     permission: hybridauth.security
+  email:
+    description: Vincular o gestionar tu email
+    usage: /email <add|remove|verify> [email]
+    aliases: [correo]
+  recover:
+    description: Recuperar contraseña olvidada
+    usage: /recover <email>
+    aliases: [recuperar]
 
 permissions:
   hybridauth.admin:

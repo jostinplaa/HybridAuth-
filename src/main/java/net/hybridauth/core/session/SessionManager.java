@@ -50,7 +50,8 @@ public class SessionManager {
                 stmt.setString(2, token);
                 stmt.setString(3, ip);
 
-                if (plugin.getDatabaseManager().getConnection().getMetaData().getURL().contains("sqlite")) {
+                // FIX BUG #4: Use existing connection instead of creating a new one
+                if (conn.getMetaData().getURL().contains("sqlite")) {
                     stmt.setString(4,
                             new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date(now)));
                     stmt.setString(5,
@@ -101,6 +102,19 @@ public class SessionManager {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
+                    // FIX BUG #7: Validar que la IP no haya cambiado (detecta session hijacking)
+                    String sessionIP = rs.getString("player_ip");
+                    if (sessionIP != null && !sessionIP.equals(ip)) {
+                        plugin.getLogger().warning("[Session] IP MISMATCH for " + uuid +
+                                " - Expected: " + sessionIP + ", Got: " + ip);
+                        plugin.getSecurityLogger().logWarning(
+                                "Session IP changed for " + uuid + " from " + sessionIP + " to " + ip);
+
+                        // Invalidar sesión comprometida
+                        invalidateSession(uuid);
+                        return false;
+                    }
+
                     // Sesión válida y NO expirada
                     plugin.getLogger().info("[Session] Valid session found for " + uuid);
 

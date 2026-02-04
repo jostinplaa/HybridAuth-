@@ -191,6 +191,12 @@ public class BlacklistManager {
 
         // Alerta Discord
         plugin.getDiscordWebhook().notifyIPBlacklisted(ip, reason, blockedBy, false);
+
+        // Sync to network
+        if (plugin.getSyncManager() != null && plugin.getSyncManager().isEnabled()) {
+            plugin.getSyncManager().addIPBlacklist(ip, (int) durationSeconds, reason);
+            plugin.getLogger().info("[MultiServerSync] Broadcasted IP blacklist: " + ip);
+        }
     }
 
     /**
@@ -219,6 +225,12 @@ public class BlacklistManager {
 
         // Alerta Discord
         plugin.getDiscordWebhook().notifyIPBlacklisted(ip, reason, blockedBy, true);
+
+        // Sync to network
+        if (plugin.getSyncManager() != null && plugin.getSyncManager().isEnabled()) {
+            plugin.getSyncManager().addIPBlacklist(ip, 0, reason); // 0 = permanent
+            plugin.getLogger().info("[MultiServerSync] Broadcasted permanent IP blacklist: " + ip);
+        }
     }
 
     /**
@@ -241,6 +253,12 @@ public class BlacklistManager {
             // Alerta Discord
             plugin.getDiscordWebhook().notifyIPUnblocked(ip, unblockedBy);
 
+            // Sync to network
+            if (plugin.getSyncManager() != null && plugin.getSyncManager().isEnabled()) {
+                plugin.getSyncManager().removeIPBlacklist(ip);
+                plugin.getLogger().info("[MultiServerSync] Broadcasted IP unblock: " + ip);
+            }
+
             return true;
         }
 
@@ -254,6 +272,16 @@ public class BlacklistManager {
         BlacklistEntry entry = blacklistedIPs.get(ip);
 
         if (entry == null) {
+            // Check network sync if not found properly
+            if (plugin.getSyncManager() != null && plugin.getSyncManager().isEnabled()) {
+                try {
+                    // Check async but wait 50ms max to avoid blocking main thread too long
+                    // Ideally check pre-login async, but this is a fallback validation
+                    return plugin.getSyncManager().isIPBlacklisted(ip).getNow(false);
+                } catch (Exception e) {
+                    return false;
+                }
+            }
             return false;
         }
 

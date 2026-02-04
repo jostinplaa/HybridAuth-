@@ -23,6 +23,20 @@ security:
     bcrypt-cost: 12
     block-common-passwords: true
     
+  # Geolocalización
+  geoip:
+    enabled: false
+    database-file: "GeoLite2-Country.mmdb"
+    # Acción al detectar IP de país bloqueado: KICK, ALERT
+    action: "KICK"
+    # Países bloqueados (códigos ISO 3166-1 alpha-2)
+    # Ejemplo: CN (China), RU (Rusia), NK (Corea del Norte)
+    blocked-countries:
+      - "CN"
+      - "RU"
+      - "KP"
+    # Si true, alerta a admins cuando un usuario entra desde un país diferente al último login
+    alert-on-change: true
   rate-limit:
     enabled: true
     max-attempts-per-ip: 5
@@ -108,6 +122,101 @@ logging:
     register: true
     premium-detect: true
     suspicious: true
+
+# v1.5.0 - Sistema de Backup Automático
+backup:
+  enabled: true
+  interval-hours: 6
+  timeout: 30  # Timeout en segundos
+  max-backups: 7
+  notify-admins: true
+
+# v1.6.0 - Multi-Server Sync (Network)
+# Activar para sincronizar auth entre servidores BungeeCord/Velocity
+multi-server:
+  enabled: false
+  server-id: "survival"  # Nombre único para este servidor
+  
+  # Backend: 'redis' (recomendado) o 'mysql' (fallback)
+  backend: redis
+  
+  # Configuración Redis
+  redis:
+    host: "localhost"
+    port: 6379
+    password: ""
+    database: 0
+    pool-size: 8
+    
+  # Features a sincronizar
+  sync-auth: true        # Sincronizar login (no loguear de nuevo al cambiar server)
+  sync-blacklist: true   # Sincronizar bans de IP
+  sync-ratelimit: true   # Rate limit global (intentos compartidos)
+
+# v1.5.0 - Email Recovery System
+email:
+  enabled: false  # Cambiar a true cuando configures el servicio
+  
+  # Provider: "sendgrid" (recomendado, más fácil) o "smtp" (tradicional)
+  provider: sendgrid
+  
+  # SendGrid (RECOMENDADO - solo necesitas API key)
+  # 1. Crea cuenta gratis en https://sendgrid.com
+  # 2. Ve a Settings -> API Keys -> Create API Key
+  # 3. Copia la API key aquí
+  sendgrid:
+    api-key: "YOUR_SENDGRID_API_KEY"
+    
+  # SMTP Tradicional (alternativa si tienes servidor de email)
+  # Para Gmail: activa 2FA y genera App Password en tu cuenta Google
+  smtp:
+    host: "smtp.gmail.com"
+    port: 587
+    username: "your-email@gmail.com"
+    password: "your-app-password"
+    use-tls: true
+    
+  # Configuración de remitente (aparece en los emails)
+  from:
+    email: "noreply@yourserver.com"  # Cambia esto
+    name: "HybridAuth"
+    
+  # Verificación de email
+  verification:
+    code-expiry-minutes: 15  # Código expira en 15 minutos
+    max-attempts: 3  # Máximo 3 intentos de verificación
+    
+  # Recuperación de cuentas
+  recovery:
+    code-expiry-minutes: 10  # Código de recuperación expira en 10 minutos
+    cooldown-minutes: 5
+    max-attempts: 3
+
+# v1.5.0 - Enhanced Logging System
+logging:
+  # Logging a archivos (además de consola y BD)
+  file-logging:
+    enabled: true
+    directory: "logs/"
+    
+  # Rotación automática de logs
+  rotation:
+    daily: true  # Rotar cada día a medianoche
+    keep-days: 30  # Mantener logs de últimos 30 días
+    compress-old: true  # Comprimir logs de más de 7 días a .gz
+    
+  # Tipos de logs (cada uno en su archivo)
+  levels:
+    security: true  # security.log - Eventos de autenticación
+    errors: true  # errors.log - Errores y excepciones
+    debug: false  # debug.log - Solo para desarrollo
+    performance: false  # performance.log - Métricas de rendimiento
+    
+  # Formato de timestamps en logs
+  format:
+    timestamp: "yyyy-MM-dd HH:mm:ss"
+    include-thread: false
+    include-class: true
 
 messages:
   prefix: "&8[&bHybridAuth&8]&r"

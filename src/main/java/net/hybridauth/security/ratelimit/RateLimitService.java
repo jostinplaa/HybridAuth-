@@ -71,17 +71,45 @@ public class RateLimitService {
         attempts++;
         attemptsCache.put(ip, attempts);
 
+        // 1. Check Local Limit
         if (attempts >= maxAttempts) {
-            // Calculate backoff: base * 2^(attempts - max)
-            // e.g. 5 failures = 300s
-            // 6 failures = 600s
-            // 7 failures = 1200s
-            int overflow = attempts - maxAttempts;
-            long multiplier = (long) Math.pow(2, Math.min(overflow, 5)); // Cap multiplier
-            long blockDurationMillis = baseBlockTime * multiplier * 1000;
+            triggerBlock(ip, attempts);
+            return;
+        }
 
-            blockCache.put(ip, System.currentTimeMillis() + blockDurationMillis);
-            plugin.getLogger().warning("Rate limiting IP: " + ip + " for " + (blockDurationMillis / 1000) + "s");
+        // 2. Check Global Limit (Async)
+        if (plugin.getSyncManager() != null && plugin.getSyncManager().isEnabled()) {
+            final int localAttempts = attempts;
+            plugin.getSyncManager().incrementRateLimit(ip, 600) // Keep global count for 10 min
+                    .thenAccept(globalCount -> {
+                        if (globalCount >= maxAttempts) {
+                            // Run on main thread to be safe with caches/logging
+                            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                                // Only trigger if not already blocked locally (avoid double log)
+                                if (blockCache.getIfPresent(ip) == null) {
+                                    plugin.getLogger().warning("[MultiServerSync] Global rate limit exceeded for " + ip
+                                            + " (" + globalCount + " attempts)");
+                                    triggerBlock(ip, globalCount);
+                                }
+                            });
+                        }
+                    });
+        }
+    }
+
+    private void triggerBlock(String ip, int attempts) {
+        // Calculate backoff: base * 2^(attempts - max)
+        int overflow = attempts - maxAttempts;
+        long multiplier = (long) Math.pow(2, Math.min(overflow, 5)); // Cap multiplier
+        long blockDurationSeconds = baseBlockTime * multiplier;
+        long blockDurationMillis = blockDurationSeconds * 1000;
+
+        blockCache.put(ip, System.currentTimeMillis() + blockDurationMillis);
+        plugin.getLogger().warning("Rate limiting IP: " + ip + " for " + blockDurationSeconds + "s");
+
+        // Broadcast block to network if sync enabled
+        if (plugin.getSyncManager() != null && plugin.getSyncManager().isEnabled()) {
+            plugin.getSyncManager().addIPBlacklist(ip, (int) blockDurationSeconds, "Rate Limit Exceeded (Automated)");
         }
     }
 

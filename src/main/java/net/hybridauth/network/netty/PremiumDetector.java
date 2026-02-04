@@ -299,6 +299,34 @@ public class PremiumDetector {
     }
 
     /**
+     * FIX BUG #2: Wrapper async-safe explícito para isPremium()
+     * Previene que desarrolladores llamen isPremium() desde main thread
+     * accidentalmente
+     * 
+     * @param playerName Nombre del jugador
+     * @return CompletableFuture que se resuelve con true si es premium, false si
+     *         cracked
+     */
+    public static java.util.concurrent.CompletableFuture<Boolean> isPremiumAsync(String playerName) {
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            return isPremium(playerName);
+        });
+    }
+
+    /**
+     * FIX BUG #2: Wrapper async-safe para obtener UUID
+     * Previene bloqueo del main thread
+     * 
+     * @param playerName Nombre del jugador
+     * @return CompletableFuture con el UUID real
+     */
+    public static java.util.concurrent.CompletableFuture<UUID> getRealUUIDAsync(String playerName) {
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            return getRealUUID(playerName);
+        });
+    }
+
+    /**
      * Datos de conexión del jugador
      */
     private static class PlayerConnectionData {

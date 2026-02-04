@@ -30,7 +30,7 @@ public class UserDAO {
     }
 
     public void createUser(User user) throws SQLException {
-        String sql = "INSERT INTO hybrid_users (uuid, username, password_hash, auth_type, premium_uuid, last_ip, registered_at, last_login_date, total_logins, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO hybrid_users (uuid, username, password_hash, auth_type, premium_uuid, last_ip, registered_at, last_login_date, total_logins, status, totp_secret, totp_enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = dbManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, user.getUuid().toString());
@@ -43,6 +43,8 @@ public class UserDAO {
             stmt.setTimestamp(8, user.getLastLoginDate());
             stmt.setInt(9, user.getTotalLogins());
             stmt.setString(10, user.getStatus());
+            stmt.setString(11, user.getTotpSecret());
+            stmt.setBoolean(12, user.isTotpEnabled());
             stmt.executeUpdate();
 
             // Cachear
@@ -104,7 +106,7 @@ public class UserDAO {
     }
 
     public void updateUser(User user) throws SQLException {
-        String sql = "UPDATE hybrid_users SET password_hash = ?, auth_type = ?, premium_uuid = ?, last_ip = ?, last_login_date = ?, total_logins = ?, status = ? WHERE uuid = ?";
+        String sql = "UPDATE hybrid_users SET password_hash = ?, auth_type = ?, premium_uuid = ?, last_ip = ?, last_login_date = ?, total_logins = ?, status = ?, totp_secret = ?, totp_enabled = ? WHERE uuid = ?";
         try (Connection conn = dbManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, user.getPasswordHash());
@@ -114,7 +116,9 @@ public class UserDAO {
             stmt.setTimestamp(5, user.getLastLoginDate());
             stmt.setInt(6, user.getTotalLogins());
             stmt.setString(7, user.getStatus());
-            stmt.setString(8, user.getUuid().toString());
+            stmt.setString(8, user.getTotpSecret());
+            stmt.setBoolean(9, user.isTotpEnabled());
+            stmt.setString(10, user.getUuid().toString());
             stmt.executeUpdate();
 
             // Actualizar cache o invalidar
@@ -185,6 +189,8 @@ public class UserDAO {
         user.setLastIp(rs.getString("last_ip"));
         user.setTotalLogins(rs.getInt("total_logins"));
         user.setStatus(rs.getString("status"));
+        user.setTotpSecret(rs.getString("totp_secret"));
+        user.setTotpEnabled(rs.getBoolean("totp_enabled"));
         return user;
     }
 

@@ -189,6 +189,34 @@ public class DatabaseManager {
 
         stmt.execute("CREATE INDEX IF NOT EXISTS idx_event_type ON hybrid_security_logs(event_type)");
         stmt.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON hybrid_security_logs(timestamp)");
+
+        // v1.5.0 - Email tables for account recovery
+        stmt.execute(
+                """
+                            CREATE TABLE IF NOT EXISTS hybrid_emails (
+                                username TEXT PRIMARY KEY,
+                                email TEXT NOT NULL UNIQUE,
+                                verified INTEGER DEFAULT 0,
+                                verification_code TEXT,
+                                code_expires_at INTEGER,
+                                created_at INTEGER DEFAULT (strftime('%s', 'now') * 1000)
+                            )
+                        """);
+
+        stmt.execute("CREATE INDEX IF NOT EXISTS idx_email ON hybrid_emails(email)");
+
+        stmt.execute(
+                """
+                            CREATE TABLE IF NOT EXISTS hybrid_recovery_codes (
+                                username TEXT PRIMARY KEY,
+                                recovery_code TEXT NOT NULL,
+                                expires_at INTEGER NOT NULL,
+                                attempts INTEGER DEFAULT 0,
+                                created_at INTEGER DEFAULT (strftime('%s', 'now') * 1000)
+                            )
+                        """);
+
+        stmt.execute("CREATE INDEX IF NOT EXISTS idx_recovery_expires ON hybrid_recovery_codes(expires_at)");
     }
 
     public Connection getConnection() throws SQLException {
